@@ -1,0 +1,4 @@
+(library
+ (name parser)
+ (libraries commons))
+(ocamllex man_lex)

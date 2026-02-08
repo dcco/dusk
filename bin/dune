@@ -1,0 +1,6 @@
+(executable
+ (public_name dusk)
+ (name main)
+ (libraries parser resolve)
+ (modes native))
+

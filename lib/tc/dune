@@ -1,0 +1,3 @@
+(library
+ (name tc)
+ (libraries commons parser resolve codegen))

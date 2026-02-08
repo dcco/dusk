@@ -1,0 +1,3 @@
+(library
+ (name resolve)
+ (libraries commons parser))
