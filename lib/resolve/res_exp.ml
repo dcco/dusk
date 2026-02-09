@@ -73,18 +73,18 @@ and resolve_body (env: res_env) (b: n_stmt list): (r_stmt list) rs_res = match b
 
 	(* declaration resolution *)
 
-let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
-	FunDec(Method(f, param_l, tau_r, b), p) ->
-		let* b' = resolve_body env b in Valid (FunDec(Method(f, param_l, tau_r, b'), p))
+let resolve_dec (env: res_env) (d: n_dec): (string * r_dec) rs_res = match d with
+	FunDec(Method(f, param_l, tau_r, b), _) ->
+		let* b' = resolve_body env b in Valid (f, FunDecR(Method(f, param_l, tau_r, b')))
 
-let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
+let rec resolve_dec_list (env: res_env) (dl: n_dec list): ((string * r_dec) list) rs_res = match dl with
 	[] -> Valid []
 	| d :: dt ->
-		let* d' = resolve_dec env d in
-		let* dt' = resolve_dec_list env dt in Valid (d' :: dt')
+		let* (f, d') = resolve_dec env d in
+		let* dt' = resolve_dec_list env dt in Valid ((f, d') :: dt')
 
 	(* section resolution *)
 
 let resolve_section (env: res_env) (s: n_section): r_section rs_res = match s with
 	Section(_, dl) ->
-		let* dl' = resolve_dec_list env dl in Valid (Section([], dl'))
+		let* dl' = resolve_dec_list env dl in Valid (SectionR dl')

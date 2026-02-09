@@ -11,8 +11,20 @@ type bind_origin = LocalOr | ImportOr of string
 type r_exp = (unit, l_pos) exp
 type r_stmt = (unit, l_pos) stmt
 type r_met = (unit, l_pos) met
-type r_dec = (unit, l_pos) dec
-type r_section = (unit, l_pos) section
+
+	(* 
+		- declarations at resolution phase include builtins
+		-- binary expression ASM
+		-- external bindings
+		-- user-defined function
+	*)
+
+type r_dec =
+	BinaryASMDecR of string
+	| ExternalDecR
+	| FunDecR of r_met
+
+type r_section = SectionR of (string * r_dec) list
 
 	(*
 		temporary environment
@@ -46,3 +58,18 @@ let lookup_env (env: res_env) (p: string option) (x: string): (bind_origin * str
 		None -> []
 		| Some xl -> List.filter (fun (ox, _) -> ox = ImportOr prefix) xl
 	)
+
+	(*
+		final environment
+	*)
+
+type full_env = (string, r_dec) Hashtbl.t
+
+let resolve_res_env (env: res_env): full_env =
+	let secList = flatten_tree env.global in
+	let bindingList = List.concat (List.map (fun (path, SectionR sec) ->
+		let prefix = (String.concat "_" path) ^ "_" in
+		List.map (fun (f, d) -> (prefix ^ f, d)) sec	
+	) secList) in
+	let table = Hashtbl.create (List.length bindingList) in
+	List.iter (fun (k, v) -> Hashtbl.add table k v) bindingList; table

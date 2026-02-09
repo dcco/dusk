@@ -30,8 +30,8 @@ let namedTy x = NamedTy x
 let unitTy = primTy "Unit"
 let intTy = primTy "Int"
 let floatTy = primTy "Float"
-let boolTy = primTy "Bool"
 let stringTy = primTy "String"
+let boolTy = primTy "Bool"
 
 	(*
 		user-defined types:
