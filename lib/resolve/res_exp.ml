@@ -24,7 +24,7 @@ let string_of_rs_err (e: resolve_err) = match e with
 let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 	ConstExp(c, p) -> Valid (ConstExp(c, p))
 	| VarExp(prefix, x, p) -> (match lookup_env env prefix x with
-		[(_, x')] -> Valid (VarExp((), x', p))
+		[(ox, x')] -> Valid (VarExp((), canonize_binding env ox x', p))
 		| [] -> Error (BadLookup_Err(prefix, x, p))
 		| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
 	)
@@ -32,7 +32,7 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 		let* ctor' = (match ctor with
 			None -> Valid None
 			| Some (prefix, x) -> (match lookup_env env prefix x with
-				[(_, x')] -> Valid (Some ((), x'))
+				[(ox, x')] -> Valid (Some ((), canonize_binding env ox x'))
 				| [] -> Error (BadLookup_Err(prefix, x, p))
 				| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
 			)
@@ -74,8 +74,8 @@ and resolve_body (env: res_env) (b: n_stmt list): (r_stmt list) rs_res = match b
 	(* declaration resolution *)
 
 let resolve_dec (env: res_env) (d: n_dec): (string * r_dec) rs_res = match d with
-	FunDec(Method(f, param_l, tau_r, b), _) ->
-		let* b' = resolve_body env b in Valid (f, FunDecR(Method(f, param_l, tau_r, b')))
+	FunDec(Method(f, param_l, tau_r, b), p) ->
+		let* b' = resolve_body env b in Valid (f, FunDec(Method(f, param_l, tau_r, b'), p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): ((string * r_dec) list) rs_res = match dl with
 	[] -> Valid []
@@ -83,8 +83,25 @@ let rec resolve_dec_list (env: res_env) (dl: n_dec list): ((string * r_dec) list
 		let* (f, d') = resolve_dec env d in
 		let* dt' = resolve_dec_list env dt in Valid ((f, d') :: dt')
 
-	(* section resolution *)
+	(* requirement resolution *)
+
+let resolve_req (env: res_env) (r: n_req): unit = match r with
+	ShortRefReq(path, _) ->
+		let handle = List.nth path ((List.length path) - 1) in
+		add_import_env env path handle
+	| _ -> failwith "UNIMPLEMENTED: res_exp.ml - resolve req case."
+
+let rec resolve_req_list (env: res_env) (rl: n_req list): unit = match rl with
+	[] -> ()
+	| r :: rt -> resolve_req env r; resolve_req_list env rt
+
+	(*
+		section resolution
+		- modifies the environment, but only the global section
+	*)
 
 let resolve_section (env: res_env) (s: n_section): r_section rs_res = match s with
-	Section(_, dl) ->
-		let* dl' = resolve_dec_list env dl in Valid (SectionR dl')
+	Section(rl, dl) ->
+		let env' = freeze_env env in
+		resolve_req_list env' rl;
+		let* dl' = resolve_dec_list env' dl in Valid (SectionR dl')

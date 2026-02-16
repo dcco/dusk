@@ -1,4 +1,5 @@
+references Sys.Os
 
 fn main()
-	print("Hello world.")
+	Os.print("Hello world.")
 end

@@ -4,6 +4,10 @@ open Parser.Parse_commons
 open Parser.Parse_exp
 open Resolve
 open Resolve.Res_exp
+open Tc
+open Tc.Tc_exp
+open Codegen.Fin_ast
+open Codegen.Gen_exp
 
 	(*
 		preproc phase (incremental steps):
@@ -21,13 +25,16 @@ let load_token_list (fname: string): (Lex_token.token list) try_log_res =
 		let tkList = lex_iter [] in
 		(close_in fc; validLog tkList);;
 
-let pre_proc_file (main_dir: string) (f: string): Res_cont.r_section try_log_res =
+let pre_compile_file (typeEnv: Tc_cont.type_env) (main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
 		(* PHASE 1. lexing / parsing *)
 	let*! tkList = load_token_list (main_dir ^ "/" ^ f) in
 	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
 		(* PHASE 2. namespace resolution *)
-	let resEnv = Res_cont.empty_env () in
-	tryWithErrLog string_of_rs_err (resolve_section resEnv rawAst)
+	let resEnv = Res_cont.builtin_env () in
+	(* tryWithErrLog string_of_rs_err (resolve_section resEnv rawAst) *)
+	let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv rawAst) in
+		(* PHASE 3. type-checking *)
+	tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst)
 
 	(* command line argument state *)
 
@@ -55,9 +62,18 @@ let program _ =
 	] (fun name -> main_arg := name) usage_msg;
 		(* main compilation *)
 	if !main_arg = "" then failLog "No file / directory name given."
-	else let main_dir = !main_arg in
+	else let main_dir = !main_arg in (
 		print_string ("Compiling: " ^ main_dir ^ "\n");
-		pre_proc_file main_dir "main.jsm"
-	;;
+		(* builtin environments *)
+		let typeEnv = Tc_cont.builtin_tenv () in
+		(* PHASES 1-3. incremental resolution *)
+		let*! typedAst = pre_compile_file typeEnv main_dir "main.dm" in
+		(* PHASE 4. code generation *)
+		let targetArch =
+			if !target_arg <> "" then Some !target_arg
+			else if !win_arg then Some "x86_64-pc-windows-gnu" else None in
+		genProgramHook targetArch (main_dir ^ "/test") false (Tc_cont.sym_list_tenv typeEnv) typedAst ;
+		endLog ()
+	);;
 
-program ()
+printLogRes (program ())

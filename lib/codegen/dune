@@ -1,3 +1,3 @@
 (library
  (name codegen)
- (libraries parser llvm llvm.analysis llvm.target llvm.all_backends))
+ (libraries parser builtin llvm llvm.analysis llvm.target llvm.all_backends))

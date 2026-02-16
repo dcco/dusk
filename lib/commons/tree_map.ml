@@ -54,6 +54,10 @@ let rec add_tree (tree: 'a tree_map) (path: string list) (v: 'a): 'a tree_map = 
 
 	(* - conversion *)
 
+let rec map_tree (f: 'a -> 'b) (tree: 'a tree_map): 'b tree_map = match tree with
+	Leaf v -> Leaf (f v)
+	| Branch m -> Branch (StringMap.map (map_tree f) m)
+
 let flatten_tree (tree: 'a tree_map): (string list * 'a) list =
 	let rec ft_rec tree path = match tree with
 		Leaf v -> [(path, v)]

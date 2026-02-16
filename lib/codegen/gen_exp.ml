@@ -1,25 +1,47 @@
 open Llvm
+open Llvm_analysis
+open Llvm_target
 
 open Parser.Dusk_ast
+open Builtin
 open Fin_type
 open Fin_ast
 open Gen_cont
 open Gen_type
 
+	(* string literal generation *)
+
+let genStrLit (cont: llvm_cont) (env: dusk_env) (s: string): dusk_val =
+		(* create (pointer to) string constant data *)
+	let i = genRef cont in
+	let strVal = const_string context s in
+	let strRef = define_global ("_s" ^ (string_of_int i)) strVal (llmod cont) in
+		(* create (pointer to) struct containing string + meta data *)
+	let structVal = const_struct context
+		[| const_int i8Type 0; const_int iType (String.length s); const_null ptrType; const_null ptrType; strRef |] in
+	let structRef = define_global ("_sz" ^ (string_of_int i)) structVal (llmod cont) in
+	let v = (structRef, ptrType) in 
+	Hashtbl.add env (DStrLit s) (DVal v); v
+
 	(* expression generation *)
 
-let genConst (c: const): dusk_val = match c with
+let genConst (cont: llvm_cont) (env: dusk_env) (c: const): dusk_val = match c with
 	IConst i -> (const_int iType i, iType)
 	| FConst f -> (const_float fType f, fType)
-	| SConst _ -> failwith "BUG: gen_exp.ml - Raw string literal in generation phase."
 	| BConst b -> (const_int bType (if b then 1 else 0), bType)
+	| SConst s -> (match Hashtbl.find_opt env (DStrLit s) with
+		Some (DVal v) -> v
+		| _ -> genStrLit cont env s
+	)
+
+		(* failwith "BUG: gen_exp.ml - Raw string literal in generation phase." *)
 
 let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx = builder cont in match e with
-	ConstExpC c -> genConst c
-	| LitExpC i -> (match Hashtbl.find env (DLitId i) with
+	ConstExpC c -> genConst cont env c
+	(*| LitExpC i -> (match Hashtbl.find env (DLitId i) with
 		DVal (v, t) -> (v, t)
 		| _ -> failwith ("BUG: gen_exp.ml - String literal incorrectly resolved in generation phase.")
-	)
+	)*)
 	| VarExpC x -> (match Hashtbl.find_opt env (DVar x) with
 		Some (DFunVal (v, t)) -> (v, t)
 		| Some (DVal (v, t)) -> (build_load t v x bx, t)
@@ -125,7 +147,7 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 			Hashtbl.add env' (DVar x) (DVal((vx, t))); gpl_rec pt (i + 1)
 	in gpl_rec pl 0; env'
 
-let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (FunDecC(pl, tau_r, b): gen_dec): unit =
+let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (FunDecC (MethodC(pl, tau_r, b)): gen_dec): unit =
 	let fType = genFunType env pl tau_r in
 	let fVal = declare_function f fType (llmod cont) in
 	let block = append_block context "entry" fVal in
@@ -136,3 +158,55 @@ let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (FunDecC(pl, tau_r, b):
 
 let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): unit =
 	let _ = List.map (fun (f, d) -> genDec cont env f d) dl in ()
+
+	(*
+	*)
+
+let genExternals (cont: llvm_cont) (env: dusk_env) (symList: (string * t_sym) list): unit =
+	List.iter (fun (f, (sym, (tau_pl, tau_r))) -> match sym with
+		ExternalSym ->
+			let fType = function_type (genType env tau_r) (Array.of_list (List.map (genType env) tau_pl)) in
+			let v = declare_function f fType (llmod cont) in
+			Hashtbl.add env (DVar f) (DFunVal(v, fType))
+		| _ -> ()
+	) symList
+
+	(*
+		code generation hook
+		- pre-initializes context data structures so LLVM content doesn't end up as a dependency outside the library
+	*)
+
+let printAllTargets (): unit =
+	let targetList = Target.all () in
+	ignore (List.map (fun t -> print_string ((Target.name t) ^ " -- " ^ (Target.description t) ^ "\n")) targetList)
+
+let genFinalize (cont: llvm_cont) (targetArg: string option) (fname: string) (optimizeFlag: bool): unit =
+	print_string ("\n" ^ (string_of_llmodule (llmod cont))); assert_valid_module (llmod cont); 
+	(
+		let target = (match targetArg with None -> Target.default_triple () | Some x -> x) in
+		let ttx = Target.by_triple target in
+		print_endline ("target: " ^ target);
+		(*printAllTargets ();*)
+		(*let target = "x86-64" in
+		let ttx = (match Target.by_name target with
+			None -> failwith "Could not find target for specified backend."
+			| Some t -> t
+		) in*)
+		(*let tm = print_endline ("target: " ^ target);*)
+		let level = if optimizeFlag then CodeGenOptLevel.Aggressive else CodeGenOptLevel.None in
+		let tm = TargetMachine.create ~triple:target ~cpu:"generic" ~features:"" ~level:level
+				~reloc_mode:RelocMode.Default ~code_model:CodeModel.Default ttx in
+		(*print_endline ("data layout: " ^ (DataLayout.as_string (TargetMachine.data_layout tm)));*)
+		set_target_triple target (llmod cont);
+		set_data_layout (DataLayout.as_string (TargetMachine.data_layout tm)) (llmod cont);
+		TargetMachine.emit_to_file (llmod cont) (CodeGenFileType.ObjectFile) (fname ^ ".o") tm;
+		TargetMachine.emit_to_file (llmod cont) (CodeGenFileType.AssemblyFile) (fname ^ ".xx") tm
+	)
+
+let genProgramHook (targetArg: string option) (fname: string) (optimizeFlag: bool)
+	(symList: (string * t_sym) list) (dl: (string * gen_dec) list): unit =
+	let cont = Gen_cont.newLCont () in
+	let env = Hashtbl.create 50 in
+	genExternals cont env symList;
+	genDecList cont env dl;
+	genFinalize cont targetArg fname optimizeFlag;;

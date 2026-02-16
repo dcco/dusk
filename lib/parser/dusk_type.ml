@@ -14,6 +14,8 @@ type 'a raw_type =
 	| TupleTy of 'a raw_type list
 	| ArrayTy of int * 'a raw_type
 
+type 'a fun_type = 'a raw_type list * 'a raw_type
+
 type m_type = string raw_type
 
 let rec string_of_type (tau: m_type): string = match tau with
@@ -21,6 +23,15 @@ let rec string_of_type (tau: m_type): string = match tau with
 	| NamedTy x -> x
 	| TupleTy tau_l -> "(" ^ String.concat ", " (List.map string_of_type tau_l) ^ ")"
 	| ArrayTy(i, tau) -> (string_of_int i) ^ "d[" ^ (string_of_type tau) ^ "]"
+
+let string_of_fun_type ((tau_pl, tau_r): string fun_type): string =
+	"fn(" ^ (String.concat ", " (List.map string_of_type tau_pl)) ^ ") " ^ (string_of_type tau_r)
+
+	(* - auxiliary function, used to find the "first" argument of a function type *)
+
+let hd_opt (l: 'a list): 'a option = match l with
+	[] -> None
+	| v :: _ -> Some v
 
 	(* primitive types *)
 
