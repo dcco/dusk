@@ -13,6 +13,9 @@ let fType = float_type context
 let bType = i1_type context
 let ptrType = pointer_type context;;
 
+	(* - complex types *)
+let structType tau_l = struct_type context (Array.of_list tau_l);;
+
 	(*
 		code generation related to types
 	*)

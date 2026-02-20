@@ -17,9 +17,6 @@ type const =
 type x_op =
 		(* previously, ElemOp *)
 	TupleIndexOp of int
-	| ArrayIndexOp of int
-	| LengthOp
-	| UpdateOp
 
 type ('m, 'ann) exp =
 	ConstExp of const * 'ann

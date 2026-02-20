@@ -111,7 +111,7 @@ type appObj =
 let rec foldAppList (e: n_exp) (appList: appObj list): n_exp = match appList with
 	[] -> e
 	| (TupleIndexApp(i, p)) :: appTail -> foldAppList (AppExp(OpExp(TupleIndexOp i, p), [e], p)) appTail
-	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(OpExp(ArrayIndexOp (List.length ei_l), p), e :: ei_l, p)) appTail
+	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(VarExp(None, "lookup", p), e :: ei_l, p)) appTail
 	| (DirectApp(el, p)) :: appTail -> foldAppList (AppExp(e, el, p)) appTail
 	| (IndirectApp(mo, f, el, p)) :: appTail -> foldAppList (AppExp(VarExp(mo, f, p), e :: el, p)) appTail
 
@@ -124,12 +124,12 @@ type lvalue =
 let asLvalue (e: n_exp): lvalue option = match e with
 	VarExp(None, x, p) -> Some (VarLV(x, p))
 	| VarExp(Some _, _, _) -> None
-	| AppExp(OpExp(ArrayIndexOp _, _), e :: ei_l, p) -> Some (IndexLV(e, ei_l, p))
+	| AppExp(VarExp(_, "lookup", _), e :: ei_l, p) -> Some (IndexLV(e, ei_l, p))
 	| _ -> None
 
 let completeAssign (lv: lvalue) (ev: n_exp): n_stmt = match lv with
 	VarLV(x, p) -> AssignStmt(x, ev, p)
-	| IndexLV(e, ei_l, p) -> EvalStmt(AppExp(OpExp(UpdateOp, p), [e; ev] @ ei_l, p), p)
+	| IndexLV(e, ei_l, p) -> EvalStmt(AppExp(VarExp(None, "update", p), [e; ev] @ ei_l, p), p)
 
 	(* auxiliary folds *)
 
@@ -185,7 +185,7 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (BAR, p) :: tkRem ->
 		let* (e, tkRem2) = parseExp tkRem in
 		let* (_, tkRem3) = parseTk BAR "Length Operator" tkRem2 in
-		Valid (AppExp(OpExp(LengthOp, p), [e], p), tkRem3)
+		Valid (AppExp(VarExp(None, "length", p), [e], p), tkRem3)
 	| tk :: _ -> Error (BadToken_Err(tk, "Exp"))
 	| _ -> Error (EOF_Err "Exp")
 

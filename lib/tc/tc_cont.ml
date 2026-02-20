@@ -10,14 +10,14 @@ module StringMap = Map.Make(String)
 	*)
 
 let tag_of_type (tau_o: g_type option): string = match tau_o with
-	None -> "void"
+	None -> "none"
 	| Some (PrimTy x) -> x
 	| Some (NamedTy x) -> x
 	| Some (TupleTy tau_l) -> let n = List.length tau_l in
 		if n = 2 then "pair"
 		else if n = 3 then "triple"
-		else (string_of_int n) ^ "t" 
-	| Some (ArrayTy(i, _)) -> (string_of_int i) ^ "d"
+		else "t" ^ (string_of_int n) 
+	| Some (ArrayTy(i, _)) -> "a" ^ (string_of_int i)
 
 	(*
 		overloaded (polymorphic) function types
@@ -44,7 +44,8 @@ type poly_dec = t_sym poly_type
 
 type type_env = {
 	global: (string, poly_dec) Hashtbl.t;
-	local: g_type StringMap.t
+	local: g_type StringMap.t;
+	boxCount: int ref
 }
 
 	(* - TEST fun: used to dump *)
@@ -70,8 +71,12 @@ let add_fun_tenv (env: type_env) (f: string) (v: t_sym): unit =
 let builtin_tenv (): type_env =
 	let env = {
 		global = Hashtbl.create 50;
-		local = StringMap.empty 
+		local = StringMap.empty;
+		boxCount = ref 0
 	} in List.iter (fun (f, s, tau_f) -> add_fun_tenv env f (s, tau_f)) (resolve_builtins ()); env
+
+let get_box_id_tenv (env: type_env): int =
+	let i = !(env.boxCount) in env.boxCount := i + 1; i
 
 let lookup_fun_tenv (env: type_env) (f: string) (tau_o: g_type option): (string * t_sym) option = match Hashtbl.find_opt env.global f with
 	None -> None (* this case should theoretically never come up *)

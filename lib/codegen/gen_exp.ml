@@ -70,6 +70,28 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		let (vf, tf) = genExp cont env ef in
 		let vl = List.map (fun e -> fst (genExp cont env e)) el in
 		(build_call tf vf (Array.of_list vl) "" (builder cont), genType env tau_r)
+	| BoxExpC(i, e, _) ->
+		let (ve, _) = genExp cont env e in (match Hashtbl.find_opt env (DBox i) with
+			Some (DVal (vb, tb)) -> ignore (build_store ve vb bx); (vb, tb)
+			| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
+		)
+	| TupleExpC el ->
+		 	(* compile the sub-expressions *)
+		let res_l = List.map (fun e -> genExp cont env e) el in
+		let tau_l = List.map snd res_l in
+			(* initialize struct + fields *)
+		let tau_enum = structType tau_l in
+		let (sVal, _) = List.fold_left (fun (sVal, i) (v, _) ->
+			let sVal' = build_insertvalue sVal v i "_stT" bx in (sVal', i + 1)
+		) (undef tau_enum, 0) res_l in
+		(sVal, tau_enum)
+	| TagTupleExpC(_, _) ->
+		failwith "BUG: Unimplemtend tag tuple gen"
+	| TupleIndexExpC(ep, i, tau_v) ->
+		let (vp, _) = genExp cont env ep in
+		(*let sVal = build_load vp bx "_structT" in*)
+		let elem = build_extractvalue vp i "_elemT" bx in
+		(elem, genType env tau_v)
 
 	(* statement generation *)
 
@@ -144,8 +166,15 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 			let (vp, t) = (Array.get va i, genType env tau) in
 			let vx = build_alloca t ("_" ^ x) (builder cont) in
 			let _ = build_store vp vx (builder cont) in
-			Hashtbl.add env' (DVar x) (DVal((vx, t))); gpl_rec pt (i + 1)
+			Hashtbl.add env' (DVar x) (DVal (vx, t)); gpl_rec pt (i + 1)
 	in gpl_rec pl 0; env'
+
+let genPreAlloc (cont: llvm_cont) (env: dusk_env) (b: gen_stmt list): unit =
+	let boxList = collect_box_body b in
+	List.iter (fun (i, _, tau) ->
+		let v = build_alloca (genType env tau) "_boxT" (builder cont) in
+		Hashtbl.add env (DBox i) (DVal (v, ptrType))
+	) boxList
 
 let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (FunDecC (MethodC(pl, tau_r, b)): gen_dec): unit =
 	let fType = genFunType env pl tau_r in
@@ -154,6 +183,7 @@ let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (FunDecC (MethodC(pl, t
 	position_at_end block (builder cont);
 	Hashtbl.add env (DVar f) (DFunVal(fVal, fType));
 	let env' = genParamList cont env pl fVal in
+	genPreAlloc cont env' b;
 	ignore (genBody cont env' (1, fVal) b)
 
 let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): unit =
@@ -164,8 +194,9 @@ let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): 
 
 let genExternals (cont: llvm_cont) (env: dusk_env) (symList: (string * t_sym) list): unit =
 	List.iter (fun (f, (sym, (tau_pl, tau_r))) -> match sym with
-		ExternalSym ->
-			let fType = function_type (genType env tau_r) (Array.of_list (List.map (genType env) tau_pl)) in
+		ExternalSym vl ->
+			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType env tau_p) tau_pl in
+			let fType = function_type (genType env tau_r) (Array.of_list tau_plx) in
 			let v = declare_function f fType (llmod cont) in
 			Hashtbl.add env (DVar f) (DFunVal(v, fType))
 		| _ -> ()

@@ -13,7 +13,7 @@ help: _build/install/default/bin/dusk
 
 # build targets
 
-main.exe:
+main.exe: FORCE
 	dune exec -- dusk "workspace/game" -w -r _runtime
 
 _build/install/default/bin/dusk: FORCE

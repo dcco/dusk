@@ -1,5 +1,12 @@
-references Sys.Os
+references Sys modules Os, Sulfur
 
 fn main()
-	Os.print("Hello world.")
+	var x = 0
+	var xspd = 1
+	loop
+		if x > 512 then xspd = -1 elsif x <= 0 then xspd = 1 end
+		x = x + xspd
+		Sulfur.drawTX((x, 11, 10, 10))
+		Sulfur.refresh()
+	end
 end

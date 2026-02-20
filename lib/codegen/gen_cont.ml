@@ -37,8 +37,26 @@ type dusk_fval =
 type dusk_key =
 	DVar of string
 	| DStrLit of string
+	| DBox of int
 	| DTName of string
 	| DCtor of string
 [@@deriving equal, hash]
 
 type dusk_env = (dusk_key, dusk_fval) Hashtbl.t
+
+	(* - TEST fun: used to dump *)
+
+let string_of_dkey (k: dusk_key): string = match k with
+	DVar x -> "VAR " ^ x
+	| DStrLit s -> "STRLIT " ^ s
+	| DBox i -> "BOX " ^ (string_of_int i)
+	| DTName t -> "TNAME " ^ t
+	| DCtor c -> "CTOR " ^ c
+
+let dump_denv (env: dusk_env): unit =
+	print_string "#CODEGEN_ENV {\n";
+	Hashtbl.iter (fun k _ ->
+		print_string ((string_of_dkey k) ^ ": ");
+		print_string "\n"
+	) env;
+	print_string "}\n";;

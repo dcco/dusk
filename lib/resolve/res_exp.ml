@@ -23,6 +23,7 @@ let string_of_rs_err (e: resolve_err) = match e with
 
 let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 	ConstExp(c, p) -> Valid (ConstExp(c, p))
+	| OpExp(xop, p) -> Valid (OpExp(xop, p))
 	| VarExp(prefix, x, p) -> (match lookup_env env prefix x with
 		[(ox, x')] -> Valid (VarExp((), canonize_binding env ox x', p))
 		| [] -> Error (BadLookup_Err(prefix, x, p))
@@ -57,6 +58,11 @@ let rec resolve_stmt (env: res_env) (s: n_stmt): r_stmt rs_res = match s with
 		| Some e ->
 			let* e' = resolve_exp env e in Valid (ReturnStmt(Some e', p))
 	)
+	| PatStmt(px, e, p) ->
+		let* e' = resolve_exp env e in (match px with
+			VarPat x -> Hashtbl.add env.local x ()
+			| ListPat xol -> List.iter (fun xo -> Option.iter (fun x -> Hashtbl.add env.local x ()) xo) xol
+		); Valid (PatStmt(px, e', p))
 	| IfStmt(e, b1, b2, p) ->
 		let* e' = resolve_exp env e in
 		let* b1' = resolve_body env b1 in
@@ -73,15 +79,16 @@ and resolve_body (env: res_env) (b: n_stmt list): (r_stmt list) rs_res = match b
 
 	(* declaration resolution *)
 
-let resolve_dec (env: res_env) (d: n_dec): (string * r_dec) rs_res = match d with
+let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 	FunDec(Method(f, param_l, tau_r, b), p) ->
-		let* b' = resolve_body env b in Valid (f, FunDec(Method(f, param_l, tau_r, b'), p))
+		let fName = canonize_scope env.curPath f in
+		let* b' = resolve_body env b in Valid (FunDec(Method(fName, param_l, tau_r, b'), p))
 
-let rec resolve_dec_list (env: res_env) (dl: n_dec list): ((string * r_dec) list) rs_res = match dl with
+let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
 	[] -> Valid []
 	| d :: dt ->
-		let* (f, d') = resolve_dec env d in
-		let* dt' = resolve_dec_list env dt in Valid ((f, d') :: dt')
+		let* d' = resolve_dec env d in
+		let* dt' = resolve_dec_list env dt in Valid (d' :: dt')
 
 	(* requirement resolution *)
 
@@ -89,7 +96,8 @@ let resolve_req (env: res_env) (r: n_req): unit = match r with
 	ShortRefReq(path, _) ->
 		let handle = List.nth path ((List.length path) - 1) in
 		add_import_env env path handle
-	| _ -> failwith "UNIMPLEMENTED: res_exp.ml - resolve req case."
+	| LongRefReq(path, ml, _) ->
+		List.iter (fun handle -> add_import_env env (path @ [handle]) handle) ml
 
 let rec resolve_req_list (env: res_env) (rl: n_req list): unit = match rl with
 	[] -> ()
@@ -102,6 +110,5 @@ let rec resolve_req_list (env: res_env) (rl: n_req list): unit = match rl with
 
 let resolve_section (env: res_env) (s: n_section): r_section rs_res = match s with
 	Section(rl, dl) ->
-		let env' = freeze_env env in
-		resolve_req_list env' rl;
-		let* dl' = resolve_dec_list env' dl in Valid (SectionR dl')
+		resolve_req_list env rl;
+		let* dl' = resolve_dec_list env dl in Valid (SectionR dl')

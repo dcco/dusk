@@ -14,7 +14,7 @@ type r_stmt = (unit, l_pos) stmt
 type r_met = (unit, l_pos) met
 type r_dec = (unit, l_pos) dec
 
-type r_section = SectionR of (string * r_dec) list
+type r_section = SectionR of r_dec list
 
 	(*
 		temporary environment
@@ -30,11 +30,22 @@ type import_env = (string, (bind_origin * string) list) Hashtbl.t
 type local_env = (string, unit) Hashtbl.t
 
 type res_env = {
+	curPath: string list;
 	global: global_env;
 	importHeader: (string, string list) Hashtbl.t;
 	import: import_env;
 	local: local_env;
 }
+
+	(* - TEST fun: used to dump *)
+
+let dump_renv (env: res_env): unit =
+	print_string "#RESOLUTION_ENV {\n";
+	Hashtbl.iter (fun x l -> List.iter (fun (ox, _) -> match ox with
+		LocalOr -> print_string ("local: " ^ x ^ "\n")
+		| ImportOr o -> print_string ("import: " ^ o ^ " - " ^ x ^ "\n")
+	) l) env.import;
+	print_string "}\n";;
 
 let add_import_env (env: res_env) (path: string list) (handle: string): unit =
 	Hashtbl.add env.importHeader handle path;
@@ -43,22 +54,27 @@ let add_import_env (env: res_env) (path: string list) (handle: string): unit =
 		let binding = (ImportOr handle, x) in
 		match Hashtbl.find_opt env.import x with
 			None -> Hashtbl.add env.import x [binding]
-			| Some l -> Hashtbl.replace env.import x (binding :: l)
+			| Some l -> (match List.find_opt (fun (b, _) -> b = ImportOr handle) l with
+				None -> Hashtbl.replace env.import x (binding :: l)
+				| _ -> ()
+			)
 	) symList
 
 let builtin_env (): res_env = let env = {
+	curPath = [];
 	global = map_tree (fun l -> List.map (fun (f, _, _) -> f) l) (builtinTreeMap ());
-	importHeader = Hashtbl.create 1;
-	import = Hashtbl.create 1;
+	importHeader = Hashtbl.create 5;
+	import = Hashtbl.create 20;
 	local = Hashtbl.create 1
-} in add_import_env env ["Predef"] ""; env
+} in add_import_env env ["builtin"] ""; env
 
-let freeze_env (env: res_env): res_env = {
+let freeze_env (env: res_env) (path: string list): res_env = let env = {
+	curPath = path;
 	global = env.global;
 	importHeader = Hashtbl.create 5;
 	import = Hashtbl.create 20;
 	local = Hashtbl.create 20
-}
+} in add_import_env env ["builtin"] ""; env
 
 let lookup_env (env: res_env) (p: string option) (x: string): (bind_origin * string) list = match p with
 	None -> if Hashtbl.mem env.local x then [(LocalOr, x)] else (match Hashtbl.find_opt env.import x with
@@ -72,7 +88,8 @@ let lookup_env (env: res_env) (p: string option) (x: string): (bind_origin * str
 	(* canonization functions *)
 
 let canonize_scope (scope: string list) (x: string): string =
-	"_" ^ (String.concat "_" scope) ^ "_" ^ x
+	if List.length scope = 0 then "_" ^ x
+	else "_" ^ (String.concat "_" scope) ^ "_" ^ x
 
 let canonize_binding (env: res_env) (ox: bind_origin) (x: string): string = match ox with
 	LocalOr -> x
