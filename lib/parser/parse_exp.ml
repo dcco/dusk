@@ -81,7 +81,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"] then Valid (primTy x, tkRem)
-		else Valid (NamedTy x, tkRem)
+		else Valid (NamedTy(QT None, x), tkRem)
 	| (LPAREN, _) :: _ ->
 		let* (tau_l, tkRem) = parseParenWrap (parseSepList parseType chkComma) "Tuple Type" tkList in
 		Valid (TupleTy tau_l, tkRem)
@@ -106,12 +106,12 @@ type appObj =
 	TupleIndexApp of int * l_pos
 	| ArrayIndexApp of n_exp list * l_pos
 	| DirectApp of n_exp list * l_pos
-	| IndirectApp of qual_prefix * string * n_exp list * l_pos
+	| IndirectApp of qual_tag * string * n_exp list * l_pos
 
 let rec foldAppList (e: n_exp) (appList: appObj list): n_exp = match appList with
 	[] -> e
 	| (TupleIndexApp(i, p)) :: appTail -> foldAppList (AppExp(OpExp(TupleIndexOp i, p), [e], p)) appTail
-	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(VarExp(None, "lookup", p), e :: ei_l, p)) appTail
+	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(VarExp(QT None, "lookup", p), e :: ei_l, p)) appTail
 	| (DirectApp(el, p)) :: appTail -> foldAppList (AppExp(e, el, p)) appTail
 	| (IndirectApp(mo, f, el, p)) :: appTail -> foldAppList (AppExp(VarExp(mo, f, p), e :: el, p)) appTail
 
@@ -122,25 +122,25 @@ type lvalue =
 	| IndexLV of n_exp * n_exp list * l_pos
 
 let asLvalue (e: n_exp): lvalue option = match e with
-	VarExp(None, x, p) -> Some (VarLV(x, p))
-	| VarExp(Some _, _, _) -> None
+	VarExp(QT None, x, p) -> Some (VarLV(x, p))
+	| VarExp(QT (Some _), _, _) -> None
 	| AppExp(VarExp(_, "lookup", _), e :: ei_l, p) -> Some (IndexLV(e, ei_l, p))
 	| _ -> None
 
 let completeAssign (lv: lvalue) (ev: n_exp): n_stmt = match lv with
 	VarLV(x, p) -> AssignStmt(x, ev, p)
-	| IndexLV(e, ei_l, p) -> EvalStmt(AppExp(VarExp(None, "update", p), [e; ev] @ ei_l, p), p)
+	| IndexLV(e, ei_l, p) -> EvalStmt(AppExp(VarExp(QT None, "update", p), [e; ev] @ ei_l, p), p)
 
 	(* auxiliary folds *)
 
 let rec foldOpListU (e: n_exp) (eOpList: (string * l_pos) list): n_exp = match eOpList with
 	[] -> e
 	| (xOp, p) :: eOpTail ->
-		let e' = foldOpListU e eOpTail in AppExp(VarExp(None, xOp, p), [e'], p)
+		let e' = foldOpListU e eOpTail in AppExp(VarExp(QT None, xOp, p), [e'], p)
 
 let rec foldOpListL (e: n_exp) (eOpList: (n_exp * string * l_pos) list): n_exp = match eOpList with
 	[] -> e
-	| (ex, xOp, p) :: eOpTail -> foldOpListL (AppExp(VarExp(None, xOp, p), [e; ex], p)) eOpTail
+	| (ex, xOp, p) :: eOpTail -> foldOpListL (AppExp(VarExp(QT None, xOp, p), [e; ex], p)) eOpTail
 
 let rec foldRangeList (rl: (string * range_type * n_exp) list) (body: n_stmt list): n_stmt = match rl with
 	[] -> failwith "BUG: Parsed for loop with no ranges"
@@ -149,7 +149,7 @@ let rec foldRangeList (rl: (string * range_type * n_exp) list) (body: n_stmt lis
 
 	(* main expression parsing *)
 
-let rec parseIdAtomExp (prefix: qual_prefix): n_exp parser = fun tkList -> match tkList with
+let rec parseIdAtomExp (prefix: qual_tag): n_exp parser = fun tkList -> match tkList with
 	(ID x, p) :: tkRem -> Valid (VarExp(prefix, x, p), tkRem)
 	| (TID m, p) :: tkRem -> (match tkRem with
 		(LPAREN, _) :: _ ->
@@ -166,10 +166,13 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (FALSE, p) :: tkRem -> Valid (ConstExp(BConst false, p), tkRem)
 	| (TRUE, p) :: tkRem -> Valid (ConstExp(BConst true, p), tkRem)
 	| (STRLIT s, p) :: tkRem -> Valid (ConstExp(SConst s, p), tkRem)
-	| (ID x, p) :: tkRem -> Valid (VarExp(None, x, p), tkRem)
-	| (TID prefix, _) :: tkRem -> (match tkRem with
-		(DOT, _) :: tkRem2 -> parseIdAtomExp (Some prefix) tkRem2
-		| _ -> parseIdAtomExp None tkList
+	| (ID x, p) :: tkRem -> Valid (VarExp(QT None, x, p), tkRem)
+	| (TID prefix, p) :: tkRem -> (match tkRem with
+		(DOT, _) :: tkRem2 -> parseIdAtomExp (QT (Some prefix)) tkRem2
+		| (LPAREN, _) :: _ ->
+			let* (el, tkRem2) = parseParenWrap (parseSepList parseExp chkComma) "Enum / Union" tkRem in
+			Valid (TupleExp(Some (QT None, prefix), el, p), tkRem2)
+		| _ -> parseIdAtomExp (QT None) tkList
 	)
 	| (NEW, p) :: tkRem -> (match tkRem with
 		(DIM i, _) :: tkRem2 ->
@@ -185,7 +188,7 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (BAR, p) :: tkRem ->
 		let* (e, tkRem2) = parseExp tkRem in
 		let* (_, tkRem3) = parseTk BAR "Length Operator" tkRem2 in
-		Valid (AppExp(VarExp(None, "length", p), [e], p), tkRem3)
+		Valid (AppExp(VarExp(QT None, "length", p), [e], p), tkRem3)
 	| tk :: _ -> Error (BadToken_Err(tk, "Exp"))
 	| _ -> Error (EOF_Err "Exp")
 
@@ -208,7 +211,7 @@ and parseAppObj: appObj parser = fun tkList -> match tkList with
 	| (DOT, p) :: tkRem -> (match tkRem with
 		(ID f, _) :: tkRem2 ->
 			let* (el, tkRem3) = parseParenWrap parseArgList "Function Call" tkRem2 in
-			Valid (IndirectApp(None, f, el, p), tkRem3)
+			Valid (IndirectApp(QT None, f, el, p), tkRem3)
 		| (INT i, _) :: tkRem2 ->
 			Valid (TupleIndexApp(i, p), tkRem2)
 		| tk :: _ ->  Error (BadToken_Err(tk, "Property / Function Call"))

@@ -2,13 +2,11 @@ open Commons.Tree_map
 open Parser.Dusk_type
 
 	(*
-		builtin symbol / virtual declarations
-		> symbol includes the binding type, so that it can be called / compiled
+		virtual declarations: special declarations to "compile" builtin functions / types
 		-- binary expression ASM
 		-- external bindings
 		>>> list of integers indicating "virtual" arguments, which arguments must be wrapped in ptrs 
 
-		> virtual dec adds the type, giving enough info to compile end-to-end
 	*)
 
 type sym =
@@ -16,17 +14,28 @@ type sym =
 	| ExternalSym of int list
 	| UserDefSym
 
-type t_sym = sym * string fun_type
+type 'm virt_dec =
+	SymVD of sym * 'm fun_type
+	| TDefVD of 'm raw_tdef
 
-type virt_dec = string * sym * string fun_type
+type 'm virt_bind = 'm * string * 'm virt_dec
+
+type m_virt_bind = qual_tag virt_bind
 
 	(*
 		builtins
 	*)
 
-let toSymList (rawList: (string * sym * string raw_type list * string raw_type) list): virt_dec list =
-	List.map (fun (x, v, tau_pl, tau_r) -> (x, v, (tau_pl, tau_r))) rawList
+let toVirtList (rawList: (string * sym * m_type list * m_type) list): m_virt_bind list =
+	List.map (fun (x, v, tau_pl, tau_r) -> (QT None, x, SymVD(v, (tau_pl, tau_r)))) rawList
 
+(*
+let completeTdefList (vl: m_virt_bind list): virt_bind list =
+	List.fold_right (fun (f, v) nl -> match v with
+		TDefVD (EnumTD cl) -> (List.map (fun (c, _, _) -> (c, CtorVD f)) cl) @ nl
+		| _ -> nl
+	) vl vl
+*)
 let builtinList =  [
 	("add", BinaryASMSym "iadd", [intTy; intTy], intTy);
 	("sub", BinaryASMSym "isub", [intTy; intTy], intTy);
@@ -58,19 +67,35 @@ let osList = [
 
 let sulfurList = [
 	("refresh", ExternalSym [], [], unitTy);
+	("draw", ExternalSym [0], [namedTy "Glyph"], unitTy);
 	("drawTX", ExternalSym [0], [TupleTy [intTy; intTy; intTy; intTy]], unitTy)
+]
+
+let sulfurTypes = [
+	(QT None, "Glyph", TDefVD (EnumTD [
+		("Nop", [], Some "C_NOP");
+		("Box", [intTy; intTy; intTy; intTy], Some "C_BOX")
+	]))
 ]
 
 	(*
 		builtin tree map
 	*)
 
-let builtinTreeMap (): (virt_dec list) tree_map =
-	let m1 = single_tree ["builtin"] (toSymList builtinList) in
-	let m2 = add_tree m1 ["Sys"; "Os"] (toSymList osList) in
-	add_tree m2 ["Sys"; "Sulfur"] (toSymList sulfurList)
+let builtinTreeMap (): (m_virt_bind list) tree_map =
+	let m1 = single_tree ["builtin"] (toVirtList builtinList) in
+	let m2 = add_tree m1 ["Sys"; "Os"] (toVirtList osList) in
+	add_tree m2 ["Sys"; "Sulfur"] (sulfurTypes @ (toVirtList sulfurList))
 
-let builtinQualList (): (string list * virt_dec) list =
+let builtinQualList (): (string list * m_virt_bind) list =
 	List.concat (List.map (fun (path, vdl) ->
 		List.map (fun vd -> (path, vd)) vdl
 	) (flatten_tree (builtinTreeMap ())))
+
+type prim_flag = PF | NPF
+
+let extractSymbols (symList: 'm virt_bind list): (prim_flag * string) list =
+	List.concat (List.map (fun (_, f, vd) -> match vd with
+		TDefVD (EnumTD cl) -> (PF, f) :: (List.map (fun (c, _, _) -> (PF, c)) cl)
+		| _ -> [(NPF, f)]
+	) symList)

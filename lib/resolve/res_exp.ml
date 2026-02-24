@@ -1,23 +1,8 @@
 open Commons.Try_log
-open Parser.Lex_token
+open Parser.Dusk_type
 open Parser.Dusk_ast
 open Res_cont
-
-	(* error types *)
-
-type resolve_err =
-	BadLookup_Err of string option * string * l_pos
-	| AmbiguousLookup_Err of string option * string * l_pos
-
-type 'a rs_res = ('a, resolve_err) try_res
-
-let string_of_name (prefix: string option) (x: string): string = match prefix with
-	None -> x
-	| Some m -> m ^ "." ^ x
-
-let string_of_rs_err (e: resolve_err) = match e with
-	BadLookup_Err(prefix, x, p) -> "Bad lookup of \"" ^ (string_of_name prefix x) ^ "\" at " ^ (string_of_pos p) ^ "."
-	| AmbiguousLookup_Err(prefix, x, p) -> "Ambiguous lookup of \"" ^ (string_of_name prefix x) ^ "\" at " ^ (string_of_pos p) ^ "."
+open Res_type
 
 	(* expression resolution *)
 
@@ -25,7 +10,7 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 	ConstExp(c, p) -> Valid (ConstExp(c, p))
 	| OpExp(xop, p) -> Valid (OpExp(xop, p))
 	| VarExp(prefix, x, p) -> (match lookup_env env prefix x with
-		[(ox, x')] -> Valid (VarExp((), canonize_binding env ox x', p))
+		[(ox, x')] -> Valid (VarExp(CT, canonize_binding env ox x', p))
 		| [] -> Error (BadLookup_Err(prefix, x, p))
 		| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
 	)
@@ -33,7 +18,7 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 		let* ctor' = (match ctor with
 			None -> Valid None
 			| Some (prefix, x) -> (match lookup_env env prefix x with
-				[(ox, x')] -> Valid (Some ((), canonize_binding env ox x'))
+				[(ox, x')] -> Valid (Some (CT, canonize_binding env ox x'))
 				| [] -> Error (BadLookup_Err(prefix, x, p))
 				| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
 			)
@@ -60,8 +45,8 @@ let rec resolve_stmt (env: res_env) (s: n_stmt): r_stmt rs_res = match s with
 	)
 	| PatStmt(px, e, p) ->
 		let* e' = resolve_exp env e in (match px with
-			VarPat x -> Hashtbl.add env.local x ()
-			| ListPat xol -> List.iter (fun xo -> Option.iter (fun x -> Hashtbl.add env.local x ()) xo) xol
+			VarPat x -> Hashtbl.add env.localIds x ()
+			| ListPat xol -> List.iter (fun xo -> Option.iter (fun x -> Hashtbl.add env.localIds x ()) xo) xol
 		); Valid (PatStmt(px, e', p))
 	| IfStmt(e, b1, b2, p) ->
 		let* e' = resolve_exp env e in
@@ -82,7 +67,11 @@ and resolve_body (env: res_env) (b: n_stmt list): (r_stmt list) rs_res = match b
 let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 	FunDec(Method(f, param_l, tau_r, b), p) ->
 		let fName = canonize_scope env.curPath f in
-		let* b' = resolve_body env b in Valid (FunDec(Method(fName, param_l, tau_r, b'), p))
+		let* param_l' = map_try_res (fun (x, tau_p) ->
+			let* tau_p' = resolve_type env p tau_p in Valid (x, tau_p')
+		) param_l in
+		let* tau_r' = resolve_type env p tau_r in
+		let* b' = resolve_body env b in Valid (FunDec(Method(fName, param_l', tau_r', b'), p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
 	[] -> Valid []

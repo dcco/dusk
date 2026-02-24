@@ -6,7 +6,8 @@ fn main()
 	loop
 		if x > 512 then xspd = -1 elsif x <= 0 then xspd = 1 end
 		x = x + xspd
-		Sulfur.drawTX((x, 11, 10, 10))
+		Sulfur.draw(Box(x, 11, 10, 10))
+		Sulfur.draw(Box(11, x, 10, 10))
 		Sulfur.refresh()
 	end
 end

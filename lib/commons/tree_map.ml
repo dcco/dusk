@@ -58,6 +58,14 @@ let rec map_tree (f: 'a -> 'b) (tree: 'a tree_map): 'b tree_map = match tree wit
 	Leaf v -> Leaf (f v)
 	| Branch m -> Branch (StringMap.map (map_tree f) m)
 
+let paths_tree (tree: 'a tree_map): string list list =
+	let rec pt_rec tree path = match tree with
+		Leaf _ -> [path]
+		| Branch childMap -> List.concat (List.map (fun (k, child) ->
+			pt_rec child (path @ [k])
+		) (StringMap.bindings childMap))
+	in pt_rec tree []
+
 let flatten_tree (tree: 'a tree_map): (string list * 'a) list =
 	let rec ft_rec tree path = match tree with
 		Leaf v -> [(path, v)]

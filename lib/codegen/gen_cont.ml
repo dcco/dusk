@@ -23,6 +23,13 @@ let builder (LCont(_, _, b, _): llvm_cont): llbuilder = b
 let genRef (LCont(_, _, _, r): llvm_cont): int = r := !r + 1; !r - 1
 
 	(*
+		dusk compilation type definitions
+	*)
+
+type dusk_tdef =
+	OpaqueTD_C of int
+
+	(*
 		code generation environment
 	*)
 
@@ -32,6 +39,7 @@ type dusk_fval =
 	DVal of dusk_val
 	| DGlobal of llvalue
 	| DFunVal of llvalue * lltype
+	| DTDef of dusk_tdef
 	| DEnum of int
 
 type dusk_key =

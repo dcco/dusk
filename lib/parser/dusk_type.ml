@@ -1,5 +1,14 @@
 
 	(*
+		identifier tag types:
+		- qualified -- raw, module-prefixed identifier taken from parsing
+		- canon -- identifier after canonization 
+	*)
+
+type qual_tag = QT of string option
+type canon_tag = CT
+
+	(*
 		dusk types:
 		> 'a: used to determine the type of "identifier used" (raw names vs canonical names) 
 		- primitive -- Unit, Int, Float, Bool, String
@@ -8,23 +17,23 @@
 		- array type -- 1d[tau], 2d[_], etc
 	*)
 
-type 'a raw_type =
+type 'm raw_type =
 	PrimTy of string
-	| NamedTy of 'a
-	| TupleTy of 'a raw_type list
-	| ArrayTy of int * 'a raw_type
+	| NamedTy of 'm * string
+	| TupleTy of 'm raw_type list
+	| ArrayTy of int * 'm raw_type
 
-type 'a fun_type = 'a raw_type list * 'a raw_type
+type 'm fun_type = 'm raw_type list * 'm raw_type
 
-type m_type = string raw_type
+type m_type = qual_tag raw_type
 
-let rec string_of_type (tau: m_type): string = match tau with
+let rec string_of_type (tau: 'm raw_type): string = match tau with
 	| PrimTy x -> x
-	| NamedTy x -> x
+	| NamedTy(_, x) -> x
 	| TupleTy tau_l -> "(" ^ String.concat ", " (List.map string_of_type tau_l) ^ ")"
 	| ArrayTy(i, tau) -> (string_of_int i) ^ "d[" ^ (string_of_type tau) ^ "]"
 
-let string_of_fun_type ((tau_pl, tau_r): string fun_type): string =
+let string_of_fun_type ((tau_pl, tau_r): 'm fun_type): string =
 	"fn(" ^ (String.concat ", " (List.map string_of_type tau_pl)) ^ ") " ^ (string_of_type tau_r)
 
 	(* - auxiliary function, used to find the "first" argument of a function type *)
@@ -36,7 +45,7 @@ let hd_opt (l: 'a list): 'a option = match l with
 	(* primitive types *)
 
 let primTy x = PrimTy x
-let namedTy x = NamedTy x
+let namedTy x = NamedTy(QT None, x)
 
 let unitTy = primTy "Unit"
 let intTy = primTy "Int"
@@ -49,9 +58,9 @@ let boolTy = primTy "Bool"
 		- enum
 	*)
 
-type 'a enum_case = 'a * 'a raw_type list * string option
+type 'm enum_case = string * 'm raw_type list * string option
 
-type 'a raw_tdef =
-	EnumTD of ('a enum_case) list
+type 'm raw_tdef =
+	EnumTD of ('m enum_case) list
 
-type m_tdef = string raw_tdef
+type m_tdef = qual_tag raw_tdef

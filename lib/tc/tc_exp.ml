@@ -17,6 +17,8 @@ type tc_err =
 		(* tuples *)
 	| NonTuple_Err of g_type * l_pos
 	| TupleIndexOOB_Err of g_type * int * l_pos
+		(* tag tuples *)
+	| NonCtorTag_Err of string * l_pos
 		(* returns *)
 	| EarlyReturn_Err of string * l_pos
 	| NoReturn_Err of string * l_pos
@@ -35,6 +37,7 @@ let string_of_tc_err (e: tc_err) = match e with
 	| NonTuple_Err(t, p) -> "Tuple operation called on non-tuple type \"" ^ (string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| TupleIndexOOB_Err(t, i, p) -> "Attempted to access index " ^ (string_of_int i ) ^ " of tuple type \"" ^
 		(string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
+	| NonCtorTag_Err(t, p) -> "Tuple tag \"" ^ t ^ "\" did not resolve to a constructor at " ^ (string_of_pos p) ^ "."
 	| EarlyReturn_Err(f, p) ->
 		"Early return from function \"" ^ f ^ "\" producing unreachable code at " ^ (string_of_pos p) ^ "."
 	| NoReturn_Err(f, p) ->
@@ -61,14 +64,19 @@ let tc_const (c: const): g_type = match c with
 
 let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e with
 	ConstExp(c, _) -> Valid (ConstExpC c, tc_const c)
-	| VarExp(_, x, _) -> (match StringMap.find_opt x env.local with
+	| VarExp(_, x, _) -> (match StringMap.find_opt x env.localIds with
 		Some tau -> Valid (VarExpC x, tau)
 		| _ -> failwith "BUG: tc_exp.ml - Failed variable lookup during type-checking phase."
 	)
 	| OpExp(_, _) -> failwith "BUG: tc_exp.ml - Operator expression in non-application position."
-	| TupleExp(_, el, _) ->
-		let* et_l' = tc_exp_list env el in
-		Valid (TupleExpC (List.map fst et_l'), TupleTy(List.map snd et_l'))
+	| TupleExp(ctor, el, p) ->
+		let* et_l' = tc_exp_list env el in (match ctor with
+			None ->	Valid (TupleExpC (List.map fst et_l'), TupleTy(List.map snd et_l'))
+			| Some (_, cx) -> (match Hashtbl.find_opt env.globalTIds cx with
+				Some (TcCtor c) -> Valid (TagTupleExpC(cx, List.map fst et_l'), NamedTy(CT, c))
+				| _ -> Error (NonCtorTag_Err(cx, p))
+			)
+		)
 	| AppExp(ef, el, _) ->
 		let* et_l' = tc_exp_list env el in
 		let tau_al = List.map snd et_l' in
@@ -81,7 +89,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				Valid (CallExpC(VarExpC f, elx, tau_r), tau_r)
 		)
 	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - type-checking exp case."
-and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * string fun_type) tc_res = match ef with
+and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
 	VarExp(_, f, p) -> (match lookup_fun_tenv env f tau_a with
 		Some (f, (d, tau_f)) -> (match d with
 			BinaryASMSym fsm -> Valid (f, BinaryGF fsm, tau_f)
@@ -110,14 +118,14 @@ and tc_exp_list (env: type_env) (el: r_exp list): ((gen_exp * g_type) list) tc_r
 let rec tc_stmt (f: string) (env: type_env) (s: r_stmt): (type_env * gen_stmt list * bool) tc_res = match s with
 	EvalStmt(e, _) ->
 		let* (e', _) = tc_exp env e in Valid (env, [EvalStmtC e'], false)
-	| AssignStmt(x, e, _) -> (match StringMap.find_opt x env.local with
+	| AssignStmt(x, e, _) -> (match StringMap.find_opt x env.localIds with
 		Some _ -> let* (e', _) = tc_exp env e in Valid (env, [AssignStmtC(x, e')], false)
 		| _ -> failwith "BUG: tc_exp.ml - Failed variable lookup during type-checking phase."
 	)
 	| PatStmt(px, e, _) ->
 		let* (e', tau_e) = tc_exp env e in (match (px, tau_e) with
 			(VarPat x, _) ->
-				Valid ({ env with local = StringMap.add x tau_e env.local }, [VarStmtC(x, e')], false)
+				Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, [VarStmtC(x, e')], false)
 			| _ -> failwith "Unimplemented: res_out.ml - Patterns.")
 	| IfStmt(ec, b1, b2, _) ->
 		let* (ec', _) = tc_exp env ec in 
@@ -139,7 +147,7 @@ and tc_body (f: string) (env: type_env) (b: r_stmt list): (type_env * gen_stmt l
 let rec add_param_list (env: type_env) (pl: (string * g_type) list): type_env = match pl with
 	[] -> env
 	| (x, tau) :: pt ->
-		add_param_list { env with local = StringMap.add x tau env.local } pt
+		add_param_list { env with localIds = StringMap.add x tau env.localIds } pt
 
 let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match d with
 	FunDec(Method(f, pl, tau_r, b), p) ->
@@ -155,6 +163,7 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =
+	dump_tenv env;
 	let rec tcs_rec dl = match dl with
 		[] -> Valid []
 		| d :: dt ->

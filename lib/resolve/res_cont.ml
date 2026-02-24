@@ -1,136 +1,109 @@
 open Commons.Tree_map
 open Builtin
 open Parser.Lex_token
+open Parser.Dusk_type
 open Parser.Dusk_ast
 
 	(*
 		output of resolution phase
 	*)
 
-type bind_origin = LocalOr | ImportOr of string
+type bind_origin = PrimOr | LocalOr | ImportOr of string
 
-type r_exp = (unit, l_pos) exp
-type r_stmt = (unit, l_pos) stmt
-type r_met = (unit, l_pos) met
-type r_dec = (unit, l_pos) dec
+type r_exp = (canon_tag, l_pos) exp
+type r_stmt = (canon_tag, l_pos) stmt
+type r_met = (canon_tag, l_pos) met
+type r_dec = (canon_tag, l_pos) dec
 
 type r_section = SectionR of r_dec list
 
 	(*
 		temporary environment
-		* global - all bindings w/ module structure preserved
-		* importHeader -  maps import prefixes -> full path names
-		* import - bindings imported locally to the module
+		* globalModules - maps module paths -> binding lists (bindings w/ module structure preserved)
+		* importPrefixes - maps import prefixes -> full path names
+		* importIds - (all) bindings imported locally to the module
 		-- mapping includes import prefix + original name (applicable when aliased)
-		* local - bindings declared locally in a function
-	*)
+		* localIds - (values) bindings declared locally in a function
 
-type global_env = (string list) tree_map
-type import_env = (string, (bind_origin * string) list) Hashtbl.t
-type local_env = (string, unit) Hashtbl.t
+		primitive flag - flag indicating that the canonical name should be unqualified 
+	*)
 
 type res_env = {
 	curPath: string list;
-	global: global_env;
-	importHeader: (string, string list) Hashtbl.t;
-	import: import_env;
-	local: local_env;
+	globalModules: ((prim_flag * string) list) tree_map;
+	importPrefixes: (string, string list) Hashtbl.t;
+	importIds: (string, (bind_origin * string) list) Hashtbl.t;
+	localIds: (string, unit) Hashtbl.t;
 }
 
-	(* - TEST fun: used to dump *)
+	(* - standard resolution functions *)
 
-let dump_renv (env: res_env): unit =
-	print_string "#RESOLUTION_ENV {\n";
-	Hashtbl.iter (fun x l -> List.iter (fun (ox, _) -> match ox with
-		LocalOr -> print_string ("local: " ^ x ^ "\n")
-		| ImportOr o -> print_string ("import: " ^ o ^ " - " ^ x ^ "\n")
-	) l) env.import;
-	print_string "}\n";;
+let lookup_env (env: res_env) (p: qual_tag) (x: string): (bind_origin * string) list = match p with
+	QT (Some prefix) -> (match Hashtbl.find_opt env.importIds x with
+		None -> []
+		| Some xl -> List.filter (fun (ox, _) -> ox = ImportOr prefix) xl)
+	| QT None -> if Hashtbl.mem env.localIds x then [(PrimOr, x)] else (match Hashtbl.find_opt env.importIds x with
+		None -> []
+		| Some xl -> xl)
+
+	(* - environment construction functions *)
 
 let add_import_env (env: res_env) (path: string list) (handle: string): unit =
-	Hashtbl.add env.importHeader handle path;
-	let symList = lookup_tree env.global path in
-	List.iter (fun x ->
-		let binding = (ImportOr handle, x) in
-		match Hashtbl.find_opt env.import x with
-			None -> Hashtbl.add env.import x [binding]
-			| Some l -> (match List.find_opt (fun (b, _) -> b = ImportOr handle) l with
-				None -> Hashtbl.replace env.import x (binding :: l)
+	Hashtbl.add env.importPrefixes handle path;
+	let symList = lookup_tree env.globalModules path in
+	List.iter (fun (pf, x) ->
+		let ox = (match pf with PF -> PrimOr | _ -> ImportOr handle) in
+		let binding = (ox, x) in
+		match Hashtbl.find_opt env.importIds x with
+			None -> Hashtbl.add env.importIds x [binding]
+			| Some l -> (match List.find_opt (fun (b, _) -> b = ox) l with
+				None -> Hashtbl.replace env.importIds x (binding :: l)
 				| _ -> ()
 			)
 	) symList
 
 let builtin_env (): res_env = let env = {
 	curPath = [];
-	global = map_tree (fun l -> List.map (fun (f, _, _) -> f) l) (builtinTreeMap ());
-	importHeader = Hashtbl.create 5;
-	import = Hashtbl.create 20;
-	local = Hashtbl.create 1
+	globalModules = map_tree extractSymbols (builtinTreeMap ());
+	importPrefixes = Hashtbl.create 5;
+	importIds = Hashtbl.create 20;
+	localIds = Hashtbl.create 1
 } in add_import_env env ["builtin"] ""; env
 
 let freeze_env (env: res_env) (path: string list): res_env = let env = {
 	curPath = path;
-	global = env.global;
-	importHeader = Hashtbl.create 5;
-	import = Hashtbl.create 20;
-	local = Hashtbl.create 20
+	globalModules = env.globalModules;
+	importPrefixes = Hashtbl.create 5;
+	importIds = Hashtbl.create 20;
+	localIds = Hashtbl.create 20
 } in add_import_env env ["builtin"] ""; env
 
-let lookup_env (env: res_env) (p: string option) (x: string): (bind_origin * string) list = match p with
-	None -> if Hashtbl.mem env.local x then [(LocalOr, x)] else (match Hashtbl.find_opt env.import x with
-		None -> []
-		| Some xl -> xl)
-	| Some prefix -> (match Hashtbl.find_opt env.import x with
-		None -> []
-		| Some xl -> List.filter (fun (ox, _) -> ox = ImportOr prefix) xl
-	)
+	(* - TEST fun: used to dump *)
 
-	(* canonization functions *)
+let dump_renv (env: res_env): unit =
+	print_string "#RESOLUTION_ENV {\n";
+	Hashtbl.iter (fun x l -> List.iter (fun (ox, _) -> match ox with
+		PrimOr -> print_string ("prim: " ^ x ^ "\n")
+		| LocalOr -> print_string ("local: " ^ x ^ "\n")
+		| ImportOr o -> print_string ("import: " ^ o ^ " - " ^ x ^ "\n")
+	) l) env.importIds;
+	print_string "}\n";;
+
+	(*
+		canonization functions
+	*)
 
 let canonize_scope (scope: string list) (x: string): string =
 	if List.length scope = 0 then "_" ^ x
 	else "_" ^ (String.concat "_" scope) ^ "_" ^ x
 
 let canonize_binding (env: res_env) (ox: bind_origin) (x: string): string = match ox with
-	LocalOr -> x
-	| ImportOr handle -> (match Hashtbl.find_opt env.importHeader handle with
+	PrimOr -> x
+	| LocalOr -> canonize_scope env.curPath x
+	| ImportOr handle -> (match Hashtbl.find_opt env.importPrefixes handle with
 		None -> failwith "BUG: res_cont.ml - Attempted to lookup unknown import handle."
 		| Some path -> canonize_scope path x
 	)
 
-	(* prepare builtins for resolution *)
-
-let resolve_builtins (): virt_dec list =
-	List.map (fun (path, (x, s, tau_f)) -> (canonize_scope path x, s, tau_f)) (builtinQualList ())
 
 
-	(*
-		final environment
-		- flattens the environment created during resolution
-	*)
-(*
-type full_env = (string, r_dec) Hashtbl.t
-
-let resolve_res_env (env: res_env): full_env =
-	let symTable = flatten_tree env.global in
-	let bindingList = List.concat (List.map (fun (path, symList) ->
-		let prefix = (String.concat "_" path) ^ "_" in
-		List.map (fun (f, d) -> (prefix ^ f, d)) symList	
-	) symTable) in
-	let table = Hashtbl.create (List.length bindingList) in
-	List.iter (fun (k, v) -> Hashtbl.add table k v) bindingList; table*)
-
-
-(*
-
-
-	(*
-		name canonization functions
-	*)
-
-let canonize_scope (scope: string list) (x: string): string =
-	"_" ^ (String.concat "_" scope) ^ "_" ^ x
-
-let canonize_scope_tag (scope: string list) (tag: string) (x: string): string =
-	"_" ^ (String.concat "_" scope) ^ "_" ^ tag ^ "_" ^ x
-*)

@@ -2,6 +2,7 @@ open Llvm
 open Llvm_analysis
 open Llvm_target
 
+open Parser.Dusk_type
 open Parser.Dusk_ast
 open Builtin
 open Fin_type
@@ -85,8 +86,24 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			let sVal' = build_insertvalue sVal v i "_stT" bx in (sVal', i + 1)
 		) (undef tau_enum, 0) res_l in
 		(sVal, tau_enum)
-	| TagTupleExpC(_, _) ->
-		failwith "BUG: Unimplemtend tag tuple gen"
+	| TagTupleExpC(tag, el) ->
+			(* find the tag literal *)
+		let tagLit = (match Hashtbl.find_opt env (DCtor tag) with
+			Some (DEnum i) -> const_int i8Type i
+			| Some (DGlobal p) -> build_load i8Type p "_G" bx
+			| Some _ -> failwith ("BUG: gen_out.ml - Enum constructor \"" ^ tag ^ "\" resolved to non-enum constructor.")
+			| None -> failwith ("BUG: gen_out.ml - Unexpected enum \"" ^ tag ^ "\" encountered in generation phase.")
+		) in
+		 	(* compile the sub-expressions *)
+		let res_l = List.map (fun e -> genExp cont env e) el in
+		let tau_l = List.map snd res_l in
+			(* initialize struct + fields *)
+		let tau_enum = structType (i8Type :: tau_l) in
+		let sVal0 = build_insertvalue (undef tau_enum) tagLit 0 "_stT" bx in
+		let (sVal, _) = List.fold_left (fun (sVal, i) (v, _) ->
+			let sVal' = build_insertvalue sVal v (i + 1) "_stT" bx in (sVal', i + 1)
+		) (sVal0, 0) res_l in
+		(sVal, tau_enum)
 	| TupleIndexExpC(ep, i, tau_v) ->
 		let (vp, _) = genExp cont env ep in
 		(*let sVal = build_load vp bx "_structT" in*)
@@ -192,13 +209,29 @@ let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): 
 	(*
 	*)
 
-let genExternals (cont: llvm_cont) (env: dusk_env) (symList: (string * t_sym) list): unit =
-	List.iter (fun (f, (sym, (tau_pl, tau_r))) -> match sym with
-		ExternalSym vl ->
+let rec genEnum (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enum_case) list): unit = match cl with
+	[] -> ()
+	| (name, _, ext_o) :: ct -> let v = (match ext_o with
+			None ->	DEnum i 
+			| Some ext -> DGlobal (declare_global i8Type ext (llmod cont))
+		) in
+		Hashtbl.add env (DCtor name) v;
+		genEnum cont env (i + 1) ct
+
+let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): unit =
+	List.iter (fun (_, f, vd) -> match vd with
+		SymVD (ExternalSym vl, (tau_pl, tau_r)) ->
 			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType env tau_p) tau_pl in
 			let fType = function_type (genType env tau_r) (Array.of_list tau_plx) in
 			let v = declare_function f fType (llmod cont) in
 			Hashtbl.add env (DVar f) (DFunVal(v, fType))
+		| TDefVD (EnumTD cl) ->
+			let zero_size = size_of_type cont i8Type in
+			let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
+				size_of_type cont (genTagTupleType env tau_l)
+			) cl) in
+			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C max_size));
+			genEnum cont env 0 cl
 		| _ -> ()
 	) symList
 
@@ -235,7 +268,7 @@ let genFinalize (cont: llvm_cont) (targetArg: string option) (fname: string) (op
 	)
 
 let genProgramHook (targetArg: string option) (fname: string) (optimizeFlag: bool)
-	(symList: (string * t_sym) list) (dl: (string * gen_dec) list): unit =
+	(symList: g_virt_bind list) (dl: (string * gen_dec) list): unit =
 	let cont = Gen_cont.newLCont () in
 	let env = Hashtbl.create 50 in
 	genExternals cont env symList;

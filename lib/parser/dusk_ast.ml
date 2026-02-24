@@ -50,10 +50,8 @@ type ('m, 'ann) stmt =
 		######################
 	*)
 
-type qual_prefix = string option
-
-type n_exp = (qual_prefix, l_pos) exp
-type n_stmt = (qual_prefix, l_pos) stmt
+type n_exp = (qual_tag, l_pos) exp
+type n_stmt = (qual_tag, l_pos) stmt
 
 	(* annotation reader *)
 
@@ -81,7 +79,7 @@ let ann_stmt s = match s with
 	*)
 
 type ('m, 'ann) met =
-	Method of string * (string * m_type) list * m_type * ('m, 'ann) stmt list
+	Method of string * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
 
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann
@@ -95,7 +93,7 @@ type ('m, 'ann) section =
 
 	(* table of contents *)
 	
-type n_met = (qual_prefix, l_pos) met
-type n_dec = (qual_prefix, l_pos) dec
+type n_met = (qual_tag, l_pos) met
+type n_dec = (qual_tag, l_pos) dec
 type n_req = l_pos req
-type n_section = (qual_prefix, l_pos) section
+type n_section = (qual_tag, l_pos) section

@@ -14,46 +14,60 @@
 	.p2align	4, 0x90
 _none_main:
 .seh_proc _none_main
-	subq	$56, %rsp
-	.seh_stackalloc 56
+	subq	$88, %rsp
+	.seh_stackalloc 88
 	.seh_endprologue
-	movl	$0, 36(%rsp)
-	movl	$1, 32(%rsp)
+	movl	$0, 44(%rsp)
+	movl	$1, 40(%rsp)
 .LBB0_1:
 	movb	$1, %al
 	testb	$1, %al
 	jne	.LBB0_2
 	jmp	.LBB0_3
 .LBB0_2:
-	cmpl	$512, 36(%rsp)
+	cmpl	$512, 44(%rsp)
 	jg	.LBB0_4
 	jmp	.LBB0_5
 .LBB0_3:
-	addq	$56, %rsp
+	addq	$88, %rsp
 	retq
 .LBB0_4:
-	movl	$-1, 32(%rsp)
+	movl	$-1, 40(%rsp)
 	jmp	.LBB0_6
 .LBB0_5:
-	cmpl	$0, 36(%rsp)
+	cmpl	$0, 44(%rsp)
 	jle	.LBB0_7
 	jmp	.LBB0_8
 .LBB0_6:
-	movl	36(%rsp), %eax
-	movl	32(%rsp), %ecx
+	movl	44(%rsp), %eax
+	movl	40(%rsp), %ecx
 	addl	%ecx, %eax
-	movl	%eax, 36(%rsp)
-	movl	36(%rsp), %eax
-	movl	%eax, 40(%rsp)
-	movl	$10, 52(%rsp)
-	movl	$10, 48(%rsp)
-	movl	$11, 44(%rsp)
-	leaq	40(%rsp), %rcx
-	callq	_t4_Sys_Sulfur_drawTX
+	movl	%eax, 44(%rsp)
+	movq	.refptr.C_BOX(%rip), %rax
+	movq	%rax, 32(%rsp)
+	movb	(%rax), %al
+	movl	44(%rsp), %ecx
+	movl	%ecx, 72(%rsp)
+	movb	%al, 68(%rsp)
+	movl	$10, 84(%rsp)
+	movl	$10, 80(%rsp)
+	movl	$11, 76(%rsp)
+	leaq	68(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
+	movq	32(%rsp), %rax
+	movb	(%rax), %al
+	movl	44(%rsp), %ecx
+	movl	%ecx, 56(%rsp)
+	movb	%al, 48(%rsp)
+	movl	$10, 64(%rsp)
+	movl	$10, 60(%rsp)
+	movl	$11, 52(%rsp)
+	leaq	48(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
 	callq	_none_Sys_Sulfur_refresh
 	jmp	.LBB0_1
 .LBB0_7:
-	movl	$1, 32(%rsp)
+	movl	$1, 40(%rsp)
 	jmp	.LBB0_9
 .LBB0_8:
 	jmp	.LBB0_9
@@ -61,3 +75,8 @@ _none_main:
 	jmp	.LBB0_6
 	.seh_endproc
 
+	.section	.rdata$.refptr.C_BOX,"dr",discard,.refptr.C_BOX
+	.p2align	3, 0x0
+	.globl	.refptr.C_BOX
+.refptr.C_BOX:
+	.quad	C_BOX

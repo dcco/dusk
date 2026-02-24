@@ -3,6 +3,7 @@ open Parser
 open Parser.Parse_commons
 open Parser.Parse_exp
 open Resolve
+open Resolve.Res_type
 open Resolve.Res_exp
 open Tc
 open Tc.Tc_exp
@@ -25,14 +26,15 @@ let load_token_list (fname: string): (Lex_token.token list) try_log_res =
 		let tkList = lex_iter [] in
 		(close_in fc; validLog tkList);;
 
-let pre_compile_file (typeEnv: Tc_cont.type_env) (main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
+let pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
+	(main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
 		(* PHASE 1. lexing / parsing *)
 	let*! tkList = load_token_list (main_dir ^ "/" ^ f) in
 	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
 		(* PHASE 2. namespace resolution *)
-	let resEnv = Res_cont.freeze_env (Res_cont.builtin_env ()) [] in
+	let resEnv' = Res_cont.freeze_env resEnv [] in
 	(* tryWithErrLog string_of_rs_err (resolve_section resEnv rawAst) *)
-	let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv rawAst) in
+	let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' rawAst) in
 		(* PHASE 3. type-checking *)
 	tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst)
 
@@ -73,14 +75,17 @@ let program _ =
 	else let main_dir = !main_arg in (
 		print_string ("Compiling: " ^ main_dir ^ "\n");
 			(* builtin environments *)
-		let typeEnv = Tc_cont.builtin_tenv () in
+		let resEnv = Res_cont.builtin_env () in
+		let resBuiltins = resolve_builtins resEnv in
+		let typeEnv = Tc_cont.builtin_tenv resBuiltins in
+		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv resBuiltins in
 			(* PHASES 1-3. incremental resolution *)
-		let*! typedAst = pre_compile_file typeEnv main_dir "main.dm" in
+		let*! typedAst = pre_compile_file resEnv typeEnv main_dir "main.dm" in
 			(* PHASE 4. code generation *)
 		let targetArch =
 			if !target_arg <> "" then Some !target_arg
 			else if !win_arg then Some "x86_64-pc-windows-gnu" else None in
-		genProgramHook targetArch (main_dir ^ "/test") false (Tc_cont.sym_list_tenv typeEnv) typedAst;
+		genProgramHook targetArch (main_dir ^ "/test") false tcBuiltins typedAst;
 			(* PHASE 5. linking *)
 		let runDir = if !runtime_arg = "" then binDir ^ "/_runtime" else !runtime_arg in
 			(* -- copy test object file to runtime directory *)
