@@ -11,6 +11,7 @@ module StringMap = Map.Make(String)
 let tag_of_type (tau_o: g_type option): string = match tau_o with
 	None -> "none"
 	| Some (PrimTy x) -> x
+	| Some (BuiltinTy x) -> x
 	| Some (NamedTy(_, x)) -> x
 	| Some (TupleTy tau_l) -> let n = List.length tau_l in
 		if n = 2 then "pair"
@@ -50,6 +51,7 @@ type tc_tval =
 type type_env = {
 	globalFIds: (string, poly_dec) Hashtbl.t;
 	globalTIds: (string, tc_tval) Hashtbl.t;
+	globalIds: (string, g_type) Hashtbl.t;
 	localIds: g_type StringMap.t;
 	boxCount: int ref
 }
@@ -85,10 +87,12 @@ let builtin_tenv (dl: g_virt_bind list): type_env =
 	let env = {
 		globalFIds = Hashtbl.create 50;
 		globalTIds = Hashtbl.create 50;
+		globalIds = Hashtbl.create 50;
 		localIds = StringMap.empty;
 		boxCount = ref 0
 	} in List.iter (fun (_, f, vd) -> match vd with
 		SymVD(s, tau_f) -> add_fun_tenv env f (s, tau_f)
+		| ResVD(_, tau) -> Hashtbl.add env.globalIds f tau
 		| TDefVD (EnumTD cl) ->
 			Hashtbl.add env.globalTIds f (TcTDef (EnumTD cl));
 			List.iter (fun (c, _, _) -> Hashtbl.add env.globalTIds c (TcCtor f)) cl

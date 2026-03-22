@@ -1,7 +1,7 @@
 (executable
  (public_name dusk)
  (name main)
- (libraries parser resolve tc codegen)
+ (libraries parser resolve tc codegen rom)
  (modes native)
  (ocamlopt_flags (:standard -cclib -fuse-ld=lld))
  (link_flags (-cclib -fuse-ld=lld)))

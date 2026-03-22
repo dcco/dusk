@@ -62,9 +62,9 @@ let add_import_env (env: res_env) (path: string list) (handle: string): unit =
 			)
 	) symList
 
-let builtin_env (): res_env = let env = {
+let builtin_env (treeMap: (m_virt_bind list) tree_map): res_env = let env = {
 	curPath = [];
-	globalModules = map_tree extractSymbols (builtinTreeMap ());
+	globalModules = map_tree extractSymbols treeMap;
 	importPrefixes = Hashtbl.create 5;
 	importIds = Hashtbl.create 20;
 	localIds = Hashtbl.create 1

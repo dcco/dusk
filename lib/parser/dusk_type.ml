@@ -19,6 +19,7 @@ type canon_tag = CT
 
 type 'm raw_type =
 	PrimTy of string
+	| BuiltinTy of string
 	| NamedTy of 'm * string
 	| TupleTy of 'm raw_type list
 	| ArrayTy of int * 'm raw_type
@@ -29,6 +30,7 @@ type m_type = qual_tag raw_type
 
 let rec string_of_type (tau: 'm raw_type): string = match tau with
 	| PrimTy x -> x
+	| BuiltinTy x -> x
 	| NamedTy(_, x) -> x
 	| TupleTy tau_l -> "(" ^ String.concat ", " (List.map string_of_type tau_l) ^ ")"
 	| ArrayTy(i, tau) -> (string_of_int i) ^ "d[" ^ (string_of_type tau) ^ "]"
@@ -45,6 +47,7 @@ let hd_opt (l: 'a list): 'a option = match l with
 	(* primitive types *)
 
 let primTy x = PrimTy x
+let builtinTy x = BuiltinTy x
 let namedTy x = NamedTy(QT None, x)
 
 let unitTy = primTy "Unit"

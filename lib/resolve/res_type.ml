@@ -28,6 +28,7 @@ let string_of_rs_err (e: resolve_err) = match e with
 
 let rec resolve_type (env: res_env) (p: l_pos) (tau: m_type): g_type rs_res = match tau with
 	PrimTy x -> Valid (PrimTy x)
+	| BuiltinTy x -> Valid (BuiltinTy x)
 	| NamedTy(prefix, x) -> (match lookup_env env prefix x with
 		[(ox, x')] -> Valid (NamedTy(CT, canonize_binding env ox x'))
 		| [] -> Error (BadLookup_Err(prefix, x, p))
@@ -56,6 +57,8 @@ let resolve_virt_dec (env: res_env) (vd: qual_tag virt_dec): canon_tag virt_dec 
 		SymVD(s, (tau_pl, tau_r)) ->
 			let* tau_pl' = map_try_res (resolve_type env Lexing.dummy_pos) tau_pl in
 			let* tau_r' = resolve_type env Lexing.dummy_pos tau_r in Valid (SymVD(s, (tau_pl', tau_r')))
+		| ResVD(url, tau) ->
+			let* tau' = resolve_type env Lexing.dummy_pos tau in Valid (ResVD(url, tau'))
 		| TDefVD td ->
 			let* td' = resolve_type_def env Lexing.dummy_pos td in
 			Valid (TDefVD td')
@@ -66,7 +69,7 @@ let resolve_virt_dec (env: res_env) (vd: qual_tag virt_dec): canon_tag virt_dec 
 			failwith "BUG: res_type.ml - Error resolving type in virtual declaration."
 	)
 
-let resolve_builtins (env: res_env): g_virt_bind list =
+let resolve_virt_bindings (env: res_env) (bindings: (string list * m_virt_bind) list): g_virt_bind list =
 		(* add all builtin symbols to environment with default import strategy *)
 	let env' = freeze_env env [] in
 	let pl = paths_tree (env.globalModules) in
@@ -78,4 +81,4 @@ let resolve_builtins (env: res_env): g_virt_bind list =
 	List.map (fun (path, (_, x, vd)) ->
 		let x' = (match vd with TDefVD _ -> x | _ -> canonize_scope path x) in
 		(CT, x', resolve_virt_dec env' vd)
-	) (builtinQualList ())
+	) bindings

@@ -219,12 +219,14 @@ let rec genEnum (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enum_
 		genEnum cont env (i + 1) ct
 
 let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): unit =
-	List.iter (fun (_, f, vd) -> match vd with
+	let resList = ref [] in
+	List.iter (fun (_, f, vd) -> print_string ("generating: " ^ f ^ "\n"); match vd with
 		SymVD (ExternalSym vl, (tau_pl, tau_r)) ->
 			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType env tau_p) tau_pl in
 			let fType = function_type (genType env tau_r) (Array.of_list tau_plx) in
 			let v = declare_function f fType (llmod cont) in
 			Hashtbl.add env (DVar f) (DFunVal(v, fType))
+		| SymVD _ -> ()
 		| TDefVD (EnumTD cl) ->
 			let zero_size = size_of_type cont i8Type in
 			let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
@@ -232,8 +234,23 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			) cl) in
 			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C max_size));
 			genEnum cont env 0 cl
-		| _ -> ()
-	) symList
+		| ResVD(url, _) ->
+			let ptr = define_global f (const_null ptrType) (llmod cont) in
+			resList := (url, ptr) :: !resList;
+			Hashtbl.add env (DVar f) (DVal(ptr, ptrType))
+	) symList;
+	let urlLitList = List.mapi (fun i (url, _) ->
+		let strVal = const_stringz context url in
+		let g = define_global ("url_" ^ (string_of_int i)) strVal (llmod cont) in
+		set_global_constant true g;
+		set_linkage Linkage.Private g; g
+	) !resList in
+	let urlArrVal = const_array ptrType (Array.of_list urlLitList) in
+	let g = define_global "res_url_list" urlArrVal (llmod cont) in
+	let ptrArrVal = const_array ptrType (Array.of_list (List.map snd !resList)) in
+	let g_p = define_global "res_ptr_list" ptrArrVal (llmod cont) in
+	let g_n = define_global "res_total" (const_int iType (List.length !resList)) (llmod cont) in
+	set_global_constant true g; set_global_constant true g_p; set_global_constant true g_n
 
 	(*
 		code generation hook

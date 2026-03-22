@@ -66,7 +66,10 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 	ConstExp(c, _) -> Valid (ConstExpC c, tc_const c)
 	| VarExp(_, x, _) -> (match StringMap.find_opt x env.localIds with
 		Some tau -> Valid (VarExpC x, tau)
-		| _ -> failwith "BUG: tc_exp.ml - Failed variable lookup during type-checking phase."
+		| _ -> (match Hashtbl.find_opt env.globalIds x with
+			Some tau -> Valid (VarExpC x, tau)
+			| _ -> failwith "BUG: tc_exp.ml - Failed variable lookup during type-checking phase."
+		)
 	)
 	| OpExp(_, _) -> failwith "BUG: tc_exp.ml - Operator expression in non-application position."
 	| TupleExp(ctor, el, p) ->
@@ -163,7 +166,6 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =
-	dump_tenv env;
 	let rec tcs_rec dl = match dl with
 		[] -> Valid []
 		| d :: dt ->

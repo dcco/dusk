@@ -9,6 +9,7 @@
 #include "buffer.h"
 #include "mesh.h"
 #include "texImage.h"
+#include "res_load_list.h"
 #include "shader.h"
 #include "sf2d.h"
 #include "glyph.h"
@@ -42,11 +43,15 @@ typedef struct sulfur {
 	int width;
 	int height;
 	GLfloat pMat[16];
+		/* render thread buffer */
 	pthread_mutex_t bufferMutex;
 	int8_t dirty;
 	glyphList_t* back_buffer;
 	glyphList_t* swap_buffer;
 	glyphList_t* front_buffer;
+		/* resource loading buffer */
+	pthread_mutex_t loadMutex;
+	resLoadList_t* res_list;
 } sulfur_t;
 
 sulfur_t* initSulfur(int width, int height) {
@@ -60,6 +65,8 @@ sulfur_t* initSulfur(int width, int height) {
 	self->back_buffer = newGList();
 	self->swap_buffer = newGList();
 	self->front_buffer = newGList();
+	pthread_mutex_init(&self->loadMutex, NULL);
+	self->res_list = newResList();
 
 	// misc init
 	glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
@@ -115,19 +122,28 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 	for (int i = 0; i < len; i++) {
 		glyph_t* g = getGList(sulfur->front_buffer, i);
 		if (g->type == C_BOX) {
-			mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, g->a, g->b, g->c, g->d);
+			box_glyph_t* bg = (box_glyph_t*) g;
+			mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, bg->x, bg->y, bg->w, bg->h);
 			drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, &sulfur->sf2d->defTex);
+		} else if (g->type == C_SPRITE) {
+			sprite_glyph_t* sg = (sprite_glyph_t*) g;
+			if (sg->imagePtr == NULL) continue;
+			tex_image_t* imagePtr = (tex_image_t*) sg->imagePtr;
+			mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, 0, 0, imagePtr->width, imagePtr->height);
+			drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, imagePtr);
 		}
 	}
-	/*
-	(GLfloat *oMat, glyph_t* g)
-	shader_t* shader = sulfur->sf2d->shader;
-	if (g->type == S_BOX) {
-		mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, g->x, g->y, g->a1, g->a2);
-		drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, &sulfur->sf2d->defTex);
-	} else if (g->type == S_IMAGE) {
-	} else if (g->type == S_SPRITE) {
-	}*/
+}
+
+void flushResList(sulfur_t* sulfur) {
+	pthread_mutex_lock(&sulfur->loadMutex);
+	resLoadItem_t* nextRes = takeResList(sulfur->res_list);
+	if (nextRes != NULL) {
+		tex_image_t* imageData = (tex_image_t*) malloc(sizeof(tex_image_t));
+		initTexImage(imageData, nextRes->width, nextRes->height, nextRes->data);
+		*nextRes->storePtr = (void*) imageData;
+	}
+	pthread_mutex_unlock(&sulfur->loadMutex);
 }
 
 #endif /* SULFUR_H */

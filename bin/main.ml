@@ -1,4 +1,5 @@
 open Commons.Try_log
+open Commons.Tree_map
 open Parser
 open Parser.Parse_commons
 open Parser.Parse_exp
@@ -9,6 +10,7 @@ open Tc
 open Tc.Tc_exp
 open Codegen.Fin_ast
 open Codegen.Gen_exp
+open Rom.Rom_load
 
 	(*
 		preproc phase (incremental steps):
@@ -74,11 +76,17 @@ let program _ =
 	if !main_arg = "" then failLog "No file / directory name given."
 	else let main_dir = !main_arg in (
 		print_string ("Compiling: " ^ main_dir ^ "\n");
-			(* builtin environments *)
-		let resEnv = Res_cont.builtin_env () in
-		let resBuiltins = resolve_builtins resEnv in
-		let typeEnv = Tc_cont.builtin_tenv resBuiltins in
-		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv resBuiltins in
+			(* build virtual bindings from builtin + rom *)
+		let romBindings = read_rom_layout (main_dir ^ "/rom") in
+		let virtTree = add_tree (Builtin.builtinTreeMap ()) ["Sys"; "Rom"] romBindings in
+		let virtBindings = List.concat (List.map (fun (path, vdl) ->
+			List.map (fun vd -> (path, vd)) vdl
+		) (flatten_tree virtTree)) in
+			(* build environments from virtual bindings *)
+		let resEnv = Res_cont.builtin_env virtTree in
+		let canonBindings = resolve_virt_bindings resEnv virtBindings in
+		let typeEnv = Tc_cont.builtin_tenv canonBindings in
+		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv canonBindings in
 			(* PHASES 1-3. incremental resolution *)
 		let*! typedAst = pre_compile_file resEnv typeEnv main_dir "main.dm" in
 			(* PHASE 4. code generation *)

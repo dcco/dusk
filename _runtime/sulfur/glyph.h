@@ -15,11 +15,31 @@ const int8_t C_SPRITE = G_SPRITE;
 
 typedef struct glyph {
 	GLYPH_TYPE type;
+	int32_t raw[23];
+} glyph_t;
+
+typedef struct box_glyph {
+	GLYPH_TYPE type;
+	int32_t x;
+	int32_t y;
+	int32_t w;
+	int32_t h;
+} box_glyph_t;
+
+typedef struct sprite_glyph {
+	GLYPH_TYPE type;
+	void* imagePtr;
+	int32_t frame;
+} sprite_glyph_t;
+
+/*
+typedef struct glyph {
+	GLYPH_TYPE type;
 	int32_t a;
 	int32_t b;
 	int32_t c;
 	int32_t d;
-} glyph_t;
+} glyph_t;*/
 
 	/*
 		glyph lists

@@ -17,6 +17,8 @@ type sym =
 type 'm virt_dec =
 	SymVD of sym * 'm fun_type
 	| TDefVD of 'm raw_tdef
+		(* url *)
+	| ResVD of string * 'm raw_type
 
 type 'm virt_bind = 'm * string * 'm virt_dec
 
@@ -67,14 +69,16 @@ let osList = [
 
 let sulfurList = [
 	("refresh", ExternalSym [], [], unitTy);
-	("draw", ExternalSym [0], [namedTy "Glyph"], unitTy);
-	("drawTX", ExternalSym [0], [TupleTy [intTy; intTy; intTy; intTy]], unitTy)
+	("draw", ExternalSym [0], [namedTy "Glyph"], unitTy)
 ]
+
+let imageTy = builtinTy "Image"
 
 let sulfurTypes = [
 	(QT None, "Glyph", TDefVD (EnumTD [
 		("Nop", [], Some "C_NOP");
-		("Box", [intTy; intTy; intTy; intTy], Some "C_BOX")
+		("Box", [intTy; intTy; intTy; intTy], Some "C_BOX");
+		("Sprite", [imageTy; intTy], Some "C_SPRITE")
 	]))
 ]
 
@@ -87,10 +91,12 @@ let builtinTreeMap (): (m_virt_bind list) tree_map =
 	let m2 = add_tree m1 ["Sys"; "Os"] (toVirtList osList) in
 	add_tree m2 ["Sys"; "Sulfur"] (sulfurTypes @ (toVirtList sulfurList))
 
+(*
 let builtinQualList (): (string list * m_virt_bind) list =
 	List.concat (List.map (fun (path, vdl) ->
 		List.map (fun vd -> (path, vd)) vdl
 	) (flatten_tree (builtinTreeMap ())))
+*)
 
 type prim_flag = PF | NPF
 

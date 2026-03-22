@@ -30,6 +30,7 @@ let rec genType (env: dusk_env) (tau: g_type): lltype = match tau with
 	| PrimTy "String" -> ptrType
 	| PrimTy "1d" -> ptrType
 	| PrimTy "nd" -> ptrType
+	| BuiltinTy _ -> ptrType
 	| TupleTy tau_l -> struct_type context (Array.of_list (List.map (genType env) tau_l))
 	| NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
 		Some (DTDef td) -> (match td with
