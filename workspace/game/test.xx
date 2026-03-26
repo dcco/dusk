@@ -45,10 +45,12 @@ _none_main:
 	movl	%eax, 44(%rsp)
 	movq	.refptr.C_SPRITE(%rip), %rax
 	movb	(%rax), %al
-	movq	_Sys_Rom_x1(%rip), %rcx
-	movq	%rcx, 56(%rsp)
+	movq	_Sys_Rom_tset(%rip), %rcx
+	movq	%rcx, 64(%rsp)
 	movb	%al, 48(%rsp)
-	movl	$66, 64(%rsp)
+	movl	$1, 72(%rsp)
+	movl	$0, 56(%rsp)
+	movl	$0, 52(%rsp)
 	leaq	48(%rsp), %rcx
 	callq	_Glyph_Sys_Sulfur_draw
 	callq	_none_Sys_Sulfur_refresh
@@ -68,6 +70,11 @@ _none_main:
 _Sys_Rom_x1:
 	.quad	0
 
+	.globl	_Sys_Rom_tset
+	.p2align	3, 0x0
+_Sys_Rom_tset:
+	.quad	0
+
 	.section	.rdata,"dr"
 .Lurl_0:
 	.asciz	"intro/x1.png"
@@ -85,6 +92,36 @@ res_ptr_list:
 	.globl	res_total
 	.p2align	2, 0x0
 res_total:
+	.long	1
+
+	.globl	cr_iargs0
+	.p2align	2, 0x0
+cr_iargs0:
+	.long	0
+	.long	0
+	.long	10
+
+	.data
+	.globl	cr_arg0
+	.p2align	3, 0x0
+cr_arg0:
+	.quad	cr_iargs0
+	.quad	_Sys_Rom_x1
+
+	.section	.rdata,"dr"
+	.globl	comp_res_arg_list
+	.p2align	3, 0x0
+comp_res_arg_list:
+	.quad	cr_arg0
+
+	.globl	comp_res_ptr_list
+	.p2align	3, 0x0
+comp_res_ptr_list:
+	.quad	_Sys_Rom_tset
+
+	.globl	comp_res_total
+	.p2align	2, 0x0
+comp_res_total:
 	.long	1
 
 	.section	.rdata$.refptr.C_SPRITE,"dr",discard,.refptr.C_SPRITE

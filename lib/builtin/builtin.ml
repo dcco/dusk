@@ -3,10 +3,17 @@ open Parser.Dusk_type
 
 	(*
 		virtual declarations: special declarations to "compile" builtin functions / types
+		* symbols: < builtin functions, and what they should compile to >
 		-- binary expression ASM
 		-- external bindings
-		>>> list of integers indicating "virtual" arguments, which arguments must be wrapped in ptrs 
-
+			< integer list describing "virtual" arguments - which arguments must be wrapped in ptrs > 
+		-- user-defined: < not a builtin function >
+		* type definition: < builtin types w/ a concrete definition (mostly ADTs) >
+		* resource: < builtin resources defined from ROM/layout >
+		-- simple resource
+			< file extension, handle (for composites), URL >
+		-- composite resource
+			< composite type, string arguments, integer arguments >
 	*)
 
 type sym =
@@ -14,11 +21,15 @@ type sym =
 	| ExternalSym of int list
 	| UserDefSym
 
+type resource_def =
+	SimpRes of string * string * string
+	| CompRes of string * string list * int list
+
 type 'm virt_dec =
 	SymVD of sym * 'm fun_type
 	| TDefVD of 'm raw_tdef
 		(* url *)
-	| ResVD of string * 'm raw_type
+	| ResVD of resource_def * 'm raw_type
 
 type 'm virt_bind = 'm * string * 'm virt_dec
 
@@ -73,6 +84,7 @@ let sulfurList = [
 ]
 
 let imageTy = builtinTy "Image"
+let spriteTy = builtinTy "Sprite"
 
 let sulfurTypes = [
 	(QT None, "Glyph", TDefVD (EnumTD [

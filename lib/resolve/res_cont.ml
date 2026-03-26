@@ -4,6 +4,8 @@ open Parser.Lex_token
 open Parser.Dusk_type
 open Parser.Dusk_ast
 
+module StringMap = Map.Make(String)
+
 	(*
 		output of resolution phase
 	*)
@@ -33,7 +35,7 @@ type res_env = {
 	globalModules: ((prim_flag * string) list) tree_map;
 	importPrefixes: (string, string list) Hashtbl.t;
 	importIds: (string, (bind_origin * string) list) Hashtbl.t;
-	localIds: (string, unit) Hashtbl.t;
+	localIds: unit StringMap.t;
 }
 
 	(* - standard resolution functions *)
@@ -42,7 +44,7 @@ let lookup_env (env: res_env) (p: qual_tag) (x: string): (bind_origin * string) 
 	QT (Some prefix) -> (match Hashtbl.find_opt env.importIds x with
 		None -> []
 		| Some xl -> List.filter (fun (ox, _) -> ox = ImportOr prefix) xl)
-	| QT None -> if Hashtbl.mem env.localIds x then [(PrimOr, x)] else (match Hashtbl.find_opt env.importIds x with
+	| QT None -> if StringMap.mem x env.localIds then [(PrimOr, x)] else (match Hashtbl.find_opt env.importIds x with
 		None -> []
 		| Some xl -> xl)
 
@@ -67,7 +69,7 @@ let builtin_env (treeMap: (m_virt_bind list) tree_map): res_env = let env = {
 	globalModules = map_tree extractSymbols treeMap;
 	importPrefixes = Hashtbl.create 5;
 	importIds = Hashtbl.create 20;
-	localIds = Hashtbl.create 1
+	localIds = StringMap.empty
 } in add_import_env env ["builtin"] ""; env
 
 let freeze_env (env: res_env) (path: string list): res_env = let env = {
@@ -75,7 +77,7 @@ let freeze_env (env: res_env) (path: string list): res_env = let env = {
 	globalModules = env.globalModules;
 	importPrefixes = Hashtbl.create 5;
 	importIds = Hashtbl.create 20;
-	localIds = Hashtbl.create 20
+	localIds = StringMap.empty
 } in add_import_env env ["builtin"] ""; env
 
 	(* - TEST fun: used to dump *)

@@ -219,8 +219,10 @@ let rec genEnum (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enum_
 		genEnum cont env (i + 1) ct
 
 let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): unit =
-	let resList = ref [] in
-	List.iter (fun (_, f, vd) -> print_string ("generating: " ^ f ^ "\n"); match vd with
+	let simpResList = ref [] in
+	let simpPtrMap = Hashtbl.create 50 in
+	let compResList = ref [] in
+	List.iter (fun (_, f, vd) -> match vd with
 		SymVD (ExternalSym vl, (tau_pl, tau_r)) ->
 			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType env tau_p) tau_pl in
 			let fType = function_type (genType env tau_r) (Array.of_list tau_plx) in
@@ -234,23 +236,49 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			) cl) in
 			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C max_size));
 			genEnum cont env 0 cl
-		| ResVD(url, _) ->
+		| ResVD(r, _) ->
 			let ptr = define_global f (const_null ptrType) (llmod cont) in
-			resList := (url, ptr) :: !resList;
-			Hashtbl.add env (DVar f) (DVal(ptr, ptrType))
+			Hashtbl.add env (DVar f) (DVal(ptr, ptrType)); (match r with
+				SimpRes(ext, x, url) ->
+					simpResList := (ext, url, ptr) :: !simpResList;
+					Hashtbl.add simpPtrMap x ptr
+				| CompRes(ext, xargs, args) ->
+					compResList := (ext, xargs, args, ptr) :: !compResList
+			)
 	) symList;
-	let urlLitList = List.mapi (fun i (url, _) ->
+		(* build URL + ptr list for simple resources *)
+	let urlLitList = List.mapi (fun i (_, url, _) -> 
 		let strVal = const_stringz context url in
 		let g = define_global ("url_" ^ (string_of_int i)) strVal (llmod cont) in
 		set_global_constant true g;
 		set_linkage Linkage.Private g; g
-	) !resList in
+	) !simpResList in
 	let urlArrVal = const_array ptrType (Array.of_list urlLitList) in
 	let g = define_global "res_url_list" urlArrVal (llmod cont) in
-	let ptrArrVal = const_array ptrType (Array.of_list (List.map snd !resList)) in
+		(* - storage ptrs + total *)
+	let ptrArrVal = const_array ptrType (Array.of_list (List.map (fun (_, _, ptr) -> ptr) !simpResList)) in
 	let g_p = define_global "res_ptr_list" ptrArrVal (llmod cont) in
-	let g_n = define_global "res_total" (const_int iType (List.length !resList)) (llmod cont) in
-	set_global_constant true g; set_global_constant true g_p; set_global_constant true g_n
+	let g_n = define_global "res_total" (const_int iType (List.length !simpResList)) (llmod cont) in
+	set_global_constant true g; set_global_constant true g_p; set_global_constant true g_n;
+		(* build argument + ptr list for composite resources *)
+	let argsList = List.mapi (fun i (_, xargs, args, _) ->
+		let xargList = List.map (fun x -> match Hashtbl.find_opt simpPtrMap x with
+			Some ptr -> ptr
+			| None -> failwith ("TO_ERR: gen_exp.ml - Composite resource using unknown source resource `" ^ x ^ "`")
+		) xargs in
+		let argList = List.map (fun i -> const_int iType i) args in
+		let argWrapPtr = const_array iType (Array.of_list argList) in
+		let g_ip = define_global ("cr_iargs" ^ (string_of_int i)) argWrapPtr (llmod cont) in
+		set_global_constant true g_ip;
+		define_global ("cr_arg" ^ (string_of_int i)) (const_array ptrType (Array.of_list (g_ip :: xargList))) (llmod cont)
+	) !compResList in
+	let argsVal = const_array ptrType (Array.of_list argsList) in
+	let gc = define_global "comp_res_arg_list" argsVal (llmod cont) in
+		(* - storage ptrs + total *)
+	let ptrArrVal = const_array ptrType (Array.of_list (List.map (fun (_, _, _, ptr) -> ptr) !compResList)) in
+	let gc_p = define_global "comp_res_ptr_list" ptrArrVal (llmod cont) in
+	let gc_n = define_global "comp_res_total" (const_int iType (List.length !compResList)) (llmod cont) in
+	set_global_constant true gc; set_global_constant true gc_p; set_global_constant true gc_n
 
 	(*
 		code generation hook

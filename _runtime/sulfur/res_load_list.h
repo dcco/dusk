@@ -1,12 +1,20 @@
 #ifndef RES_STACK_H
 #define RES_STACK_H
 
+	/* resource loading info */
+
+typedef enum : int8_t { R_IMAGE, R_SPRITE } R_LOAD_TYPE;
+
 typedef struct resLoadItem {
+	R_LOAD_TYPE type;
 	void** storePtr;
-	int width;
-	int height;
-	char* data;
+	int a;
+	int b;
+	int* iArgs;
+	void* xArgs;
 } resLoadItem_t;
+
+	/* resource load queue */
 
 typedef struct resLoadList {
 	int32_t capacity;

@@ -12,6 +12,10 @@ extern void* res_url_list[];
 extern void* res_ptr_list[];
 extern int res_total;
 
+extern void* comp_res_arg_list[];
+extern void* comp_res_ptr_list[];
+extern int comp_res_total;
+
 void* load_res(void* arg) {
 	// unpack sulfur
 	sulfur_t* sulfur = (sulfur_t*) arg;
@@ -21,7 +25,7 @@ void* load_res(void* arg) {
 	char *full_url = malloc(full_len + 1);
 	// image data storage
 	resLoadItem_t iData;
-	int n;
+	int n, w, h;
 	// iterate through each URL
 	for (int i = 0; i < res_total; i++) {
 		// increase memory size if required
@@ -34,14 +38,28 @@ void* load_res(void* arg) {
 		strcpy(full_url, ROM_DIR);
 		strcat(full_url, res_url_list[i]);
 		// load image data
+		iData.type = R_IMAGE;
 		iData.storePtr = res_ptr_list[i];
-		char* img = stbi_load(full_url, &iData.width, &iData.height, &n, 0);
+		char* img = stbi_load(full_url, &iData.a, &iData.b, &n, 0);
 		if (img == NULL) {
 			// TODO: throw exception
 			printf("Failed to load: %s\n", full_url);
 			return NULL;
 		}
-		iData.data = img;
+		iData.xArgs = img;
+		// check image size
+		if (i == 0) {
+			w = iData.a;
+			h = iData.b;
+			// initialize sulfur's texture array
+			pthread_mutex_lock(&sulfur->bufferMutex);
+			sulfur->texArr = initTexArray(res_total, w, h);
+			pthread_mutex_unlock(&sulfur->bufferMutex);
+		} else {
+			if (iData.a != w || iData.b != h) {
+				exit_log("Inconsistent texture sizes for texture atlas.", "");
+			}
+		}
 		// pass image data to sulfur's resource loader
 		pthread_mutex_lock(&sulfur->loadMutex);
 		addResList(sulfur->res_list, &iData);
@@ -58,6 +76,20 @@ void* load_res(void* arg) {
 		// int* p = *((int**) res_ptr_list[i]);
 	}
 	free(full_url);
+	// iterate through each composite resource
+	for (int i = 0; i < comp_res_total; i++) {
+		// read arguments
+		void** comp_res_args = comp_res_arg_list[i];
+		// sprite case (only case atm)
+		iData.type = R_SPRITE;
+		iData.storePtr = comp_res_ptr_list[i];
+		iData.iArgs = (int*) comp_res_args[0];
+		iData.xArgs = (void**) comp_res_args[1];
+		// pass sprite data to sulfur's resource loader
+		pthread_mutex_lock(&sulfur->loadMutex);
+		addResList(sulfur->res_list, &iData);
+		pthread_mutex_unlock(&sulfur->loadMutex);
+	}
 	return NULL;
 }
 

@@ -1,3 +1,5 @@
+#ifndef GLYPH_H
+#define GLYPH_H
 
 	/* glyph datatype */
 
@@ -28,7 +30,9 @@ typedef struct box_glyph {
 
 typedef struct sprite_glyph {
 	GLYPH_TYPE type;
-	void* imagePtr;
+	int32_t x;
+	int32_t y;
+	sprite_t* spritePtr;
 	int32_t frame;
 } sprite_glyph_t;
 
@@ -80,3 +84,5 @@ int32_t lenGList(glyphList_t* list) {
 glyph_t* getGList(glyphList_t* list, int i) {
 	return &list->data[i];
 }
+
+#endif

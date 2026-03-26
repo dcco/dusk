@@ -2,6 +2,24 @@
 #define TEX_IMAGE_H
 
 typedef struct tex_image {
+	int index;
+} tex_image_t;
+
+void initTexImage(tex_array_t* texArray, tex_image_t* image, int index, const char* data) {
+	// upload texture data to array
+	glBindTexture(GL_TEXTURE_2D_ARRAY, texArray->id);
+	glTexSubImage3D(
+		GL_TEXTURE_2D_ARRAY, 0,
+		0, 0, index,
+		texArray->width, texArray->height, 1,
+		GL_RGBA, GL_UNSIGNED_BYTE, data
+	);
+
+	// store object data
+	image->index = index;
+}
+
+/*typedef struct tex_image {
 	GLuint texId;
 	int width;
 	int height;
@@ -35,6 +53,6 @@ void initTexImage(tex_image_t* image, int w, int h, const char* data) {
 const char DEF_TEX_DATA[] = {
 	255, 255, 255, 255, 255, 255, 255, 255, 
 	255, 255, 255, 255, 255, 255, 255, 255
-};
+};*/
 
 #endif /* TEX_IMAGE_H */

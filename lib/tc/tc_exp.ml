@@ -137,7 +137,28 @@ let rec tc_stmt (f: string) (env: type_env) (s: r_stmt): (type_env * gen_stmt li
 	| WhileStmt(ec, b, _) ->
 		let* (ec', _) = tc_exp env ec in 
 		let* (_, b', _) = tc_body f env b in Valid (env, [WhileStmtC(ec', b')], false)
-	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - type-checking statement case."
+	| ForStmt(x, rt, e, b, _) ->
+		let* (e', _) = tc_exp env e in
+		let* (tau_x, cmp, _) = (match rt with
+			LtRange -> Valid (intTy, "ilt", false)
+			| LeqRange -> Valid (intTy, "ileq", false)
+			| ListRange -> failwith "UNIMPLEMENTED: tc_exp.ml - List case for for loop."
+			(*| ListRange -> (match tau_e with
+				ArrayTy(_, tau_a) -> Valid (tau_a, "ilt", true)
+				| _ -> Error (NonArrayType_Err(simplify_type tau_e, p))
+			)*)
+		) in let env' = { env with localIds = StringMap.add x tau_x env.localIds } in
+			(* for loop header:  _iterator, conditional depending on list case *)
+		let (i', end') = (x, e') (*if list_flag then ("__i", LengthExpC e') else (x, e') *) in
+		let x' = VarExpC i' in
+		let cond' = BinExpC(cmp, x', end') in
+			(* for loop body: body; _iterator = _iterator + 1 *)
+		let* (_, b', _) = tc_body f env' b in
+		let b'' = b' @ [AssignStmtC(i', BinExpC("iadd", x', ConstExpC (IConst 1)))] in
+			(* for loop body: prefix with x = e[_iterator] for list case *)
+		(*let bf' = if list_flag then AssignStmtC(i', ArrayIndexExpC(e', [x'], tau_x)) :: b'' else b'' in*)
+		Valid (env, [VarStmtC(i', ConstExpC (IConst 0)); WhileStmtC(cond', b'')], false)
+	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - statement case."
 and tc_body (f: string) (env: type_env) (b: r_stmt list): (type_env * gen_stmt list * bool) tc_res = match b with
 	[] -> Valid (env, [], false)
 	| s :: st ->

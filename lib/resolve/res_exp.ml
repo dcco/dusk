@@ -35,32 +35,38 @@ and resolve_exp_list (env: res_env) (el: n_exp list): (r_exp list) rs_res = matc
 
 	(* statement resolution *)
 
-let rec resolve_stmt (env: res_env) (s: n_stmt): r_stmt rs_res = match s with
-	EvalStmt(e, p) -> let* e' = resolve_exp env e in Valid (EvalStmt(e', p))
-	| AssignStmt(x, e, p) -> let* e' = resolve_exp env e in Valid (AssignStmt(x, e', p))
+let rec resolve_stmt (env: res_env) (s: n_stmt): (res_env * r_stmt) rs_res = match s with
+	EvalStmt(e, p) -> let* e' = resolve_exp env e in Valid (env, EvalStmt(e', p))
+	| AssignStmt(x, e, p) -> let* e' = resolve_exp env e in Valid (env, AssignStmt(x, e', p))
 	| ReturnStmt(e, p) -> (match e with
-		None -> Valid (ReturnStmt(None, p))
+		None -> Valid (env, ReturnStmt(None, p))
 		| Some e ->
-			let* e' = resolve_exp env e in Valid (ReturnStmt(Some e', p))
+			let* e' = resolve_exp env e in Valid (env, ReturnStmt(Some e', p))
 	)
 	| PatStmt(px, e, p) ->
-		let* e' = resolve_exp env e in (match px with
-			VarPat x -> Hashtbl.add env.localIds x ()
-			| ListPat xol -> List.iter (fun xo -> Option.iter (fun x -> Hashtbl.add env.localIds x ()) xo) xol
-		); Valid (PatStmt(px, e', p))
+		let* e' = resolve_exp env e in
+		let env' = (match px with
+			VarPat x -> { env with localIds = StringMap.add x () env.localIds }
+			| ListPat xol -> List.fold_left (fun env' xo -> match xo with
+				None -> env' | Some x -> { env' with localIds = StringMap.add x () env'.localIds }
+			) env xol
+		) in Valid (env', PatStmt(px, e', p))
 	| IfStmt(e, b1, b2, p) ->
 		let* e' = resolve_exp env e in
-		let* b1' = resolve_body env b1 in
-		let* b2' = resolve_body env b2 in Valid (IfStmt(e', b1', b2', p))
+		let* (_, b1') = resolve_body env b1 in
+		let* (_, b2') = resolve_body env b2 in Valid (env, IfStmt(e', b1', b2', p))
 	| WhileStmt(e, b, p) ->
 		let* e' = resolve_exp env e in
-		let* b' = resolve_body env b in Valid (WhileStmt(e', b', p))
-	| _ -> failwith "UNIMPLEMENTED: res_exp.ml - resolve stmt case."
-and resolve_body (env: res_env) (b: n_stmt list): (r_stmt list) rs_res = match b with
-	[] -> Valid []
+		let* (_, b') = resolve_body env b in Valid (env, WhileStmt(e', b', p))
+	| ForStmt(x, rt, e, b, p) ->
+		let* e' = resolve_exp env e in
+		let env' = { env with localIds = StringMap.add x () env.localIds } in
+		let* (_, b') = resolve_body env' b in Valid (env, ForStmt(x, rt, e', b', p))
+and resolve_body (env: res_env) (b: n_stmt list): (res_env * r_stmt list) rs_res = match b with
+	[] -> Valid (env, [])
 	| s :: st ->
-		let* s' = resolve_stmt env s in
-		let* st' = resolve_body env st in Valid (s' :: st')
+		let* (env2, s') = resolve_stmt env s in
+		let* (env3, st') = resolve_body env2 st in Valid (env3, s' :: st')
 
 	(* declaration resolution *)
 
@@ -71,7 +77,7 @@ let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 			let* tau_p' = resolve_type env p tau_p in Valid (x, tau_p')
 		) param_l in
 		let* tau_r' = resolve_type env p tau_r in
-		let* b' = resolve_body env b in Valid (FunDec(Method(fName, param_l', tau_r', b'), p))
+		let* (_, b') = resolve_body env b in Valid (FunDec(Method(fName, param_l', tau_r', b'), p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
 	[] -> Valid []

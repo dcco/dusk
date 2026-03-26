@@ -6,6 +6,7 @@ exit_log
 buffer
 texImage
 mesh
+sprite
 
 - shader objects
 shader
