@@ -8,6 +8,7 @@ typedef enum { R_IMAGE, R_SPRITE } R_LOAD_TYPE;
 typedef struct resLoadItem {
 	R_LOAD_TYPE type;
 	void** storePtr;
+	int storeId;
 	int a;
 	int b;
 	int* iArgs;
@@ -16,7 +17,15 @@ typedef struct resLoadItem {
 
 	/* resource load queue */
 
+typedef struct resListMeta {
+	int8_t init;
+	int32_t total;
+	int32_t width;
+	int32_t height;
+} resListMeta_t;
+
 typedef struct resLoadList {
+	resListMeta_t meta;
 	int32_t capacity;
 	int32_t length;
 	int32_t head;
@@ -25,6 +34,7 @@ typedef struct resLoadList {
 
 resLoadList_t* newResList() {
 	resLoadList_t* rl = (resLoadList_t*) malloc(sizeof(resLoadList_t));
+	rl->meta.init = 0;
 	rl->capacity = 30;
 	rl->length = 0;
 	rl->head = 0;

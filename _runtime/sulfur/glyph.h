@@ -47,7 +47,6 @@ typedef struct glyph {
 
 	/*
 		glyph lists
-	*/
 
 typedef struct glyphList {
 	int32_t capacity;
@@ -83,6 +82,6 @@ int32_t lenGList(glyphList_t* list) {
 
 glyph_t* getGList(glyphList_t* list, int i) {
 	return &list->data[i];
-}
+}	*/
 
 #endif

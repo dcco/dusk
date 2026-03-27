@@ -3,6 +3,8 @@
 
 typedef struct tex_image {
 	int index;
+	int width;
+	int height;
 } tex_image_t;
 
 void initTexImage(tex_array_t* texArray, tex_image_t* image, int index, const char* data) {
@@ -17,6 +19,8 @@ void initTexImage(tex_array_t* texArray, tex_image_t* image, int index, const ch
 
 	// store object data
 	image->index = index;
+	image->width = texArray->width;
+	image->height = texArray->height;
 }
 
 /*typedef struct tex_image {

@@ -13,8 +13,10 @@
 #include "sprite.h"
 #include "res_load_list.h"
 #include "shader.h"
+#include "shader2d.h"
 #include "sf2d.h"
 #include "glyph.h"
+#include "renderList.h"
 
 void orthoMat(GLfloat* m, float l, float r, float b, float t, float n, float f) {
 	float lr = 1.0f / (l - r);
@@ -50,9 +52,9 @@ typedef struct sulfur {
 		/* render thread buffer */
 	pthread_mutex_t bufferMutex;
 	int8_t dirty;
-	glyphList_t* back_buffer;
-	glyphList_t* swap_buffer;
-	glyphList_t* front_buffer;
+	renderList_t* back_buffer;
+	renderList_t* swap_buffer;
+	renderList_t* front_buffer;
 		/* resource loading buffer */
 	pthread_mutex_t loadMutex;
 	resLoadList_t* res_list;
@@ -67,9 +69,9 @@ sulfur_t* initSulfur(int width, int height) {
 	orthoMat(self->pMat, 0.0f, (float) width, (float) height, 0.0f, -1.0f, 1.0f);
 	self->texArr = NULL;
 	pthread_mutex_init(&self->bufferMutex, NULL);
-	self->back_buffer = newGList();
-	self->swap_buffer = newGList();
-	self->front_buffer = newGList();
+	self->back_buffer = newRList(sizeof(draw_dat2d_t));
+	self->swap_buffer = newRList(sizeof(draw_dat2d_t));
+	self->front_buffer = newRList(sizeof(draw_dat2d_t));
 	pthread_mutex_init(&self->loadMutex, NULL);
 	self->res_list = newResList();
 
@@ -99,23 +101,49 @@ void _clear(sulfur_t* sulfur) {
 
 void swapBackBuffer(sulfur_t* sulfur) {
 	pthread_mutex_lock(&sulfur->bufferMutex);
-	glyphList_t* temp = sulfur->back_buffer;
+	renderList_t* temp = sulfur->back_buffer;
 	sulfur->back_buffer = sulfur->swap_buffer;
 	sulfur->swap_buffer = temp;
-	clearGList(sulfur->back_buffer);
+	clearRList(sulfur->back_buffer);
 	sulfur->dirty = 1;
 	pthread_mutex_unlock(&sulfur->bufferMutex);
+}
+
+void addGlyph(sulfur_t* sulfur, glyph_t* g) {
+	renderList_t* rl = sulfur->back_buffer;
+	if (g->type == C_SPRITE) {
+		// obtain sprite + image data
+		sprite_glyph_t* sg = (sprite_glyph_t*) g;
+		if (sg->spritePtr == NULL) return;
+		sprite_t* spritePtr = (sprite_t*) sg->spritePtr;
+		if (spritePtr->image == NULL) return;
+		tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
+		// write into render list
+		draw_dat2d_t* dat = (draw_dat2d_t*) nextRList(rl);
+		dat->aPos[0] = (float) sg->x;
+		dat->aPos[1] = (float) sg->y;
+		dat->aSize[0] = (float) imagePtr->width;
+		dat->aSize[1] = (float) imagePtr->height;
+		dat->aTexId = imagePtr->index;
+		dat->aTexUVPos[0] = 0.0;
+		dat->aTexUVPos[1] = 0.0;
+		dat->aTexUVSize[0] = 1.0;
+		dat->aTexUVSize[1] = 1.0;
+		//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, 0, 0, imagePtr->width, imagePtr->height);
+		//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, imagePtr);
+		//drawDataShader(shader, mesh, sulfur->texArr, total, data) {
+	}
 }
 
 void render(GLfloat *oMat, sulfur_t* sulfur) {
 	int8_t dirty = 0;
 	pthread_mutex_lock(&sulfur->bufferMutex);
 	if (sulfur->dirty) {
-		glyphList_t* temp = sulfur->front_buffer;
+		renderList_t* temp = sulfur->front_buffer;
 		sulfur->front_buffer = sulfur->swap_buffer;
 		sulfur->swap_buffer = temp;
 		sulfur->dirty = 0;
-		dirty = 1;
+		if (sulfur->texArr != NULL) dirty = 1;
 	}
 	pthread_mutex_unlock(&sulfur->bufferMutex);
 	if (!dirty) return;
@@ -123,8 +151,9 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 	_clear(sulfur);
 	shader_t* shader = sulfur->sf2d->shader;
 
-	int32_t len = lenGList(sulfur->front_buffer);
-	for (int i = 0; i < len; i++) {
+	int32_t len = lenRList(sulfur->front_buffer);
+	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->texArr, len, sulfur->front_buffer->data);
+	/*for (int i = 0; i < len; i++) {
 		glyph_t* g = getGList(sulfur->front_buffer, i);
 		if (g->type == C_BOX) {
 			box_glyph_t* bg = (box_glyph_t*) g;
@@ -138,23 +167,30 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 			tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
 			//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, 0, 0, imagePtr->width, imagePtr->height);
 			//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, imagePtr);
+			//drawDataShader(shader, mesh, sulfur->texArr, total, data) {
 		}
-	}
+	}*/
 }
 
 void flushResList(sulfur_t* sulfur) {
+	// initialize sulfur's texture array if applicable
+	if (sulfur->texArr == NULL && sulfur->res_list->meta.init) {
+		resListMeta_t* meta = &sulfur->res_list->meta;
+		sulfur->texArr = initTexArray(meta->total, meta->width, meta->height);
+	}
+	// load remaining resources
 	pthread_mutex_lock(&sulfur->loadMutex);
 	resLoadItem_t* nextRes = takeResList(sulfur->res_list);
 	if (nextRes != NULL) {
 		if (nextRes->type == R_IMAGE) {
 			tex_image_t* imageData = (tex_image_t*) malloc(sizeof(tex_image_t));
+			initTexImage(sulfur->texArr, imageData, nextRes->storeId, (char*) nextRes->xArgs);
 			//initTexImage(imageData, nextRes->a, nextRes->b, (char*) nextRes->xArgs);
 			*nextRes->storePtr = (void*) imageData;
 		} else if (nextRes->type == R_SPRITE) {
 			int* i_args = nextRes->iArgs;
 			tex_image_t* imgPtr = *((tex_image_t**) nextRes->xArgs);
-			sprite_t* sprite = NULL;
-			//sprite_t* sprite = initSprite(imgPtr, i_args[0], i_args[1], i_args[2], 1, 1);
+			sprite_t* sprite = initSprite(imgPtr, i_args[0], i_args[1], i_args[2], 1, 1);
 			*nextRes->storePtr = (void*) sprite;
 		}
 	}

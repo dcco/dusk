@@ -8,8 +8,8 @@ sulfur_t* sulfur = NULL;
 
 extern void _Glyph_Sys_Sulfur_draw(int8_t raw[20])
 {
-	glyph_t* g = (glyph_t*) raw;
-	addGList(sulfur->back_buffer, g);
+	addGlyph(sulfur, (glyph_t*) raw);
+	//addRList(sulfur->back_buffer, g);
 }
 /*
 extern void _Int_Sys_Sulfur_drawBox(int x, int y, int w, int h)

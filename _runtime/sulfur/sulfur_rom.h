@@ -40,6 +40,7 @@ void* load_res(void* arg) {
 		// load image data
 		iData.type = R_IMAGE;
 		iData.storePtr = res_ptr_list[i];
+		iData.storeId = i;
 		char* img = stbi_load(full_url, &iData.a, &iData.b, &n, 0);
 		if (img == NULL) {
 			// TODO: throw exception
@@ -51,10 +52,14 @@ void* load_res(void* arg) {
 		if (i == 0) {
 			w = iData.a;
 			h = iData.b;
-			// initialize sulfur's texture array
-			pthread_mutex_lock(&sulfur->bufferMutex);
-			sulfur->texArr = initTexArray(res_total, w, h);
-			pthread_mutex_unlock(&sulfur->bufferMutex);
+			// pass meta-information along
+			pthread_mutex_lock(&sulfur->loadMutex);
+			resListMeta_t* meta = &sulfur->res_list->meta;
+			meta->init = 1;
+			meta->total = res_total;
+			meta->width = w;
+			meta->height = h;
+			pthread_mutex_unlock(&sulfur->loadMutex);
 		} else {
 			if (iData.a != w || iData.b != h) {
 				exit_log("Inconsistent texture sizes for texture atlas.", "");
