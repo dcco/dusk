@@ -1,3 +1,5 @@
+#ifndef TEX_ARRAY_H
+#define TEX_ARRAY_H
 
 typedef struct tex_array {
 	GLuint id;
@@ -26,3 +28,5 @@ tex_array_t* initTexArray(int total, int w, int h) {
 	arr->height = h;
 	return arr;
 }
+
+#endif

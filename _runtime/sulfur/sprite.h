@@ -12,7 +12,7 @@ typedef struct sprite {
 	float fx, fy;
 	float fw, fh;
 } sprite_t;
-
+/*
 sprite_t* initSprite(tex_image_t* image, int x, int y, int spanWidth, int tw, int th) {
 	sprite_t* sprite = malloc(sizeof(sprite_t));
 	sprite->image = image;
@@ -24,6 +24,6 @@ sprite_t* initSprite(tex_image_t* image, int x, int y, int spanWidth, int tw, in
 	sprite->fw = (float) tw / (image->width / TILE_SIZE);
 	sprite->fh = (float) th / (image->height / TILE_SIZE);
 	return sprite;
-}
+}*/
 
 #endif

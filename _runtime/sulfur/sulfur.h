@@ -8,9 +8,9 @@
 
 #include "buffer.h"
 #include "mesh.h"
+#include "texArray.h"
 #include "texImage.h"
 #include "sprite.h"
-#include "texArray.h"
 #include "res_load_list.h"
 #include "shader.h"
 #include "sf2d.h"
@@ -128,16 +128,16 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 		glyph_t* g = getGList(sulfur->front_buffer, i);
 		if (g->type == C_BOX) {
 			box_glyph_t* bg = (box_glyph_t*) g;
-			mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, bg->x, bg->y, bg->w, bg->h);
-			drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, &sulfur->sf2d->defTex);
+			//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, bg->x, bg->y, bg->w, bg->h);
+			//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, &sulfur->sf2d->defTex);
 		} else if (g->type == C_SPRITE) {
 			sprite_glyph_t* sg = (sprite_glyph_t*) g;
 			if (sg->spritePtr == NULL) continue;
 			sprite_t* spritePtr = (sprite_t*) sg->spritePtr;
 			if (spritePtr->image == NULL) continue;
 			tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
-			mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, 0, 0, imagePtr->width, imagePtr->height);
-			drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, imagePtr);
+			//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, 0, 0, imagePtr->width, imagePtr->height);
+			//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, imagePtr);
 		}
 	}
 }
@@ -148,12 +148,13 @@ void flushResList(sulfur_t* sulfur) {
 	if (nextRes != NULL) {
 		if (nextRes->type == R_IMAGE) {
 			tex_image_t* imageData = (tex_image_t*) malloc(sizeof(tex_image_t));
-			initTexImage(imageData, nextRes->a, nextRes->b, (char*) nextRes->xArgs);
+			//initTexImage(imageData, nextRes->a, nextRes->b, (char*) nextRes->xArgs);
 			*nextRes->storePtr = (void*) imageData;
 		} else if (nextRes->type == R_SPRITE) {
 			int* i_args = nextRes->iArgs;
 			tex_image_t* imgPtr = *((tex_image_t**) nextRes->xArgs);
-			sprite_t* sprite = initSprite(imgPtr, i_args[0], i_args[1], i_args[2], 1, 1);
+			sprite_t* sprite = NULL;
+			//sprite_t* sprite = initSprite(imgPtr, i_args[0], i_args[1], i_args[2], 1, 1);
 			*nextRes->storePtr = (void*) sprite;
 		}
 	}

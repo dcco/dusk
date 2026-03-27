@@ -5,27 +5,48 @@
 
 const char *BASE2_VS = "#version 300 es \n\
 precision highp float; \n\
-layout (location = 0) in vec3 aPos; \n\
-layout (location = 1) in vec2 aTex; \n\
-uniform mat4 uMVMat; \n\
+layout (location = 0) in vec2 bPos; \n\
+layout (location = 1) in vec2 bTex; \n\
+layout (location = 2) in vec2 aPos; \n\
+layout (location = 3) in vec2 aSize; \n\
+layout (location = 4) in float aTexId; \n\
+layout (location = 5) in vec2 aTexUVPos; \n\
+layout (location = 6) in vec2 aTexUVSize; \n\
 uniform mat4 uPMat; \n\
 out vec2 vTex; \n\
 void main(void) { \n\
-	gl_Position = uPMat * uMVMat * vec4(aPos, 1.0); \n\
-	vTex = aTex; \n\
+	vec2 pos = (bPos * aSize) + aPos; \n\
+	gl_Position = uPMat * vec4(pos, 0.0, 1.0); \n\
+	vTex = (bTex * bSize) + aTexUVPos; \n\
+	vTexId = aTexId; \n\
 }";
 
 const char *BASE2_FS = "#version 300 es \n\
 precision mediump float; \n\
+precision mediump sampler2DArray; \n\
 in vec2 vTex; \n\
-uniform vec4 uColor; \n\
-uniform sampler2D uSampler; \n\
+in float vTexId; \n\
+uniform sampler2DArray uSampler; \n\
 out vec4 FragColor; \n\
 void main(void) { \n\
-	vec4 texColor = texture(uSampler, vTex); \n\
+	vec4 texColor = texture(uSampler, vec3(vTex, vTexId)); \n\
 	if (texColor.a == 0.0) discard; \n\
-	FragColor = vec4(texColor.rgb * uColor.rgb, texColor.a * uColor.a); \n\
+	FragColor = vec4(texColor.rgb, texColor.a); \n\
 }";
+
+//uniform vec4 uColor; \n\
+//FragColor = vec4(texColor.rgb * uColor.rgb, texColor.a * uColor.a); \n\
+
+	/*
+		default 2d draw data:
+			defines one object sent to be drawn to the 2d shader.
+			(objects sent to the 3d shader are compiled based on the pipeline definition) 
+	*/
+
+typedef struct draw_dat2d {
+	float aPos[2];
+	float aTex[2];
+} draw_dat2d_t;
 
 	/* shader main attribute def */
 
@@ -133,6 +154,10 @@ void _setAttrib(GLint loc, buffer_t* buf, GLint size) {
 	glVertexAttribPointer(loc, size, GL_FLOAT, 0, 0, 0);
 }
 
+void drawMeshShader(shader_t* shader) {
+}
+
+/*
 void drawMeshShader(shader_t* shader, GLfloat* oMat, mesh_t* mesh, buffer_t* tBuf, tex_image_t* image) {
 	_setAttrib(shader->aPos, &mesh->vBuf, VBUF_SIZE);
 	_setAttrib(shader->aTex, tBuf, TBUF_SIZE);
@@ -144,6 +169,6 @@ void drawMeshShader(shader_t* shader, GLfloat* oMat, mesh_t* mesh, buffer_t* tBu
 	if (shader->uColor >= 0) glUniform4f(shader->uColor, 1.0f, 1.0f, 1.0f, 1.0f);
 	
 	glDrawArrays(GL_TRIANGLES, 0, mesh->vBuf.numItems);
-}
+}*/
 
 #endif /* SULF_SHADER_H */

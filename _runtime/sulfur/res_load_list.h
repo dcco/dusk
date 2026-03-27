@@ -3,7 +3,7 @@
 
 	/* resource loading info */
 
-typedef enum : int8_t { R_IMAGE, R_SPRITE } R_LOAD_TYPE;
+typedef enum { R_IMAGE, R_SPRITE } R_LOAD_TYPE;
 
 typedef struct resLoadItem {
 	R_LOAD_TYPE type;

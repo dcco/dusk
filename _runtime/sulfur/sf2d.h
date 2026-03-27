@@ -15,7 +15,7 @@ sf2d_t* initSf2d() {
 	sf2d_t* self = (sf2d_t*) malloc(sizeof(sf2d_t));
 	self->shader = initShader(BASE2_VS, BASE2_FS, &BASE2_ATTR_DEF);
 	// create default materials
-	initTexImage(&self->defTex, 2, 2, DEF_TEX_DATA);
+	//initTexImage(&self->defTex, 2, 2, DEF_TEX_DATA);
 	initBuffer(&self->defTBuf, sizeof(SQUARE_TEX_COORDS), SQUARE_TEX_COORDS, 6);
 	float zCoords[18];
 	squareZVertices(zCoords, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
