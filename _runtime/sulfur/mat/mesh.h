@@ -2,17 +2,6 @@
 #define SULF_MESH_H
 
 	/*
-		vertex:
-			defines an individual vertex in a uniform way, to be passed into shaders
-	*/
-
-typedef struct vertex {
-	float pos[3];
-	float normal[3];
-	float uv[2];
-} vertex_t;
-
-	/*
 		mesh:
 	*/
 

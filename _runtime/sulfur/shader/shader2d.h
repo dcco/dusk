@@ -37,6 +37,9 @@ void main(void) { \n\
 	FragColor = vec4(texColor.rgb, texColor.a); \n\
 }";
 
+//uniform vec4 uColor; \n\
+//FragColor = vec4(texColor.rgb * uColor.rgb, texColor.a * uColor.a); \n\
+
 	/*
 		default 2d draw data:
 			defines one object sent to be drawn to the 2d shader.
@@ -68,77 +71,5 @@ const struct shader_attr_def BASE2_ATTR_LIST[7] = {
 const struct shader_def BASE2_DEF = {
 	7, sizeof(draw_dat2d_t), BASE2_ATTR_LIST, "uSampler", "uPMat"
 };
-
-//uniform vec4 uColor; \n\
-//FragColor = vec4(texColor.rgb * uColor.rgb, texColor.a * uColor.a); \n\
-
-	/*
-		default 2d draw data:
-			defines one object sent to be drawn to the 2d shader.
-			(objects sent to the 3d shader are compiled based on the pipeline definition) 
-	*/
-/*
-typedef struct draw_dat2d {
-	float bPos[2];
-	float bTex[2];
-	float aPos[2];
-	float aSize[2];
-	float aTexId;
-	float aSize[2];
-	float aTexUVPos[2];
-	float aTexUVSize[2];
-} draw_dat2d_t;
-*/
-	/*
-		shader 2d:
-			special shader object for the main 2d shader
-
-
-typedef struct shader2d {
-	GLuint prog;
-} shader2d_t;	*/
-
-	/* shader constructors / destructors
-
-shader_t* initShader2d() {
-	// compile shaders
-	GLuint frag = makeShaderSrc(BASE2_FS, GL_FRAGMENT_SHADER);
-	GLuint vert = makeShaderSrc(BASE2_VS, GL_VERTEX_SHADER);
-
-	// build shader program
-	GLuint prog = glCreateProgram();
-	if (prog == 0) exit_log("shader.h - Could not create shader program.", "");
-	glAttachShader(prog, vert);
-	glAttachShader(prog, frag);
-	glLinkProgram(prog);
-
-	// check validity
-	GLint status;
-	glGetProgramiv(prog, GL_LINK_STATUS, &status);
-	if (!status) exit_log("shader.h - Could not link shaders.", "");
-	glUseProgram(prog);
-
-	// create shader object
-	shader_t* shader = (shader_t*) malloc(sizeof(shader_t));
-	shader->prog = prog;
-	shader->uColor = -1;
-
-	// create vertex array object
-	glGenVertexArrays(1, &shader->vao);
-	glBindVertexArray(shader->vao);
-
-	// add main attributes
-	addAttribShader(prog, &shader->aPos, def->aPos);
-	addAttribShader(prog, &shader->aTex, def->aTex);
-	addUniformShader(prog, &shader->uPers, def->uPers);
-	addUniformShader(prog, &shader->uObj, def->uObj);
-	if (def->uColor != NULL) addUniformShader(prog, &shader->uColor, def->uColor);
-
-	return shader;
-}
-
-void delShader2d(shader2d_t* s) {
-	free(s);
-} */
 
 #endif 

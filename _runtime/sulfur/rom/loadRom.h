@@ -1,5 +1,5 @@
-#ifndef SULFUR_ROM_H
-#define SULFUR_ROM_H
+#ifndef LOAD_ROM_H
+#define LOAD_ROM_H
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -16,9 +16,9 @@ extern void* comp_res_arg_list[];
 extern void* comp_res_ptr_list[];
 extern int comp_res_total;
 
-void* load_res(void* arg) {
-	// unpack sulfur
-	sulfur_t* sulfur = (sulfur_t*) arg;
+void* initRomLoad(void* arg) {
+	// unpack sulfur rom
+	sf_rom_t* rom = ((sulfur_t*) arg)->rom;
 	// initialize memory to store URL
 	size_t rom_len = strlen(ROM_DIR);
 	size_t full_len = rom_len * 2;
@@ -53,22 +53,22 @@ void* load_res(void* arg) {
 			w = iData.a;
 			h = iData.b;
 			// pass meta-information along
-			pthread_mutex_lock(&sulfur->loadMutex);
-			resListMeta_t* meta = &sulfur->res_list->meta;
+			pthread_mutex_lock(&rom->loadMutex);
+			resListMeta_t* meta = &rom->resList->meta;
 			meta->init = 1;
 			meta->total = res_total;
 			meta->width = w;
 			meta->height = h;
-			pthread_mutex_unlock(&sulfur->loadMutex);
+			pthread_mutex_unlock(&rom->loadMutex);
 		} else {
 			if (iData.a != w || iData.b != h) {
 				exit_log("Inconsistent texture sizes for texture atlas.", "");
 			}
 		}
 		// pass image data to sulfur's resource loader
-		pthread_mutex_lock(&sulfur->loadMutex);
-		addResList(sulfur->res_list, &iData);
-		pthread_mutex_unlock(&sulfur->loadMutex);
+		pthread_mutex_lock(&rom->loadMutex);
+		addResList(rom->resList, &iData);
+		pthread_mutex_unlock(&rom->loadMutex);
 		/*printf("Successfully loaded: %s\n", full_url);
 		int ix = 0;
 		for (int k = 0; k < y; k++) {
@@ -91,9 +91,9 @@ void* load_res(void* arg) {
 		iData.iArgs = (int*) comp_res_args[0];
 		iData.xArgs = (void**) comp_res_args[1];
 		// pass sprite data to sulfur's resource loader
-		pthread_mutex_lock(&sulfur->loadMutex);
-		addResList(sulfur->res_list, &iData);
-		pthread_mutex_unlock(&sulfur->loadMutex);
+		pthread_mutex_lock(&rom->loadMutex);
+		addResList(rom->resList, &iData);
+		pthread_mutex_unlock(&rom->loadMutex);
 	}
 	return NULL;
 }

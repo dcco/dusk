@@ -72,12 +72,12 @@ int main(void) {
 
 	pthread_t main_thread;
 	pthread_create(&main_thread, NULL, wrap_main, NULL);
-	pthread_create(&main_thread, NULL, load_res, sulfur_local);
+	pthread_create(&main_thread, NULL, initRomLoad, sulfur_local);
 
 	// basic render loop
 	while (!glfwWindowShouldClose(window)) {
 		render(zMat, sulfur_local);
-		flushResList(sulfur_local);
+		updateRom(sulfur_local);
 		// , zMat, &g1
 		glfwSwapBuffers(window);
 		glfwPollEvents();

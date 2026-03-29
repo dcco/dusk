@@ -6,18 +6,26 @@
 #include "glfw3.h"
 #include "exit_log.h"
 
-#include "buffer.h"
+	// materials
+#include "vertex.h"
 #include "mesh.h"
 #include "texArray.h"
 #include "texImage.h"
 #include "sprite.h"
-#include "res_load_list.h"
+
+	// shader code
 #include "shader.h"
 #include "shader2d.h"
-#include "sf2d.h"
-#include "captureCard.h"
+
+	// glyph / render list code
 #include "glyph.h"
 #include "renderList.h"
+
+	// rom + main code
+#include "resLoadList.h"
+#include "sulfurRom.h"
+#include "sf2d.h"
+#include "captureCard.h"
 
 const int ZOOM = 2;
 
@@ -51,17 +59,14 @@ typedef struct sulfur {
 	int width;
 	int height;
 	GLfloat pMat[16];
-		/* permanent resources */
-	tex_array_t* texArr;
 		/* render thread buffer */
 	pthread_mutex_t bufferMutex;
 	int8_t dirty;
 	renderList_t* back_buffer;
 	renderList_t* swap_buffer;
 	renderList_t* front_buffer;
-		/* resource loading buffer */
-	pthread_mutex_t loadMutex;
-	resLoadList_t* res_list;
+		/* media rom */
+	sf_rom_t* rom;
 } sulfur_t;
 
 sulfur_t* initSulfur(int width, int height) {
@@ -72,13 +77,11 @@ sulfur_t* initSulfur(int width, int height) {
 	self->width = width;
 	self->height = height;
 	orthoMat(self->pMat, 0.0f, (float) width, (float) height, 0.0f, -1.0f, 1.0f);
-	self->texArr = NULL;
 	pthread_mutex_init(&self->bufferMutex, NULL);
 	self->back_buffer = newRList(sizeof(draw_dat2d_t));
 	self->swap_buffer = newRList(sizeof(draw_dat2d_t));
 	self->front_buffer = newRList(sizeof(draw_dat2d_t));
-	pthread_mutex_init(&self->loadMutex, NULL);
-	self->res_list = newResList();
+	self->rom = initSfRom();
 
 	// misc init
 	glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
@@ -146,7 +149,7 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 		sulfur->front_buffer = sulfur->swap_buffer;
 		sulfur->swap_buffer = temp;
 		sulfur->dirty = 0;
-		if (sulfur->texArr != NULL) dirty = 1;
+		if (sulfur->rom->texArr != NULL) dirty = 1;
 	}
 	pthread_mutex_unlock(&sulfur->bufferMutex);
 	if (!dirty) return;
@@ -156,7 +159,7 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 	shader_t* shader = sulfur->sf2d->shader;
 
 	int32_t len = lenRList(sulfur->front_buffer);
-	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->texArr, len, sulfur->front_buffer->data);
+	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->rom->texArr, len, sulfur->front_buffer->data);
 
 	// copy to capture card and re-render
 	copyCC(sulfur->cc);
@@ -182,29 +185,8 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 	}*/
 }
 
-void flushResList(sulfur_t* sulfur) {
-	// initialize sulfur's texture array if applicable
-	if (sulfur->texArr == NULL && sulfur->res_list->meta.init) {
-		resListMeta_t* meta = &sulfur->res_list->meta;
-		sulfur->texArr = initTexArray(meta->total, meta->width, meta->height);
-	}
-	// load remaining resources
-	pthread_mutex_lock(&sulfur->loadMutex);
-	resLoadItem_t* nextRes = takeResList(sulfur->res_list);
-	if (nextRes != NULL) {
-		if (nextRes->type == R_IMAGE) {
-			tex_image_t* imageData = (tex_image_t*) malloc(sizeof(tex_image_t));
-			initTexImage(sulfur->texArr, imageData, nextRes->storeId, (char*) nextRes->xArgs);
-			//initTexImage(imageData, nextRes->a, nextRes->b, (char*) nextRes->xArgs);
-			*nextRes->storePtr = (void*) imageData;
-		} else if (nextRes->type == R_SPRITE) {
-			int* i_args = nextRes->iArgs;
-			tex_image_t* imgPtr = *((tex_image_t**) nextRes->xArgs);
-			sprite_t* sprite = initSprite(imgPtr, i_args[0], i_args[1], i_args[2], 1, 1);
-			*nextRes->storePtr = (void*) sprite;
-		}
-	}
-	pthread_mutex_unlock(&sulfur->loadMutex);
+void updateRom(sulfur_t* sulfur) {
+	_updateRom(sulfur->rom);
 }
 
 #endif /* SULFUR_H */

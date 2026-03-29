@@ -2,7 +2,7 @@
 #define SULFUR_BINDINGS_H
 
 #include "sulfur.h"
-#include "sulfur_rom.h"
+#include "loadRom.h"
 
 sulfur_t* sulfur = NULL;
 
