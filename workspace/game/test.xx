@@ -14,54 +14,88 @@
 	.p2align	4, 0x90
 _none_main:
 .seh_proc _none_main
-	subq	$72, %rsp
-	.seh_stackalloc 72
+	subq	$120, %rsp
+	.seh_stackalloc 120
 	.seh_endprologue
-	movl	$0, 44(%rsp)
-	movl	$1, 40(%rsp)
+	movl	$0, 116(%rsp)
+	movl	$1, 112(%rsp)
 .LBB0_1:
 	movb	$1, %al
 	testb	$1, %al
 	jne	.LBB0_2
 	jmp	.LBB0_3
 .LBB0_2:
-	cmpl	$512, 44(%rsp)
+	cmpl	$240, 116(%rsp)
 	jg	.LBB0_4
 	jmp	.LBB0_5
 .LBB0_3:
-	addq	$72, %rsp
+	addq	$120, %rsp
 	retq
 .LBB0_4:
-	movl	$-1, 40(%rsp)
+	movl	$-1, 112(%rsp)
 	jmp	.LBB0_6
 .LBB0_5:
-	cmpl	$0, 44(%rsp)
+	cmpl	$0, 116(%rsp)
 	jle	.LBB0_7
 	jmp	.LBB0_8
 .LBB0_6:
-	movl	44(%rsp), %eax
-	movl	40(%rsp), %ecx
-	addl	%ecx, %eax
-	movl	%eax, 44(%rsp)
-	movq	.refptr.C_SPRITE(%rip), %rax
-	movb	(%rax), %al
-	movq	_Sys_Rom_tset(%rip), %rcx
-	movq	%rcx, 64(%rsp)
-	movb	%al, 48(%rsp)
-	movl	$1, 72(%rsp)
-	movl	$0, 56(%rsp)
-	movl	$0, 52(%rsp)
-	leaq	48(%rsp), %rcx
-	callq	_Glyph_Sys_Sulfur_draw
-	callq	_none_Sys_Sulfur_refresh
-	jmp	.LBB0_1
+	movl	116(%rsp), %eax
+	addl	112(%rsp), %eax
+	movl	%eax, 116(%rsp)
+	movl	$0, 108(%rsp)
+	jmp	.LBB0_10
 .LBB0_7:
-	movl	$1, 40(%rsp)
+	movl	$1, 112(%rsp)
 	jmp	.LBB0_9
 .LBB0_8:
 	jmp	.LBB0_9
 .LBB0_9:
 	jmp	.LBB0_6
+.LBB0_10:
+	cmpl	$10, 108(%rsp)
+	jge	.LBB0_12
+	movl	$0, 104(%rsp)
+	jmp	.LBB0_13
+.LBB0_12:
+	movq	.refptr.C_SPRITE(%rip), %rax
+	movb	(%rax), %al
+	movl	116(%rsp), %ecx
+	movq	_Sys_Rom_tset(%rip), %rdx
+	movq	%rdx, 56(%rsp)
+	movl	%ecx, 44(%rsp)
+	movb	%al, 40(%rsp)
+	movl	$2, 64(%rsp)
+	movl	$120, 48(%rsp)
+	leaq	40(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
+	callq	_none_Sys_Sulfur_refresh
+	jmp	.LBB0_1
+.LBB0_13:
+	cmpl	$10, 104(%rsp)
+	jge	.LBB0_15
+	movq	.refptr.C_SPRITE(%rip), %rax
+	movb	(%rax), %al
+	movl	108(%rsp), %ecx
+	shll	$3, %ecx
+	movl	104(%rsp), %edx
+	shll	$3, %edx
+	movq	_Sys_Rom_tset(%rip), %r8
+	movq	%r8, 88(%rsp)
+	movl	%edx, 80(%rsp)
+	movl	%ecx, 76(%rsp)
+	movb	%al, 72(%rsp)
+	movl	$2, 96(%rsp)
+	leaq	72(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
+	movl	104(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 104(%rsp)
+	jmp	.LBB0_13
+.LBB0_15:
+	movl	108(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 108(%rsp)
+	jmp	.LBB0_10
 	.seh_endproc
 
 	.bss

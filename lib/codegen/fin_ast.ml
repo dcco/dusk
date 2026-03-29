@@ -22,7 +22,7 @@ type gen_stmt =
 	EvalStmtC of gen_exp
 	| AssignStmtC of string * gen_exp
 	| ReturnStmtC of gen_exp option
-	| VarStmtC of string * gen_exp
+	| VarStmtC of string * gen_exp * g_type
 	| IfStmtC of gen_exp * gen_stmt list * bool * gen_stmt list * bool
 	| WhileStmtC of gen_exp * gen_stmt list
 
@@ -52,9 +52,20 @@ let rec collect_box_stmt (s: gen_stmt): (int * gen_exp * g_type) list = match s 
 	EvalStmtC e -> collect_box_exp e
 	| AssignStmtC(_, e) -> collect_box_exp e
 	| ReturnStmtC eo -> (match eo with None -> [] | Some e -> collect_box_exp e)
-	| VarStmtC(_, e) -> collect_box_exp e
+	| VarStmtC(_, e, _) -> collect_box_exp e
 	| IfStmtC(e, b1, _, b2, _) -> (collect_box_exp e) @ (collect_box_body b1) @ (collect_box_body b2)
 	| WhileStmtC(e, b) -> (collect_box_exp e) @ (collect_box_body b)
 and collect_box_body (b: gen_stmt list): (int * gen_exp * g_type) list = match b with
 	[] -> []
 	| s :: st -> (collect_box_stmt s) @ (collect_box_body st)
+
+let rec collect_var_stmt (s: gen_stmt): (string * g_type) list = match s with
+	EvalStmtC _ -> []
+	| AssignStmtC(_, _) -> []
+	| ReturnStmtC _ -> []
+	| VarStmtC(x, _, tau) -> [(x, tau)]
+	| IfStmtC(_, b1, _, b2, _) -> (collect_var_body b1) @ (collect_var_body b2)
+	| WhileStmtC(_, b) -> collect_var_body b
+and collect_var_body (b: gen_stmt list): (string * g_type) list = match b with
+	[] -> []
+	| s :: st -> (collect_var_stmt s) @ (collect_var_body st)

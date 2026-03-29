@@ -6,7 +6,7 @@
 
 sulfur_t* sulfur = NULL;
 
-extern void _Glyph_Sys_Sulfur_draw(int8_t raw[20])
+extern void _Glyph_Sys_Sulfur_draw(int8_t raw[32])
 {
 	addGlyph(sulfur, (glyph_t*) raw);
 	//addRList(sulfur->back_buffer, g);

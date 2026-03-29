@@ -4,6 +4,7 @@ exit_log
 
 - primitive render objects
 buffer
+texArray
 texImage
 mesh
 sprite
@@ -16,6 +17,9 @@ res_list
 sulfur_rom
 
 - main sulfur interface
+glyph
+renderList
+captureCard
 sf2d
 sulfur
 sulfur_bindings

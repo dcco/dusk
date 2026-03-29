@@ -18,16 +18,19 @@ let newLCont (): llvm_cont =
 	let m = create_module context "dusk"
 	in LCont(m, DataLayout.of_string (data_layout m), builder context, ref 0)
 
+let setLayoutCont (LCont(m, _, b, r): llvm_cont) (l': DataLayout.t): llvm_cont = LCont(m, l', b, r)
+
 let llmod (LCont(m, _, _, _): llvm_cont): llmodule = m
 let builder (LCont(_, _, b, _): llvm_cont): llbuilder = b
 let genRef (LCont(_, _, _, r): llvm_cont): int = r := !r + 1; !r - 1
 
 	(*
-		dusk compilation type definitions
+		dusk compilation type definitions:
+			- opaque: opaque array of bytes used for unions, has size + alignment
 	*)
 
 type dusk_tdef =
-	OpaqueTD_C of int
+	OpaqueTD_C of int * int
 
 	(*
 		code generation environment
@@ -35,8 +38,12 @@ type dusk_tdef =
 
 type dusk_val = llvalue * lltype
 
+	(*
+		- val: normal storage variable (includes alignment when applicable)
+	*)
+
 type dusk_fval =
-	DVal of dusk_val
+	DVal of dusk_val * int option
 	| DGlobal of llvalue
 	| DFunVal of llvalue * lltype
 	| DTDef of dusk_tdef

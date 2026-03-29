@@ -3,7 +3,8 @@
 
 	/* glyph datatype */
 
-typedef enum { G_NOP = 0, G_BOX = 1, G_IMAGE = 2, G_SPRITE = 3 } GLYPH_TYPE;
+typedef int8_t GLYPH_TYPE;
+enum { G_NOP = 0, G_BOX = 1, G_IMAGE = 2, G_SPRITE = 3 };
 
 extern const int8_t C_NOP;
 extern const int8_t C_BOX;
@@ -17,7 +18,7 @@ const int8_t C_SPRITE = G_SPRITE;
 
 typedef struct glyph {
 	GLYPH_TYPE type;
-	int32_t raw[23];
+	int8_t raw[31];
 } glyph_t;
 
 typedef struct box_glyph {

@@ -90,7 +90,7 @@ let sulfurTypes = [
 	(QT None, "Glyph", TDefVD (EnumTD [
 		("Nop", [], Some "C_NOP");
 		("Box", [intTy; intTy; intTy; intTy], Some "C_BOX");
-		("Sprite", [imageTy; intTy], Some "C_SPRITE")
+		("Sprite", [intTy; intTy; imageTy; intTy], Some "C_SPRITE")
 	]))
 ]
 

@@ -22,7 +22,7 @@ let genStrLit (cont: llvm_cont) (env: dusk_env) (s: string): dusk_val =
 		[| const_int i8Type 0; const_int iType (String.length s); const_null ptrType; const_null ptrType; strRef |] in
 	let structRef = define_global ("_sz" ^ (string_of_int i)) structVal (llmod cont) in
 	let v = (structRef, ptrType) in 
-	Hashtbl.add env (DStrLit s) (DVal v); v
+	Hashtbl.add env (DStrLit s) (DVal(v, None)); v
 
 	(* expression generation *)
 
@@ -31,7 +31,7 @@ let genConst (cont: llvm_cont) (env: dusk_env) (c: const): dusk_val = match c wi
 	| FConst f -> (const_float fType f, fType)
 	| BConst b -> (const_int bType (if b then 1 else 0), bType)
 	| SConst s -> (match Hashtbl.find_opt env (DStrLit s) with
-		Some (DVal v) -> v
+		Some (DVal (v, _)) -> v
 		| _ -> genStrLit cont env s
 	)
 
@@ -45,7 +45,9 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 	)*)
 	| VarExpC x -> (match Hashtbl.find_opt env (DVar x) with
 		Some (DFunVal (v, t)) -> (v, t)
-		| Some (DVal (v, t)) -> (build_load t v x bx, t)
+		| Some (DVal ((v, t), alignOpt)) ->
+			let vx = build_load t v x bx in
+			Option.iter (fun align -> set_alignment align vx) alignOpt; (vx, t)
 		| Some _ -> failwith ("BUG: gen_exp.ml - Variable \"" ^ x ^ "\" resolved to non-value.")
 		| None -> failwith ("BUG: gen_exp.ml - Unexpected variable \"" ^ x ^ "\" encountered in generation phase.")
 	)
@@ -73,7 +75,9 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		(build_call tf vf (Array.of_list vl) "" (builder cont), genType env tau_r)
 	| BoxExpC(i, e, _) ->
 		let (ve, _) = genExp cont env e in (match Hashtbl.find_opt env (DBox i) with
-			Some (DVal (vb, tb)) -> ignore (build_store ve vb bx); (vb, tb)
+			Some (DVal ((vb, tb), alignOpt)) ->
+				let vs = build_store ve vb bx in
+				Option.iter (fun align -> set_alignment align vs) alignOpt; (vb, tb)
 			| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
 		)
 	| TupleExpC el ->
@@ -117,24 +121,23 @@ type blockInfo = int * llvalue
 let addBlock ((i, fVal): blockInfo) (prefix: string): (llbasicblock * blockInfo) =
 	(append_block context (prefix ^ "_" ^ (string_of_int i)) fVal, (i + 1, fVal))
 
+let genAssign (cont: llvm_cont) (env: dusk_env) (x: string) (e: gen_exp): unit =
+	let (ve, _) = genExp cont env e in
+	(match Hashtbl.find env (DVar x) with
+		DVal ((vx, _), alignOpt) ->
+			let vs = build_store ve vx (builder cont) in
+			Option.iter (fun align -> set_alignment align vs) alignOpt
+		| _ -> failwith "BUG: gen_exp.ml - Unexpected assignment to function variable."
+	)
+
 let rec genStmt (cont: llvm_cont) (env: dusk_env) (b: blockInfo) (s: gen_stmt): blockInfo = match s with
 	EvalStmtC e -> let _ = genExp cont env e in b
-	| AssignStmtC(x, e) ->
-		let (ve, _) = genExp cont env e in
-		(match Hashtbl.find env (DVar x) with
-			DVal (vx, _) ->
-				let _ = build_store ve vx (builder cont) in b
-			| _ -> failwith "BUG: gen_exp.ml - Unexpected assignment to function variable."
-		)
+	| AssignStmtC(x, e) -> genAssign cont env x e; b
+	| VarStmtC(x, e, _) -> genAssign cont env x e; b
 	| ReturnStmtC rv -> let _ = (match rv with
 		None -> build_ret_void (builder cont)
 		| Some e ->
 			let (ve, _) = genExp cont env e in build_ret ve (builder cont)) in b
-	| VarStmtC(x, e) ->
-		let (ve, t) = genExp cont env e in
-		let vx = build_alloca t x (builder cont) in
-			Hashtbl.add env (DVar x) (DVal (vx, t));
-			let _ = build_store ve vx (builder cont) in b
 	| IfStmtC(ec, body, term1, elseBody, term2) ->
 		let (vc, _) = genExp cont env ec in
 			(* create branch statement *)
@@ -180,17 +183,28 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 	let rec gpl_rec pl i = match pl with
 		[] -> ()
 		| (x, tau) :: pt ->
-			let (vp, t) = (Array.get va i, genType env tau) in
+			let (vp, t, alignOpt) = (Array.get va i, genType env tau, genAlign env tau) in
 			let vx = build_alloca t ("_" ^ x) (builder cont) in
-			let _ = build_store vp vx (builder cont) in
-			Hashtbl.add env' (DVar x) (DVal (vx, t)); gpl_rec pt (i + 1)
+			let vs = build_store vp vx (builder cont) in
+			Option.iter (fun align -> set_alignment align vx; set_alignment align vs) alignOpt;
+			Hashtbl.add env' (DVar x) (DVal ((vx, t), alignOpt)); gpl_rec pt (i + 1)
 	in gpl_rec pl 0; env'
 
 let genPreAlloc (cont: llvm_cont) (env: dusk_env) (b: gen_stmt list): unit =
+	let varList = collect_var_body b in
+	List.iter (fun (x, tau) ->
+		let t = genType env tau in
+		let alignOpt = genAlign env tau in
+		let vx = build_alloca t ("_" ^ x) (builder cont) in
+		Option.iter (fun align -> set_alignment align vx) alignOpt;
+		Hashtbl.add env (DVar x) (DVal ((vx, t), alignOpt))
+	) varList;
 	let boxList = collect_box_body b in
 	List.iter (fun (i, _, tau) ->
+		let alignOpt = genAlign env tau in
 		let v = build_alloca (genType env tau) "_boxT" (builder cont) in
-		Hashtbl.add env (DBox i) (DVal (v, ptrType))
+		Option.iter (fun align -> set_alignment align v) alignOpt;
+		Hashtbl.add env (DBox i) (DVal ((v, ptrType), alignOpt))
 	) boxList
 
 let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (FunDecC (MethodC(pl, tau_r, b)): gen_dec): unit =
@@ -234,11 +248,15 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
 				size_of_type cont (genTagTupleType env tau_l)
 			) cl) in
-			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C max_size));
+			let max_align = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
+				align_of_type cont (genTagTupleType env tau_l)
+			) cl) in
+			(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
+			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
 			genEnum cont env 0 cl
 		| ResVD(r, _) ->
 			let ptr = define_global f (const_null ptrType) (llmod cont) in
-			Hashtbl.add env (DVar f) (DVal(ptr, ptrType)); (match r with
+			Hashtbl.add env (DVar f) (DVal((ptr, ptrType), None)); (match r with
 				SimpRes(ext, x, url) ->
 					simpResList := (ext, url, ptr) :: !simpResList;
 					Hashtbl.add simpPtrMap x ptr
@@ -289,33 +307,39 @@ let printAllTargets (): unit =
 	let targetList = Target.all () in
 	ignore (List.map (fun t -> print_string ((Target.name t) ^ " -- " ^ (Target.description t) ^ "\n")) targetList)
 
-let genFinalize (cont: llvm_cont) (targetArg: string option) (fname: string) (optimizeFlag: bool): unit =
-	print_string ("\n" ^ (string_of_llmodule (llmod cont))); assert_valid_module (llmod cont); 
-	(
-		let target = (match targetArg with None -> Target.default_triple () | Some x -> x) in
-		let ttx = Target.by_triple target in
-		print_endline ("target: " ^ target);
-		(*printAllTargets ();*)
-		(*let target = "x86-64" in
-		let ttx = (match Target.by_name target with
-			None -> failwith "Could not find target for specified backend."
-			| Some t -> t
-		) in*)
-		(*let tm = print_endline ("target: " ^ target);*)
-		let level = if optimizeFlag then CodeGenOptLevel.Aggressive else CodeGenOptLevel.None in
-		let tm = TargetMachine.create ~triple:target ~cpu:"generic" ~features:"" ~level:level
-				~reloc_mode:RelocMode.Default ~code_model:CodeModel.Default ttx in
-		(*print_endline ("data layout: " ^ (DataLayout.as_string (TargetMachine.data_layout tm)));*)
-		set_target_triple target (llmod cont);
-		set_data_layout (DataLayout.as_string (TargetMachine.data_layout tm)) (llmod cont);
-		TargetMachine.emit_to_file (llmod cont) (CodeGenFileType.ObjectFile) (fname ^ ".o") tm;
-		TargetMachine.emit_to_file (llmod cont) (CodeGenFileType.AssemblyFile) (fname ^ ".xx") tm
-	)
+let genTarget (targetArg: string option) (optimizeFlag: bool): (llvm_cont * TargetMachine.t) =
+	let newCont = Gen_cont.newLCont () in
+		(* get target *)
+	let target = (match targetArg with None -> Target.default_triple () | Some x -> x) in
+	let ttx = Target.by_triple target in
+	(*print_endline ("target: " ^ target);*)
+	set_target_triple target (llmod newCont);
+	(*printAllTargets ();*)
+	(*let target = "x86-64" in
+	let ttx = (match Target.by_name target with
+		None -> failwith "Could not find target for specified backend."
+		| Some t -> t
+	) in*)
+	(*let tm = print_endline ("target: " ^ target);*)
+		(* create target machine *)
+	let level = if optimizeFlag then CodeGenOptLevel.Aggressive else CodeGenOptLevel.None in
+	let tm = TargetMachine.create ~triple:target ~cpu:"generic" ~features:"" ~level:level
+		~reloc_mode:RelocMode.Default ~code_model:CodeModel.Default ttx in
+		(* get data layout from target machine *)
+	let layout = TargetMachine.data_layout tm in
+	(*print_endline ("data layout: " ^ (DataLayout.as_string layout));*)
+	let cont = setLayoutCont newCont layout in
+	set_data_layout (DataLayout.as_string layout) (llmod cont); (cont, tm)
+
+let genFinalize (cont: llvm_cont) (tm: TargetMachine.t) (fname: string): unit =
+	print_string ("\n" ^ (string_of_llmodule (llmod cont))); assert_valid_module (llmod cont);
+	TargetMachine.emit_to_file (llmod cont) (CodeGenFileType.ObjectFile) (fname ^ ".o") tm;
+	TargetMachine.emit_to_file (llmod cont) (CodeGenFileType.AssemblyFile) (fname ^ ".xx") tm
 
 let genProgramHook (targetArg: string option) (fname: string) (optimizeFlag: bool)
 	(symList: g_virt_bind list) (dl: (string * gen_dec) list): unit =
-	let cont = Gen_cont.newLCont () in
+	let (cont, tm) = genTarget targetArg optimizeFlag in
 	let env = Hashtbl.create 50 in
 	genExternals cont env symList;
 	genDecList cont env dl;
-	genFinalize cont targetArg fname optimizeFlag;;
+	genFinalize cont tm fname;;

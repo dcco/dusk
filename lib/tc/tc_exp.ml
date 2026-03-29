@@ -128,7 +128,7 @@ let rec tc_stmt (f: string) (env: type_env) (s: r_stmt): (type_env * gen_stmt li
 	| PatStmt(px, e, _) ->
 		let* (e', tau_e) = tc_exp env e in (match (px, tau_e) with
 			(VarPat x, _) ->
-				Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, [VarStmtC(x, e')], false)
+				Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, [VarStmtC(x, e', tau_e)], false)
 			| _ -> failwith "Unimplemented: res_out.ml - Patterns.")
 	| IfStmt(ec, b1, b2, _) ->
 		let* (ec', _) = tc_exp env ec in 
@@ -157,7 +157,7 @@ let rec tc_stmt (f: string) (env: type_env) (s: r_stmt): (type_env * gen_stmt li
 		let b'' = b' @ [AssignStmtC(i', BinExpC("iadd", x', ConstExpC (IConst 1)))] in
 			(* for loop body: prefix with x = e[_iterator] for list case *)
 		(*let bf' = if list_flag then AssignStmtC(i', ArrayIndexExpC(e', [x'], tau_x)) :: b'' else b'' in*)
-		Valid (env, [VarStmtC(i', ConstExpC (IConst 0)); WhileStmtC(cond', b'')], false)
+		Valid (env, [VarStmtC(i', ConstExpC (IConst 0), intTy); WhileStmtC(cond', b'')], false)
 	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - statement case."
 and tc_body (f: string) (env: type_env) (b: r_stmt list): (type_env * gen_stmt list * bool) tc_res = match b with
 	[] -> Valid (env, [], false)
