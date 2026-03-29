@@ -36,6 +36,7 @@ let rec genType (env: dusk_env) (tau: g_type): lltype = match tau with
 	| NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
 		Some (DTDef td) -> (match td with
 			OpaqueTD_C(i, _) -> array_type i8Type i
+			| HeapTD_C _ -> ptrType
 		)
 		| _ -> failwith ("BUG: gen_type.ml - Generation with non-existent type \"" ^ x ^ "\"")
 	)
@@ -45,6 +46,7 @@ let genAlign (env: dusk_env) (tau: g_type): int option = match tau with
 	NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
 		Some (DTDef td) -> (match td with
 			OpaqueTD_C(_, align) -> Some align
+			| _ -> None
 		)
 		| _ -> None
 	)

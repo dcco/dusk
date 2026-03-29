@@ -18,7 +18,9 @@ type tc_err =
 	| NonTuple_Err of g_type * l_pos
 	| TupleIndexOOB_Err of g_type * int * l_pos
 		(* tag tuples *)
-	| NonCtorTag_Err of string * l_pos
+	| NonCtor_Err of string * l_pos
+		(* structs *)
+	| BadCtorStruct_Err of string * lpos
 		(* returns *)
 	| EarlyReturn_Err of string * l_pos
 	| NoReturn_Err of string * l_pos
@@ -37,7 +39,8 @@ let string_of_tc_err (e: tc_err) = match e with
 	| NonTuple_Err(t, p) -> "Tuple operation called on non-tuple type \"" ^ (string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| TupleIndexOOB_Err(t, i, p) -> "Attempted to access index " ^ (string_of_int i ) ^ " of tuple type \"" ^
 		(string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
-	| NonCtorTag_Err(t, p) -> "Tuple tag \"" ^ t ^ "\" did not resolve to a constructor at " ^ (string_of_pos p) ^ "."
+	| NonCtor_Err(t, p) -> "Type name \"" ^ t ^ "\" did not resolve to a constructor at " ^ (string_of_pos p) ^ "."
+	| BadCtorStruct_Err(t, p) -> "Attempted to initialize struct with non-struct constructor \"" ^ t ^ "\" at " ^ (string_of_pos p) ^ "."
 	| EarlyReturn_Err(f, p) ->
 		"Early return from function \"" ^ f ^ "\" producing unreachable code at " ^ (string_of_pos p) ^ "."
 	| NoReturn_Err(f, p) ->
@@ -80,6 +83,18 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				| _ -> Error (NonCtorTag_Err(cx, p))
 			)
 		)
+	| NewStructExp(_, cx, fl, p) ->
+		let* ftl' = try_map_res (fun (x, e) -> let* (e', t) = tc_exp env e in (x, e', t)) fl in
+		let* el' = (match Hashtbl.find_opt env.globalTIds cx with
+			Some (TcCtor (StructTD pl)) ->
+				try_map_res (fun (x, _) ->
+					match List.find_opt (fun (y, _, _) -> x = y) ftl' with
+						None -> Error (MissingField_Err(cx, x, p))
+						| Some (_, e', _) -> Valid e' 
+				) pl
+			| Some (TcCtor _) -> Error (NonStructCtor_Err(cx, p))
+			| _ -> Error (NonCtorStruct_Err(cx, p))
+		) in Valid (NewStructExpC el')
 	| AppExp(ef, el, _) ->
 		let* et_l' = tc_exp_list env el in
 		let tau_al = List.map snd et_l' in

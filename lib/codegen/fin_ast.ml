@@ -17,6 +17,8 @@ type gen_exp =
 	| TupleExpC of gen_exp list
 	| TagTupleExpC of string * gen_exp list
 	| TupleIndexExpC of gen_exp * int * g_type
+		(* struct operations *)
+	| NewStructExpC of gen_exp list
 
 type gen_stmt =
 	EvalStmtC of gen_exp

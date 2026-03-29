@@ -113,6 +113,9 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		(*let sVal = build_load vp bx "_structT" in*)
 		let elem = build_extractvalue vp i "_elemT" bx in
 		(elem, genType env tau_v)
+	| NewStructExpC el ->
+		
+
 
 	(* statement generation *)
 

@@ -27,10 +27,12 @@ let genRef (LCont(_, _, _, r): llvm_cont): int = r := !r + 1; !r - 1
 	(*
 		dusk compilation type definitions:
 			- opaque: opaque array of bytes used for unions, has size + alignment
+			- heap: same, but heap-allocated
 	*)
 
 type dusk_tdef =
 	OpaqueTD_C of int * int
+	| HeapTD_C of int
 
 	(*
 		code generation environment
