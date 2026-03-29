@@ -64,6 +64,7 @@ let boolTy = primTy "Bool"
 type 'm enum_case = string * 'm raw_type list * string option
 
 type 'm raw_tdef =
-	EnumTD of ('m enum_case) list
+	StructTD of (string * 'm raw_type) list
+	| EnumTD of ('m enum_case) list
 
 type m_tdef = qual_tag raw_tdef

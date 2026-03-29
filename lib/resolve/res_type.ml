@@ -38,7 +38,11 @@ let rec resolve_type (env: res_env) (p: l_pos) (tau: m_type): g_type rs_res = ma
 	| ArrayTy(i, tau) -> let* tau' = resolve_type env p tau in Valid (ArrayTy(i, tau'))
 
 let resolve_type_def (env: res_env) (p: l_pos) (td: m_tdef): g_tdef rs_res = match td with
-	EnumTD cl ->
+	StructTD fl ->
+		let* fl' = map_try_res (fun (x, tau) ->
+			let* tau' = resolve_type env p tau in Valid (x, tau')
+		) fl in Valid (StructTD fl')
+	| EnumTD cl ->
 		let prefix = QT None in
 		let* cl' = map_try_res (fun (x, tau_l, ext) ->
 			let* tau_l' = map_try_res (resolve_type env p) tau_l in (match lookup_env env prefix x with

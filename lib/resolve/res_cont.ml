@@ -23,7 +23,7 @@ type r_section = SectionR of r_dec list
 		temporary environment
 		* globalModules - maps module paths -> binding lists (bindings w/ module structure preserved)
 		* importPrefixes - maps import prefixes -> full path names
-		* importIds - (all) bindings imported locally to the module
+		* importIds - (all) bindings imported locally to the module / declared at module level
 		-- mapping includes import prefix + original name (applicable when aliased)
 		* localIds - (values) bindings declared locally in a function
 
@@ -63,6 +63,14 @@ let add_import_env (env: res_env) (path: string list) (handle: string): unit =
 				| _ -> ()
 			)
 	) symList
+
+let add_local_dec_env (env: res_env) (x: string): unit =
+	match Hashtbl.find_opt env.importIds x with
+		None -> Hashtbl.add env.importIds x [(LocalOr, x)]
+		| Some l -> (match List.find_opt (fun (b, _) -> b = LocalOr) l with
+			None -> Hashtbl.replace env.importIds x ((LocalOr, x) :: l)
+			| _ -> ()
+		)
 
 let builtin_env (treeMap: (m_virt_bind list) tree_map): res_env = let env = {
 	curPath = [];

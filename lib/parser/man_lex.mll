@@ -23,6 +23,7 @@ rule token = parse
 	| "module" { lexWrap lexbuf MODULE }
 	| "modules" { lexWrap lexbuf MODULES }
 	| "end" { lexWrap lexbuf END }
+	| "struct" { lexWrap lexbuf STRUCT }
 	| "fn" { lexWrap lexbuf FN }
 	| "var" { lexWrap lexbuf VAR }
 	| "new" { lexWrap lexbuf NEW }

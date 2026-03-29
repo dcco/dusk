@@ -2,13 +2,14 @@
 #define SULFUR_BINDINGS_H
 
 #include "sulfur.h"
-#include "loadRom.h"
+#include "initRom.h"
 
 sulfur_t* sulfur = NULL;
 
 extern void _Glyph_Sys_Sulfur_draw(int8_t raw[32])
 {
-	addGlyph(sulfur, (glyph_t*) raw);
+	renderList_t* rl = sulfur->back_buffer;
+	addGlyphRList(rl, (glyph_t*) raw);
 	//addRList(sulfur->back_buffer, g);
 }
 /*

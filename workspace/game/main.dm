@@ -1,6 +1,9 @@
 references Sys modules Os, Sulfur, Rom
 
+struct ABox{ Int x, Int y, Int width, Int height }
+
 fn main()
+	var h = new ABox{ x = 0, y = 0, width = 16, height = 16 }
 	var x = 0
 	var xspd = 1
 	loop

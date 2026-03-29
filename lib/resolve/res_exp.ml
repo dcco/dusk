@@ -1,28 +1,33 @@
 open Commons.Try_log
+open Parser.Lex_token
 open Parser.Dusk_type
 open Parser.Dusk_ast
 open Res_cont
 open Res_type
+
+	(* basic name resolution *)
+
+let resolve_name (env: res_env) (p: l_pos) (prefix: qual_tag) (x: string): string rs_res = match lookup_env env prefix x with
+	[(ox, x')] -> Valid (canonize_binding env ox x')
+	| [] -> Error (BadLookup_Err(prefix, x, p))
+	| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
 
 	(* expression resolution *)
 
 let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 	ConstExp(c, p) -> Valid (ConstExp(c, p))
 	| OpExp(xop, p) -> Valid (OpExp(xop, p))
-	| VarExp(prefix, x, p) -> (match lookup_env env prefix x with
-		[(ox, x')] -> Valid (VarExp(CT, canonize_binding env ox x', p))
-		| [] -> Error (BadLookup_Err(prefix, x, p))
-		| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
-	)
+	| VarExp(prefix, x, p) -> let* x' = resolve_name env p prefix x in Valid (VarExp(CT, x', p))
 	| TupleExp(ctor, el, p) ->
-		let* ctor' = (match ctor with
-			None -> Valid None
-			| Some (prefix, x) -> (match lookup_env env prefix x with
-				[(ox, x')] -> Valid (Some (CT, canonize_binding env ox x'))
-				| [] -> Error (BadLookup_Err(prefix, x, p))
-				| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
-			)
-		) in let* el' = resolve_exp_list env el in Valid (TupleExp(ctor', el', p))
+		let* ctor' = opt_try_res (fun (prefix, x) ->
+			let* x' = resolve_name env p prefix x in Valid (CT, x')
+		) ctor in
+		let* el' = resolve_exp_list env el in Valid (TupleExp(ctor', el', p))
+	| NewStructExp(prefix, x, fl, p) ->
+		let* x' = resolve_name env p prefix x in
+		let* fl' = map_try_res (fun (f, e) ->
+			let* e' = resolve_exp env e in Valid (f, e')
+		) fl in Valid (NewStructExp(CT, x', fl', p))
 	| AppExp(ef, el, p) ->
 		let* ef' = resolve_exp env ef in
 		let* el' = resolve_exp_list env el in Valid (AppExp(ef', el', p))
@@ -77,7 +82,12 @@ let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 			let* tau_p' = resolve_type env p tau_p in Valid (x, tau_p')
 		) param_l in
 		let* tau_r' = resolve_type env p tau_r in
+		add_local_dec_env env f;
 		let* (_, b') = resolve_body env b in Valid (FunDec(Method(fName, param_l', tau_r', b'), p))
+	| TDefDec(x, td, p) ->
+		let tName = canonize_scope env.curPath x in
+		add_local_dec_env env x;
+		let* td' = resolve_type_def env p td in	Valid (TDefDec(tName, td', p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
 	[] -> Valid []

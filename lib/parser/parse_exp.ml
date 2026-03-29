@@ -11,6 +11,7 @@ let neverEnd (_: raw_token): bool = false
 let chkComma (tk: raw_token): bool = match tk with
 	COMMA -> true
 	| _ -> false
+
 let chkBar (tk: raw_token): bool = match tk with
 	BAR -> true
 	| _ -> false
@@ -44,6 +45,10 @@ let chkUniEnd (tk: raw_token): bool = match tk with
 	DASH -> false
 	| EXCLAM -> false
 	| _ -> true
+
+let chkBrackR (tk: raw_token): bool = match tk with
+	RBRACK -> true
+	| _ -> false
 
 let readUniOp (tk: raw_token): string option = match tk with
 	DASH -> Some "neg"
@@ -178,6 +183,10 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 		(DIM i, _) :: tkRem2 ->
 			let* ((tau, el), tkRem3) = parseBraceWrap parseArrayInner "Array Initializer" tkRem2 in
 			Valid (NewDimExp(i, tau, el, p), tkRem3)
+		| (TID x, _) :: tkRem2 ->
+			let* (fl, tkRem3) = parseBrackWrap
+				(parseOrEmpty (parseSepList parseStructInit chkComma) chkBrackR) "Struct Initializer" tkRem2 in
+			Valid (NewStructExp(QT None, x, fl, p), tkRem3)
 		| tk :: _ -> Error (BadToken_Err(tk, "Heap Memory Initializer"))
 		| _ -> Error (EOF_Err "Heap Memory Initializer")
 	)
@@ -200,6 +209,11 @@ and parseArrayInner: (m_type * n_exp list) parser = fun tkList ->
 	let* (tau, tkRem) = parseType tkList in
 	let* (_, tkRem2) = parseTk ELLIP "Array Initializer" tkRem in
 	let* (el, tkRem3) = parseSepList parseExp chkBy tkRem2 in Valid ((tau, el), tkRem3)
+
+and parseStructInit: (string * n_exp) parser = fun tkList ->
+	let* (x, tkRem) = parseId tkList in
+	let* (_, tkRem2) = parseTk EQ "Struct Initializer" tkRem in
+	let* (e, tkRem3) = parseExp tkRem2 in Valid ((x, e), tkRem3)
 
 and parseAppObj: appObj parser = fun tkList -> match tkList with
 	(LPAREN, p) :: _ -> 
@@ -364,12 +378,21 @@ let parseMet: n_met parser = fun tkList -> match tkList with
 	| tk :: _ -> Error (BadToken_Err(tk, "Method"))
 	| _ -> Error (EOF_Err "Method")
 
-	(* declaration parsing *)
+	(* declaration / type definition parsing *)
+
+let parseFieldDef: (string * m_type) parser = fun tkList ->
+	let* (t, tkRem) = parseType tkList in
+	let* (x, tkRem2) = parseId tkRem in
+	Valid ((x, t), tkRem2)
 
 let parseDec: n_dec parser = fun tkList -> match tkList with
 	(FN, p) :: _ ->
 		let* (m, tkRem) = parseMet tkList in
 		Valid (FunDec(m, p), tkRem)
+	| (STRUCT, p) :: tkRem ->
+		let* (x, tkRem2) = parseTId tkRem in
+		let* (fl, tkRem3) = parseBrackWrap (parseSepList parseFieldDef chkComma) "Struct Definition" tkRem2 in
+		Valid (TDefDec(x, StructTD fl, p), tkRem3)
 	| tk :: _ -> Error (BadToken_Err(tk, "Dec"))
 	| _ -> Error (EOF_Err "Dec")
 

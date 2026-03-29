@@ -18,8 +18,8 @@
 #include "shader2d.h"
 
 	// glyph / render list code
-#include "glyph.h"
 #include "renderList.h"
+#include "glyph.h"
 
 	// rom + main code
 #include "resLoadList.h"
@@ -109,29 +109,6 @@ void swapBackBuffer(sulfur_t* sulfur) {
 	pthread_mutex_unlock(&sulfur->bufferMutex);
 }
 
-void addGlyph(sulfur_t* sulfur, glyph_t* g) {
-	renderList_t* rl = sulfur->back_buffer;
-	if (g->type == C_SPRITE) {
-		// obtain sprite + image data
-		sprite_glyph_t* sg = (sprite_glyph_t*) g;
-		if (sg->spritePtr == NULL) return;
-		sprite_t* spritePtr = (sprite_t*) sg->spritePtr;
-		if (spritePtr->image == NULL) return;
-		tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
-		// write into render list
-		draw_dat2d_t* dat = (draw_dat2d_t*) nextRList(rl);
-		dat->aPos[0] = (float) sg->x;
-		dat->aPos[1] = (float) sg->y;
-		dat->aSize[0] = (float) spritePtr->tw;
-		dat->aSize[1] = (float) spritePtr->th;
-		dat->aTexId = imagePtr->index;
-		dat->aTexUVPos[0] = spritePtr->fx + ((sg->frame % spritePtr->spanWidth) * spritePtr->fw);
-		dat->aTexUVPos[1] = spritePtr->fy + ((sg->frame / spritePtr->spanWidth) * spritePtr->fh);
-		dat->aTexUVSize[0] = spritePtr->fw;
-		dat->aTexUVSize[1] = spritePtr->fh;
-	}
-}
-
 void _clear(sulfur_t* sulfur) {
 	shader_t* shader = sulfur->sf2d->shader;
 	glUseProgram(shader->prog);
@@ -165,24 +142,6 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 	copyCC(sulfur->cc);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->cc->capArr, 1, (void*) sulfur->cc->data);
-
-	/*for (int i = 0; i < len; i++) {
-		glyph_t* g = getGList(sulfur->front_buffer, i);
-		if (g->type == C_BOX) {
-			box_glyph_t* bg = (box_glyph_t*) g;
-			//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, bg->x, bg->y, bg->w, bg->h);
-			//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, &sulfur->sf2d->defTex);
-		} else if (g->type == C_SPRITE) {
-			sprite_glyph_t* sg = (sprite_glyph_t*) g;
-			if (sg->spritePtr == NULL) continue;
-			sprite_t* spritePtr = (sprite_t*) sg->spritePtr;
-			if (spritePtr->image == NULL) continue;
-			tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
-			//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, 0, 0, imagePtr->width, imagePtr->height);
-			//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, imagePtr);
-			//drawDataShader(shader, mesh, sulfur->texArr, total, data) {
-		}
-	}*/
 }
 
 void updateRom(sulfur_t* sulfur) {

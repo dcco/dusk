@@ -10,6 +10,7 @@ typedef struct sf_rom {
 
 sf_rom_t* initSfRom() {
 	sf_rom_t* self = (sf_rom_t*) malloc(sizeof(sf_rom_t));
+	self->texArr = NULL;
 	pthread_mutex_init(&self->loadMutex, NULL);
 	self->resList = newResList();
 	return self;

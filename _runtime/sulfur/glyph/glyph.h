@@ -37,52 +37,47 @@ typedef struct sprite_glyph {
 	int32_t frame;
 } sprite_glyph_t;
 
-/*
-typedef struct glyph {
-	GLYPH_TYPE type;
-	int32_t a;
-	int32_t b;
-	int32_t c;
-	int32_t d;
-} glyph_t;*/
+	/* add to render list */
 
-	/*
-		glyph lists
-
-typedef struct glyphList {
-	int32_t capacity;
-	int32_t length;
-	glyph_t* data;
-} glyphList_t;
-
-glyphList_t* newGList() {
-	glyphList_t* gl = (glyphList_t*) malloc(sizeof(glyphList_t));
-	gl->capacity = 100;
-	gl->length = 0;
-	gl->data = (glyph_t*) malloc(100 * sizeof(glyph_t));
-	return gl;
-}
-
-void clearGList(glyphList_t* list) {
-	list->length = 0;
-}
-
-void addGList(glyphList_t* list, glyph_t* g) {
-	if (list->length >= list->capacity) {
-		int32_t newCap = (list->capacity * 5) / 4;
-		list->data = (glyph_t*) realloc(list->data, newCap * sizeof(glyph_t));
-		list->capacity = newCap;
+void addGlyphRList(renderList_t* rl, glyph_t* g) {
+	if (g->type == C_SPRITE) {
+		// obtain sprite + image data
+		sprite_glyph_t* sg = (sprite_glyph_t*) g;
+		if (sg->spritePtr == NULL) return;
+		sprite_t* spritePtr = (sprite_t*) sg->spritePtr;
+		if (spritePtr->image == NULL) return;
+		tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
+		// write into render list
+		draw_dat2d_t* dat = (draw_dat2d_t*) nextRList(rl);
+		dat->aPos[0] = (float) sg->x;
+		dat->aPos[1] = (float) sg->y;
+		dat->aSize[0] = (float) spritePtr->tw;
+		dat->aSize[1] = (float) spritePtr->th;
+		dat->aTexId = imagePtr->index;
+		dat->aTexUVPos[0] = spritePtr->fx + ((sg->frame % spritePtr->spanWidth) * spritePtr->fw);
+		dat->aTexUVPos[1] = spritePtr->fy + ((sg->frame / spritePtr->spanWidth) * spritePtr->fh);
+		dat->aTexUVSize[0] = spritePtr->fw;
+		dat->aTexUVSize[1] = spritePtr->fh;
 	}
-	list->data[list->length] = *g;
-	list->length = list->length + 1;
 }
 
-int32_t lenGList(glyphList_t* list) {
-	return list->length;
-}
 
-glyph_t* getGList(glyphList_t* list, int i) {
-	return &list->data[i];
-}	*/
+	/*for (int i = 0; i < len; i++) {
+		glyph_t* g = getGList(sulfur->front_buffer, i);
+		if (g->type == C_BOX) {
+			box_glyph_t* bg = (box_glyph_t*) g;
+			//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, bg->x, bg->y, bg->w, bg->h);
+			//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, &sulfur->sf2d->defTex);
+		} else if (g->type == C_SPRITE) {
+			sprite_glyph_t* sg = (sprite_glyph_t*) g;
+			if (sg->spritePtr == NULL) continue;
+			sprite_t* spritePtr = (sprite_t*) sg->spritePtr;
+			if (spritePtr->image == NULL) continue;
+			tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
+			//mesh_t* mesh = tempBoxSf2d(sulfur->sf2d, 0, 0, imagePtr->width, imagePtr->height);
+			//drawMeshShader(shader, oMat, mesh, &sulfur->sf2d->defTBuf, imagePtr);
+			//drawDataShader(shader, mesh, sulfur->texArr, total, data) {
+		}
+	}*/
 
 #endif

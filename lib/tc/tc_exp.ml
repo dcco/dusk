@@ -185,6 +185,7 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			if tau_r <> unitTy then Error (NoReturn_Err(fName, p))
 			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
+	| TDefDec(x, td, _) -> Hashtbl.add env.globalTIds x (TcTDef td); Valid []
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =
 	let rec tcs_rec dl = match dl with

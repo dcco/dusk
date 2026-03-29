@@ -11,6 +11,10 @@ type ('a, 'b) try_res =
 let (let*) (x: ('a, 'c) try_res) (f: 'a -> ('b, 'c) try_res): ('b, 'c) try_res =
 	match x with Error e -> Error e | Valid v -> f v
 
+let opt_try_res (f: 'a -> ('b, 'c) try_res) (o: 'a option): ('b option, 'c) try_res = match o with
+	None -> Valid None
+	| Some v ->	let* v' = f v in Valid (Some v')
+
 let rec map_try_res (f: 'a -> ('b, 'c) try_res) (l: 'a list): ('b list, 'c) try_res = match l with
 	[] -> Valid []
 	| v :: t ->

@@ -254,6 +254,7 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
 			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
 			genEnum cont env 0 cl
+		| TDefVD (StructTD _) -> ()
 		| ResVD(r, _) ->
 			let ptr = define_global f (const_null ptrType) (llmod cont) in
 			Hashtbl.add env (DVar f) (DVal((ptr, ptrType), None)); (match r with

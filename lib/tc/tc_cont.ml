@@ -71,7 +71,8 @@ let dump_tenv (env: type_env): unit =
 	print_string "} {\n";
 	Hashtbl.iter (fun x td ->
 		print_string (" " ^ x ^ ": "); (match td with
-			TcTDef (EnumTD _) -> print_string "enum"
+			TcTDef (StructTD _) -> print_string "struct"
+			| TcTDef (EnumTD _) -> print_string "enum"
 			| TcCtor f -> print_string ("ctor: " ^ f)
 		); print_string "\n"
 	) env.globalTIds;
@@ -93,6 +94,8 @@ let builtin_tenv (dl: g_virt_bind list): type_env =
 	} in List.iter (fun (_, f, vd) -> match vd with
 		SymVD(s, tau_f) -> add_fun_tenv env f (s, tau_f)
 		| ResVD(_, tau) -> Hashtbl.add env.globalIds f tau
+		| TDefVD (StructTD fl) ->
+			Hashtbl.add env.globalTIds f (TcTDef (StructTD fl))
 		| TDefVD (EnumTD cl) ->
 			Hashtbl.add env.globalTIds f (TcTDef (EnumTD cl));
 			List.iter (fun (c, _, _) -> Hashtbl.add env.globalTIds c (TcCtor f)) cl
