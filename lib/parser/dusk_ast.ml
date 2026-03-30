@@ -13,10 +13,13 @@ type const =
 	| SConst of string
 	| BConst of bool
 
+type rw = RR | WW
+
 	(* functions parameterized by something other than a pure value *)
 type x_op =
 		(* previously, ElemOp *)
 	TupleIndexOp of int
+	| StructFieldOp of rw * string
 
 type ('m, 'ann) exp =
 	ConstExp of const * 'ann

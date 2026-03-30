@@ -110,6 +110,7 @@ and parseRetTy: m_type parser = fun tkList -> match tkList with
 type appObj =
 	TupleIndexApp of int * l_pos
 	| ArrayIndexApp of n_exp list * l_pos
+	| StructFieldApp of string * l_pos 
 	| DirectApp of n_exp list * l_pos
 	| IndirectApp of qual_tag * string * n_exp list * l_pos
 
@@ -117,6 +118,7 @@ let rec foldAppList (e: n_exp) (appList: appObj list): n_exp = match appList wit
 	[] -> e
 	| (TupleIndexApp(i, p)) :: appTail -> foldAppList (AppExp(OpExp(TupleIndexOp i, p), [e], p)) appTail
 	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(VarExp(QT None, "lookup", p), e :: ei_l, p)) appTail
+	| (StructFieldApp(x, p)) :: appTail -> foldAppList (AppExp(OpExp(StructFieldOp(RR, x), p), [e], p)) appTail
 	| (DirectApp(el, p)) :: appTail -> foldAppList (AppExp(e, el, p)) appTail
 	| (IndirectApp(mo, f, el, p)) :: appTail -> foldAppList (AppExp(VarExp(mo, f, p), e :: el, p)) appTail
 
@@ -125,16 +127,19 @@ let rec foldAppList (e: n_exp) (appList: appObj list): n_exp = match appList wit
 type lvalue =
 	VarLV of string * l_pos
 	| IndexLV of n_exp * n_exp list * l_pos
+	| FieldLV of n_exp * string * l_pos
 
 let asLvalue (e: n_exp): lvalue option = match e with
 	VarExp(QT None, x, p) -> Some (VarLV(x, p))
 	| VarExp(QT (Some _), _, _) -> None
 	| AppExp(VarExp(_, "lookup", _), e :: ei_l, p) -> Some (IndexLV(e, ei_l, p))
+	| AppExp(OpExp(StructFieldOp(RR, x), _), [e], p) -> Some (FieldLV(e, x, p))
 	| _ -> None
 
 let completeAssign (lv: lvalue) (ev: n_exp): n_stmt = match lv with
 	VarLV(x, p) -> AssignStmt(x, ev, p)
 	| IndexLV(e, ei_l, p) -> EvalStmt(AppExp(VarExp(QT None, "update", p), [e; ev] @ ei_l, p), p)
+	| FieldLV(e, x, p) -> EvalStmt(AppExp(OpExp(StructFieldOp(WW, x), p), [e; ev], p), p)
 
 	(* auxiliary folds *)
 
@@ -223,9 +228,12 @@ and parseAppObj: appObj parser = fun tkList -> match tkList with
 		let* (el, tkRem) = parseBraceWrap (parseSepList parseExp chkComma) "Array Index" tkList in
 		Valid (ArrayIndexApp(el, p), tkRem)
 	| (DOT, p) :: tkRem -> (match tkRem with
-		(ID f, _) :: tkRem2 ->
-			let* (el, tkRem3) = parseParenWrap parseArgList "Function Call" tkRem2 in
-			Valid (IndirectApp(QT None, f, el, p), tkRem3)
+		(ID f, _) :: tkRem2 -> (match tkRem2 with
+			(LPAREN, _) :: _ ->
+				let* (el, tkRem3) = parseParenWrap parseArgList "Function Call" tkRem2 in
+				Valid (IndirectApp(QT None, f, el, p), tkRem3)
+			| _ -> Valid (StructFieldApp(f, p), tkRem2)
+		)
 		| (INT i, _) :: tkRem2 ->
 			Valid (TupleIndexApp(i, p), tkRem2)
 		| tk :: _ ->  Error (BadToken_Err(tk, "Property / Function Call"))

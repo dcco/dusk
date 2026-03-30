@@ -1,18 +1,17 @@
 references Sys modules Os, Sulfur, Rom
 
-struct ABox{ Int x, Int y, Int width, Int height }
+struct MoveObj{ Int x, Int xspd }
 
 fn main()
-	var h = new ABox{ x = 0, y = 0, width = 16, height = 16 }
+	var obj = new MoveObj{ x = 0, xspd = 1 }
 	var x = 0
-	var xspd = 1
 	loop
-		if x > 240 then xspd = -1 elsif x <= 0 then xspd = 1 end
-		x = x + xspd
+		if obj.x > 240 then obj.xspd = -1 elsif obj.x <= 0 then obj.xspd = 1 end
+		obj.x = obj.x + obj.xspd
 		for i < 10, j < 10 do
 			Sulfur.draw(Sprite(i * 8, j * 8, tset, 2))
 		end
-			Sulfur.draw(Sprite(x, 120, tset, 2))
+		Sulfur.draw(Sprite(obj.x, 120, tset, 2))
 		Sulfur.refresh()
 	end
 end

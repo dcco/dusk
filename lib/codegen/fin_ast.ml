@@ -5,6 +5,8 @@ open Fin_type
 		representation for raw code
 	*)
 
+
+
 type gen_exp =
 	ConstExpC of const
 	(*| LitExpC of int*)
@@ -18,7 +20,9 @@ type gen_exp =
 	| TagTupleExpC of string * gen_exp list
 	| TupleIndexExpC of gen_exp * int * g_type
 		(* struct operations *)
-	| NewStructExpC of gen_exp list
+	| NewStructExpC of string option * gen_exp list
+	| StructFieldExpC of gen_rw * gen_exp * int * string
+and gen_rw = RC | WC of gen_exp 
 
 type gen_stmt =
 	EvalStmtC of gen_exp
@@ -36,6 +40,7 @@ let type_of_method (MethodC(arg_l, tau_r, _): gen_met): g_type list * g_type =
 
 type gen_dec =
 	FunDecC of gen_met
+	| TDefDecC of g_tdef
 
 	(*
 		auxiliary gathering functions

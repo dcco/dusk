@@ -9,6 +9,7 @@
 #include "exit_log.h"
 #include "sulfur_bindings.h"
 
+#include "gc.h"
 #include "jas_array.h"
 #include "jas_string.h"
 #include "os.h"

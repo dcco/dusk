@@ -36,7 +36,7 @@ let rec genType (env: dusk_env) (tau: g_type): lltype = match tau with
 	| NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
 		Some (DTDef td) -> (match td with
 			OpaqueTD_C(i, _) -> array_type i8Type i
-			| HeapTD_C _ -> ptrType
+			| StructTD_C(_, _) -> ptrType
 		)
 		| _ -> failwith ("BUG: gen_type.ml - Generation with non-existent type \"" ^ x ^ "\"")
 	)
@@ -65,6 +65,6 @@ let genTagTupleType (env: dusk_env) (tau_l: g_type list): lltype =
 
 let align_rup (offset: int) (align: int): int = ((offset + align - 1) / align) * align
 
-let size_of_type (LCont(_, l, _, _): llvm_cont) (t: lltype): int = Int64.to_int (DataLayout.abi_size t l)
+let size_of_type (cont: llvm_cont) (t: lltype): int = Int64.to_int (DataLayout.abi_size t cont.data_layout)
 
-let align_of_type (LCont(_, l, _, _): llvm_cont) (t: lltype): int = DataLayout.abi_align t l
+let align_of_type (cont: llvm_cont) (t: lltype): int = DataLayout.abi_align t cont.data_layout
