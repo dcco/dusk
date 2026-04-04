@@ -3,8 +3,9 @@ type raw_token = INT of int | FLOAT of float | TRUE | FALSE
 	| STRLIT of string | ID of string | TID of string | DIM of int
 	| REFERENCES | MODULE | MODULES | END
 	| STRUCT
-	| FN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
-	| LOOP | WHILE | DO | FOR | IN | RETURN | UNDERSCORE
+	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
+	| LOOP | WHILE | DO | FOR | IN | RETURN
+	| GC_COLLECT | UNDERSCORE
 	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA
 	| LBRACE | RBRACE | BAR | LBRACK | RBRACK
 	| NEQ | LANGLE | RANGLE | LEQ | GEQ | AND | OR | EXCLAM
@@ -25,6 +26,7 @@ let string_of_raw_token tk = match tk with
 	| END -> "end"
 	| STRUCT -> "struct"
 	| FN -> "fn"
+	| LIN -> "lin"
 	| VAR -> "var"
 	| NEW -> "new"
 	| BY -> "by"
@@ -39,6 +41,7 @@ let string_of_raw_token tk = match tk with
 	| FOR -> "for"
 	| IN -> "in"
 	| RETURN -> "return"
+	| GC_COLLECT -> "gc_collect"
 	| UNDERSCORE -> "_"
 	| EQ -> "="
 	| DOT -> "."

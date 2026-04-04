@@ -25,6 +25,7 @@ rule token = parse
 	| "end" { lexWrap lexbuf END }
 	| "struct" { lexWrap lexbuf STRUCT }
 	| "fn" { lexWrap lexbuf FN }
+	| "lin" { lexWrap lexbuf LIN }
 	| "var" { lexWrap lexbuf VAR }
 	| "new" { lexWrap lexbuf NEW }
 	| "by" { lexWrap lexbuf BY }
@@ -41,6 +42,7 @@ rule token = parse
 	| "return" { lexWrap lexbuf RETURN }
 	| "false" { lexWrap lexbuf FALSE }
 	| "true" { lexWrap lexbuf TRUE }
+	| "gc_collect" { lexWrap lexbuf GC_COLLECT }
 	| "\"" { strlit (lexeme_start_p lexbuf) "" lexbuf }
 	| ("_"? ['a'-'z'] idChar*) as x { lexWrap lexbuf (ID x) }
 	| ("_"? ['A'-'Z'] idChar*) as x { lexWrap lexbuf (TID x) }

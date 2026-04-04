@@ -20,6 +20,7 @@ type x_op =
 		(* previously, ElemOp *)
 	TupleIndexOp of int
 	| StructFieldOp of rw * string
+	| ArrayIndexOp of rw
 
 type ('m, 'ann) exp =
 	ConstExp of const * 'ann
@@ -28,7 +29,7 @@ type ('m, 'ann) exp =
 	| OpExp of x_op * 'ann
 		(* ctors *)
 	| TupleExp of ('m * string) option * ('m, 'ann) exp list * 'ann
-	| NewDimExp of int * m_type * ('m, 'ann) exp list * 'ann
+	| NewDimExp of int * ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
 	| NewStructExp of 'm * string * (string * ('m, 'ann) exp) list * 'ann
 		(* function call *)
 	| AppExp of ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
@@ -47,6 +48,7 @@ type ('m, 'ann) stmt =
 	| IfStmt of ('m, 'ann) exp * ('m, 'ann) stmt list * ('m, 'ann) stmt list * 'ann
 	| WhileStmt of ('m, 'ann) exp * ('m, 'ann) stmt list * 'ann
 	| ForStmt of string * range_type * ('m, 'ann) exp * ('m, 'ann) stmt list * 'ann
+	| GCCollectStmt of 'ann
 
 	(*
 		######################
@@ -76,6 +78,7 @@ let ann_stmt s = match s with
 	| IfStmt(_, _, _, a) -> a
 	| WhileStmt(_, _, a) -> a
 	| ForStmt(_, _, _, _, a) -> a
+	| GCCollectStmt a -> a
 
 	(*
 		######################
@@ -83,8 +86,10 @@ let ann_stmt s = match s with
 		######################
 	*)
 
+type lin_flag = Fn | Lin
+
 type ('m, 'ann) met =
-	Method of string * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
+	Method of lin_flag * string * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
 
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann

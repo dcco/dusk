@@ -19,27 +19,46 @@ let ptrType = pointer_type context;;
 
 let structType tau_l = struct_type context (Array.of_list tau_l);;
 
+let gcArrType dim =
+	let tau_l =
+		if dim <= 1 then [iType; iType; ptrType]
+		else [iType; iType; ptrType; array_type iType dim]
+	in struct_type context (Array.of_list tau_l);;
+
 	(*
 		code generation related to types
 	*)
 
-let rec genType (env: dusk_env) (tau: g_type): lltype = match tau with
+let isHeapType (env: dusk_env) (tau: g_type): bool = match tau with
+	NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
+		Some (DTDef td) -> (match td with
+			StructTD_C(_, _) -> true
+			| _ -> false
+		)
+		| _ -> failwith "BUG: gen_type.ml - Invalid type encountered while checking heap type status."
+	)
+	| ArrayTy(_, _) -> true
+	| _ -> false
+
+let genType (tau: g_type): lltype = match tau with
 	PrimTy "Unit" -> voidType
 	| PrimTy "Int" -> iType
 	| PrimTy "Float" -> fType
 	| PrimTy "Bool" -> bType
 	| PrimTy "String" -> ptrType
-	| PrimTy "1d" -> ptrType
-	| PrimTy "nd" -> ptrType
 	| BuiltinTy _ -> ptrType
-	| TupleTy tau_l -> struct_type context (Array.of_list (List.map (genType env) tau_l))
-	| NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
-		Some (DTDef td) -> (match td with
-			OpaqueTD_C(i, _) -> array_type i8Type i
+	(*| TupleTy tau_l -> struct_type context (Array.of_list (List.map (genType env) tau_l)) *)
+	| NamedTy(_, _) -> ptrType
+	(*match Hashtbl.find_opt env (DTName x) with
+		Some (DTDef td) -> ptrType
+		(*match td with
+			OpaqueTD_C(_, _) -> ptrType (*array_type i8Type i*)
 			| StructTD_C(_, _) -> ptrType
-		)
+		*)
 		| _ -> failwith ("BUG: gen_type.ml - Generation with non-existent type \"" ^ x ^ "\"")
-	)
+	*)
+	| TupleTy _ -> ptrType
+	| ArrayTy(_, _) -> ptrType
 	| _ -> failwith "BUG: gen_type.ml - Unimplemented type."
 
 let genAlign (env: dusk_env) (tau: g_type): int option = match tau with
@@ -52,11 +71,31 @@ let genAlign (env: dusk_env) (tau: g_type): int option = match tau with
 	)
 	| _ -> None
 
-let genFunType (env: dusk_env) (pl: (string * g_type) list) (tau_r: g_type): lltype =
-	function_type (genType env tau_r) (Array.of_list (List.map (fun (_, t) -> genType env t) pl))
+let genAllocaType (env: dusk_env) (tau: g_type): lltype = match tau with
+	TupleTy tau_l -> struct_type context (Array.of_list (List.map genType tau_l))
+	| NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
+		Some (DTDef td) -> (match td with
+			OpaqueTD_C(i, _) -> array_type i8Type i
+			| _ -> failwith ("BUG: gen_type.ml - Box allocation made for invalid type \"" ^ x ^ "\".")
+		)
+		| _ -> failwith ("BUG: gen_type.ml - Generation with non-existent type \"" ^ x ^ "\"")
+	)
+	| _ -> failwith "BUG: gen_type.ml - Box allocation made for invalid type."
 
-let genTagTupleType (env: dusk_env) (tau_l: g_type list): lltype =
-	let tau_l' = List.map (genType env) tau_l in
+	(*match Hashtbl.find_opt env (DTName x) with
+		Some (DTDef td) -> ptrType
+		(*match td with
+			OpaqueTD_C(_, _) -> ptrType (*array_type i8Type i*)
+			| StructTD_C(_, _) -> ptrType
+		*)
+		| _ -> failwith ("BUG: gen_type.ml - Generation with non-existent type \"" ^ x ^ "\"")
+	*)
+	
+let genFunType (pl: (string * g_type) list) (tau_r: g_type): lltype =
+	function_type (genType tau_r) (Array.of_list (List.map (fun (_, t) -> genType t) pl))
+
+let virtTagTupleType (tau_l: g_type list): lltype =
+	let tau_l' = List.map genType tau_l in
 	struct_type context (Array.of_list (i8Type :: tau_l'))
 
 	(*

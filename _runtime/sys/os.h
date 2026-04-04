@@ -19,7 +19,7 @@ extern int32_t _Int_Sys_Os_randomInt(int32_t i) {
 	return rand() % i;
 }
 
-extern float _none_Stl_Os_randomFloat() {
+extern float _none_Sys_Os_randomFloat() {
 	return ((float) rand()) / ((float) RAND_MAX);
 }
 

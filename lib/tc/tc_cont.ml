@@ -1,5 +1,6 @@
 open Builtin
 open Parser.Dusk_type
+open Parser.Dusk_ast
 open Codegen.Fin_type
 
 module StringMap = Map.Make(String)
@@ -124,3 +125,15 @@ let sym_list_tenv (env: type_env): g_virt_bind list =
 
 let tc_complete_builtins (env: type_env) (symList: g_virt_bind list): g_virt_bind list =
 	(List.filter (fun (_, _, vd) -> match vd with SymVD(_, _) -> false | _ -> true) symList) @ sym_list_tenv env
+
+	(*
+		function context:
+			stores important meta-information about the function being compiled
+	*)
+
+type fun_cont = {
+	f: string;
+	lf: lin_flag;
+}
+
+let nonLinCont (cont: fun_cont): fun_cont = { cont with lf = Fn }

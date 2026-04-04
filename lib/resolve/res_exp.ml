@@ -23,6 +23,9 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 			let* x' = resolve_name env p prefix x in Valid (CT, x')
 		) ctor in
 		let* el' = resolve_exp_list env el in Valid (TupleExp(ctor', el', p))
+	| NewDimExp(i, ez, el, p) ->
+		let* ez' = resolve_exp env ez in
+		let* el' = resolve_exp_list env el in Valid (NewDimExp(i, ez', el', p))
 	| NewStructExp(prefix, x, fl, p) ->
 		let* x' = resolve_name env p prefix x in
 		let* fl' = map_try_res (fun (f, e) ->
@@ -31,7 +34,6 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 	| AppExp(ef, el, p) ->
 		let* ef' = resolve_exp env ef in
 		let* el' = resolve_exp_list env el in Valid (AppExp(ef', el', p))
-	| _ -> failwith "UNIMPLEMENTED: res_exp.ml - resolve exp case."
 and resolve_exp_list (env: res_env) (el: n_exp list): (r_exp list) rs_res = match el with
 	[] -> Valid []
 	| e :: et ->
@@ -67,6 +69,7 @@ let rec resolve_stmt (env: res_env) (s: n_stmt): (res_env * r_stmt) rs_res = mat
 		let* e' = resolve_exp env e in
 		let env' = { env with localIds = StringMap.add x () env.localIds } in
 		let* (_, b') = resolve_body env' b in Valid (env, ForStmt(x, rt, e', b', p))
+	| GCCollectStmt p -> Valid (env, GCCollectStmt p)
 and resolve_body (env: res_env) (b: n_stmt list): (res_env * r_stmt list) rs_res = match b with
 	[] -> Valid (env, [])
 	| s :: st ->
@@ -76,14 +79,14 @@ and resolve_body (env: res_env) (b: n_stmt list): (res_env * r_stmt list) rs_res
 	(* declaration resolution *)
 
 let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
-	FunDec(Method(f, param_l, tau_r, b), p) ->
+	FunDec(Method(lf, f, param_l, tau_r, b), p) ->
 		let fName = canonize_scope env.curPath f in
 		let* param_l' = map_try_res (fun (x, tau_p) ->
 			let* tau_p' = resolve_type env p tau_p in Valid (x, tau_p')
 		) param_l in
 		let* tau_r' = resolve_type env p tau_r in
 		add_local_dec_env env f;
-		let* (_, b') = resolve_body env b in Valid (FunDec(Method(fName, param_l', tau_r', b'), p))
+		let* (_, b') = resolve_body env b in Valid (FunDec(Method(lf, fName, param_l', tau_r', b'), p))
 	| TDefDec(x, td, p) ->
 		let tName = canonize_scope env.curPath x in
 		add_local_dec_env env x;

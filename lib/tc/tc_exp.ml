@@ -54,11 +54,25 @@ let string_of_tc_err (e: tc_err) = match e with
 	| NoReturn_Err(f, p) ->
 		"Declaration of function \"" ^ f ^ "\" does not return on all paths at " ^ (string_of_pos p) ^ "."
 	
+	(* type-checking basics *)
+
+let is_heap_type (env: type_env) (tau: g_type): bool = match tau with
+	NamedTy(_, cx) -> (match Hashtbl.find_opt env.globalTIds cx with
+		Some (TcTDef td) -> (match td with
+			StructTD _ -> true
+			| _ -> false
+		)
+		| _ -> failwith "BUG: tc_exp.ml - Invalid type encountered while checking heap type status."
+	)
+	| ArrayTy(_, _) -> true
+	| _ -> false
+
 	(* type-checking auxiliaries *)
 
 type g_fun =
 	BinaryGF of string
 	| TupleIndexGF of int
+	| ArrayIndexGF of rw
 	| StructFieldGF of rw * int * string
 	| CallGF of int list
 
@@ -92,12 +106,20 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 	| OpExp(_, _) -> failwith "BUG: tc_exp.ml - Operator expression in non-application position."
 	| TupleExp(ctor, el, p) ->
 		let* et_l' = tc_exp_list env el in (match ctor with
-			None ->	Valid (TupleExpC (List.map fst et_l'), TupleTy(List.map snd et_l'))
+			None ->
+				let tau_s = TupleTy(List.map snd et_l') in
+				Valid (TupleExpC(get_box_id_tenv env, tau_s, List.map fst et_l'), tau_s)
 			| Some (_, cx) -> (match Hashtbl.find_opt env.globalTIds cx with
-				Some (TcCtor c) -> Valid (TagTupleExpC(cx, List.map fst et_l'), NamedTy(CT, c))
+				Some (TcCtor c) ->
+					let tau_s = NamedTy(CT, c) in
+					Valid (TagTupleExpC(get_box_id_tenv env, tau_s, cx, List.map fst et_l'), tau_s)
 				| _ -> Error (NonCtor_Err(cx, p))
 			)
 		)
+	| NewDimExp(i, ez, el, _) ->
+		let* (_, tau) = tc_exp env ez in
+		let* et_l' = tc_exp_list env el in
+		Valid (NewArrayExpC(List.map fst et_l', tau), ArrayTy(i, tau))
 	| NewStructExp(_, cx, fl, p) ->
 		let* ftl' = map_try_res (fun (x, e) -> let* (e', t) = tc_exp env e in Valid (x, e', t)) fl in
 		let* el' = (match Hashtbl.find_opt env.globalTIds cx with
@@ -109,7 +131,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				) pl
 			| Some _ -> Error (BadCtorStruct_Err(cx, p))
 			| _ -> Error (NonCtor_Err(cx, p))
-		) in Valid (NewStructExpC(None, el'), NamedTy(CT, cx))
+		) in Valid (NewStructExpC(cx, el'), NamedTy(CT, cx))
 	| AppExp(ef, el, _) ->
 		let* et_l' = tc_exp_list env el in
 		let tau_al = List.map snd et_l' in
@@ -117,6 +139,9 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 		let* (f, d, (_, tau_r)) = tc_fun_exp env ef (hd_opt tau_al) in (match d with
 			BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_r)
 			| TupleIndexGF i -> Valid (TupleIndexExpC(List.hd el', i, tau_r), tau_r)
+			| ArrayIndexGF rw ->
+				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
+				Valid (ArrayIndexExpC(rw', List.hd el', List.tl el'), tau_r)
 			| StructFieldGF(rw, i, cx) ->
 				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
 				Valid (StructFieldExpC(rw', List.nth el' 0, i, cx), tau_r)
@@ -124,7 +149,6 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
 				Valid (CallExpC(VarExpC f, elx, tau_r), tau_r)
 		)
-	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - type-checking exp case."
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
 	VarExp(_, f, p) -> (match lookup_fun_tenv env f tau_a with
 		Some (f, (d, tau_f)) -> (match d with
@@ -138,9 +162,18 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 		None -> failwith "BUG: tc_exp.ml - No argument for tuple index operation."
 		| Some (TupleTy tau_l) -> (match index_type_list tau_l (i - 1) with
 			None -> Error (TupleIndexOOB_Err(TupleTy tau_l, i, p))
-			| Some tau_i -> Valid ("", TupleIndexGF (i - 1), ([TupleTy tau_l], tau_i))
+			| Some tau_i ->	Valid ("", TupleIndexGF (i - 1), ([TupleTy tau_l], tau_i))
 		)
 		| Some tau -> Error (NonTuple_Err(tau, p))
+	)
+	| OpExp(ArrayIndexOp rw, p) -> (match tau_a with
+		None -> failwith "BUG: tc_exp.ml - No argument for array index operation."
+		| Some (ArrayTy(i, tau_v)) ->
+			let tau_r = if rw = RR then tau_v else unitTy in
+			Valid ("", ArrayIndexGF rw, (List.init i (fun _ -> tau_v), tau_r))
+		| Some _ ->
+			let fName = if rw = RR then "_builtin_lookup" else "_builtin_update" in 
+			tc_fun_exp env (VarExp(CT, fName, p)) tau_a
 	)
 	| OpExp(StructFieldOp(rw, x), p) -> (match tau_a with
 		None -> failwith "BUG: tc_exp.ml - No argument for struct field operation."
@@ -168,7 +201,7 @@ and tc_exp_list (env: type_env) (el: r_exp list): ((gen_exp * g_type) list) tc_r
 
 	(* statement type-checking *)
 
-let rec tc_stmt (f: string) (env: type_env) (s: r_stmt): (type_env * gen_stmt list * bool) tc_res = match s with
+let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_stmt list * bool) tc_res = match s with
 	EvalStmt(e, _) ->
 		let* (e', _) = tc_exp env e in Valid (env, [EvalStmtC e'], false)
 	| AssignStmt(x, e, _) -> (match StringMap.find_opt x env.localIds with
@@ -178,15 +211,16 @@ let rec tc_stmt (f: string) (env: type_env) (s: r_stmt): (type_env * gen_stmt li
 	| PatStmt(px, e, _) ->
 		let* (e', tau_e) = tc_exp env e in (match (px, tau_e) with
 			(VarPat x, _) ->
-				Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, [VarStmtC(x, e', tau_e)], false)
+				let ef = if cont.lf = Lin && is_heap_type env tau_e then GCNewRootExpC e' else e' in
+				Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, [VarStmtC(x, ef, tau_e)], false)
 			| _ -> failwith "Unimplemented: res_out.ml - Patterns.")
 	| IfStmt(ec, b1, b2, _) ->
 		let* (ec', _) = tc_exp env ec in 
-		let* (_, b1', term1) = tc_body f env b1 in
-		let* (_, b2', term2) = tc_body f env b2 in Valid (env, [IfStmtC(ec', b1', term1, b2', term2)], false)
+		let* (_, b1', term1) = tc_body (nonLinCont cont) env b1 in
+		let* (_, b2', term2) = tc_body (nonLinCont cont) env b2 in Valid (env, [IfStmtC(ec', b1', term1, b2', term2)], false)
 	| WhileStmt(ec, b, _) ->
-		let* (ec', _) = tc_exp env ec in 
-		let* (_, b', _) = tc_body f env b in Valid (env, [WhileStmtC(ec', b')], false)
+		let* (ec', _) = tc_exp env ec in
+		let* (_, b', _) = tc_body (nonLinCont cont) env b in Valid (env, [WhileStmtC(ec', b')], false)
 	| ForStmt(x, rt, e, b, _) ->
 		let* (e', _) = tc_exp env e in
 		let* (tau_x, cmp, _) = (match rt with
@@ -203,18 +237,19 @@ let rec tc_stmt (f: string) (env: type_env) (s: r_stmt): (type_env * gen_stmt li
 		let x' = VarExpC i' in
 		let cond' = BinExpC(cmp, x', end') in
 			(* for loop body: body; _iterator = _iterator + 1 *)
-		let* (_, b', _) = tc_body f env' b in
+		let* (_, b', _) = tc_body (nonLinCont cont) env' b in
 		let b'' = b' @ [AssignStmtC(i', BinExpC("iadd", x', ConstExpC (IConst 1)))] in
 			(* for loop body: prefix with x = e[_iterator] for list case *)
 		(*let bf' = if list_flag then AssignStmtC(i', ArrayIndexExpC(e', [x'], tau_x)) :: b'' else b'' in*)
 		Valid (env, [VarStmtC(i', ConstExpC (IConst 0), intTy); WhileStmtC(cond', b'')], false)
+	| GCCollectStmt _ -> Valid (env, [GCCollectStmtC], false)
 	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - statement case."
-and tc_body (f: string) (env: type_env) (b: r_stmt list): (type_env * gen_stmt list * bool) tc_res = match b with
+and tc_body (cont: fun_cont) (env: type_env) (b: r_stmt list): (type_env * gen_stmt list * bool) tc_res = match b with
 	[] -> Valid (env, [], false)
 	| s :: st ->
-		let* (env2, s', term0) = tc_stmt f env s in
-		if term0 then Error (EarlyReturn_Err (f, ann_stmt s))
-		else let* (env3, st', termX) = tc_body f env2 st in Valid (env3, s' @ st', termX)
+		let* (env2, s', term0) = tc_stmt cont env s in
+		if term0 then Error (EarlyReturn_Err (cont.f, ann_stmt s))
+		else let* (env3, st', termX) = tc_body cont env2 st in Valid (env3, s' @ st', termX)
 
 	(* declaration / sectional type-checking *)
 
@@ -224,14 +259,14 @@ let rec add_param_list (env: type_env) (pl: (string * g_type) list): type_env = 
 		add_param_list { env with localIds = StringMap.add x tau env.localIds } pt
 
 let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match d with
-	FunDec(Method(f, pl, tau_r, b), p) ->
+	FunDec(Method(lf, f, pl, tau_r, b), p) ->
 		let tau_pl = List.map (fun (_, tau) -> tau) pl in
 			(* a function name cant be fully "canonized" until this stage *)
 		let fName = "_" ^ (tag_of_type (hd_opt tau_pl)) ^ f in
 		add_fun_tenv env fName (UserDefSym, (tau_pl, tau_r));
 		(*let env' = { env with local = StringMap.add fName (FunTy(tau_pl', tau_r')) } in*)
 		let localEnv = add_param_list env pl in
-		let* (_, b', term) = tc_body fName localEnv b in
+		let* (_, b', term) = tc_body { f = fName; lf = lf; } localEnv b in
 		if not term then (
 			if tau_r <> unitTy then Error (NoReturn_Err(fName, p))
 			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]

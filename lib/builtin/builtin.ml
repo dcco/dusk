@@ -80,7 +80,7 @@ let osList = [
 
 let sulfurList = [
 	("refresh", ExternalSym [], [], unitTy);
-	("draw", ExternalSym [0], [namedTy "Glyph"], unitTy)
+	("draw", ExternalSym [], [namedTy "Glyph"], unitTy)
 ]
 
 let imageTy = builtinTy "Image"

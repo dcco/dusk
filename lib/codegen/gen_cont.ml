@@ -13,7 +13,10 @@ Llvm_all_backends.initialize ();;
 	*)
 
 type gc_iface = {
+	new_array: llvalue * lltype;
 	gc_alloc: llvalue * lltype;
+	gc_new_root: llvalue * lltype;
+	gc_collect: llvalue * lltype;
 }
 
 	(*
@@ -35,7 +38,10 @@ let newLCont (): llvm_cont =
 		data_layout = DataLayout.of_string (data_layout m);
 		builder = builder context;
 		gc = ref {
+			new_array = (const_null ptrType, ptrType);
 			gc_alloc = (const_null ptrType, ptrType);
+			gc_new_root = (const_null ptrType, ptrType);
+			gc_collect = (const_null ptrType, ptrType);
 		};
 		uid = ref 0;
 	}
@@ -56,12 +62,12 @@ let genRef (LCont(_, _, _, r): llvm_cont): int = r := !r + 1; !r - 1
 	(*
 		dusk compilation type definitions:
 			- opaque: opaque array of bytes used for unions, has size + alignment
-			- struct: heap-allocated struct w/ size
+			- struct: heap-allocated struct, w/ reference to "size" information for GC
 	*)
 
 type dusk_tdef =
 	OpaqueTD_C of int * int
-	| StructTD_C of lltype list * int
+	| StructTD_C of lltype list * llvalue
 
 	(*
 		code generation environment

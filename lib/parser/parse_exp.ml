@@ -117,7 +117,7 @@ type appObj =
 let rec foldAppList (e: n_exp) (appList: appObj list): n_exp = match appList with
 	[] -> e
 	| (TupleIndexApp(i, p)) :: appTail -> foldAppList (AppExp(OpExp(TupleIndexOp i, p), [e], p)) appTail
-	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(VarExp(QT None, "lookup", p), e :: ei_l, p)) appTail
+	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(OpExp(ArrayIndexOp RR, p), e :: ei_l, p)) appTail
 	| (StructFieldApp(x, p)) :: appTail -> foldAppList (AppExp(OpExp(StructFieldOp(RR, x), p), [e], p)) appTail
 	| (DirectApp(el, p)) :: appTail -> foldAppList (AppExp(e, el, p)) appTail
 	| (IndirectApp(mo, f, el, p)) :: appTail -> foldAppList (AppExp(VarExp(mo, f, p), e :: el, p)) appTail
@@ -132,13 +132,13 @@ type lvalue =
 let asLvalue (e: n_exp): lvalue option = match e with
 	VarExp(QT None, x, p) -> Some (VarLV(x, p))
 	| VarExp(QT (Some _), _, _) -> None
-	| AppExp(VarExp(_, "lookup", _), e :: ei_l, p) -> Some (IndexLV(e, ei_l, p))
+	| AppExp(OpExp(ArrayIndexOp RR, _), e :: ei_l, p) -> Some (IndexLV(e, ei_l, p))
 	| AppExp(OpExp(StructFieldOp(RR, x), _), [e], p) -> Some (FieldLV(e, x, p))
 	| _ -> None
 
 let completeAssign (lv: lvalue) (ev: n_exp): n_stmt = match lv with
 	VarLV(x, p) -> AssignStmt(x, ev, p)
-	| IndexLV(e, ei_l, p) -> EvalStmt(AppExp(VarExp(QT None, "update", p), [e; ev] @ ei_l, p), p)
+	| IndexLV(e, ei_l, p) -> EvalStmt(AppExp(OpExp(ArrayIndexOp WW, p), [e; ev] @ ei_l, p), p)
 	| FieldLV(e, x, p) -> EvalStmt(AppExp(OpExp(StructFieldOp(WW, x), p), [e; ev], p), p)
 
 	(* auxiliary folds *)
@@ -210,10 +210,10 @@ and parseArgList: n_exp list parser = fun tkList -> match tkList with
 	(RPAREN, _) :: _ -> Valid ([], tkList)
 	| _ -> parseSepList parseExp chkComma tkList
 
-and parseArrayInner: (m_type * n_exp list) parser = fun tkList ->
-	let* (tau, tkRem) = parseType tkList in
+and parseArrayInner: (n_exp * n_exp list) parser = fun tkList ->
+	let* (ez, tkRem) = parseExp tkList in
 	let* (_, tkRem2) = parseTk ELLIP "Array Initializer" tkRem in
-	let* (el, tkRem3) = parseSepList parseExp chkBy tkRem2 in Valid ((tau, el), tkRem3)
+	let* (el, tkRem3) = parseSepList parseExp chkBy tkRem2 in Valid ((ez, el), tkRem3)
 
 and parseStructInit: (string * n_exp) parser = fun tkList ->
 	let* (x, tkRem) = parseId tkList in
@@ -318,6 +318,8 @@ let rec parseStmt: n_stmt parser = fun tkList -> match tkList with
 		| _ ->
 			let* (e, tkRem2) = parseExp tkRem in
 			Valid (ReturnStmt(Some e, p), tkRem2))
+	| (GC_COLLECT, p) :: tkRem ->
+		Valid (GCCollectStmt p, tkRem)
 	| (tk, p) :: _ ->
 		let* (e, tkRem) = parseAddExp tkList in (match tkRem with
 		(EQ, _) :: tkRem2 -> (match asLvalue e with
@@ -378,13 +380,10 @@ let parseFnMain: ((string * m_type) list * m_type * n_stmt list) parser = fun tk
 	let* (_, tkRem4) = parseTk END "Method" tkRem3 in
 	Valid ((pl, tau_r, sl), tkRem4)
 
-let parseMet: n_met parser = fun tkList -> match tkList with
-	(FN, _) :: tkRem ->
-		let* (f, tkRem2) = parseId tkRem in
-		let* ((pl, tau_r, body), tkRem3) = parseFnMain tkRem2 in
-		Valid (Method(f, pl, tau_r, body), tkRem3)
-	| tk :: _ -> Error (BadToken_Err(tk, "Method"))
-	| _ -> Error (EOF_Err "Method")
+let parseMet (lf: lin_flag): n_met parser = fun tkList ->
+	let* (f, tkRem) = parseId tkList in
+	let* ((pl, tau_r, body), tkRem2) = parseFnMain tkRem in
+	Valid (Method(lf, f, pl, tau_r, body), tkRem2)
 
 	(* declaration / type definition parsing *)
 
@@ -394,9 +393,12 @@ let parseFieldDef: (string * m_type) parser = fun tkList ->
 	Valid ((x, t), tkRem2)
 
 let parseDec: n_dec parser = fun tkList -> match tkList with
-	(FN, p) :: _ ->
-		let* (m, tkRem) = parseMet tkList in
-		Valid (FunDec(m, p), tkRem)
+	(FN, p) :: tkRem ->
+		let* (m, tkRem2) = parseMet Fn tkRem in
+		Valid (FunDec(m, p), tkRem2)
+	| (LIN, p) :: tkRem ->
+		let* (m, tkRem2) = parseMet Lin tkRem in
+		Valid (FunDec(m, p), tkRem2)
 	| (STRUCT, p) :: tkRem ->
 		let* (x, tkRem2) = parseTId tkRem in
 		let* (fl, tkRem3) = parseBrackWrap (parseSepList parseFieldDef chkComma) "Struct Definition" tkRem2 in
