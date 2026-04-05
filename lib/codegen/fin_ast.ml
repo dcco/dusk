@@ -21,7 +21,7 @@ type gen_exp =
 	| TupleIndexExpC of gen_exp * int * g_type
 		(* array operations *)
 	| NewArrayExpC of gen_exp list * g_type
-	| ArrayIndexExpC of gen_rw * gen_exp * gen_exp list
+	| ArrayIndexExpC of gen_rw * gen_exp * gen_exp list * g_type
 		(* struct operations *)
 	| NewStructExpC of string * gen_exp list
 	| StructFieldExpC of gen_rw * gen_exp * int * string

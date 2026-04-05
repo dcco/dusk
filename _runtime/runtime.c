@@ -18,6 +18,7 @@
 void _none_main();
 
 void* wrap_main(void* arg) {
+	srand(time(NULL) ^ getpid());
 	_none_main();
 	return NULL;
 }

@@ -19,11 +19,9 @@ let ptrType = pointer_type context;;
 
 let structType tau_l = struct_type context (Array.of_list tau_l);;
 
-let gcArrType dim =
-	let tau_l =
-		if dim <= 1 then [iType; iType; ptrType]
-		else [iType; iType; ptrType; array_type iType dim]
-	in struct_type context (Array.of_list tau_l);;
+let gcArrType = struct_type context (Array.of_list [iType; iType; ptrType]);;
+
+let gcDimsType n = struct_type context (Array.of_list (List.init n (fun _ -> iType)));;
 
 	(*
 		code generation related to types

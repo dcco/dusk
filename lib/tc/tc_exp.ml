@@ -140,8 +140,10 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_r)
 			| TupleIndexGF i -> Valid (TupleIndexExpC(List.hd el', i, tau_r), tau_r)
 			| ArrayIndexGF rw ->
-				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
-				Valid (ArrayIndexExpC(rw', List.hd el', List.tl el'), tau_r)
+				let (rw', tau_r', et') =
+					if rw = RR then (RC, tau_r, List.tl el')
+					else (WC (List.nth el' 1), unitTy, List.tl (List.tl el')) in
+				Valid (ArrayIndexExpC(rw', List.hd el', et', tau_r), tau_r')
 			| StructFieldGF(rw, i, cx) ->
 				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
 				Valid (StructFieldExpC(rw', List.nth el' 0, i, cx), tau_r)
@@ -169,8 +171,9 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 	| OpExp(ArrayIndexOp rw, p) -> (match tau_a with
 		None -> failwith "BUG: tc_exp.ml - No argument for array index operation."
 		| Some (ArrayTy(i, tau_v)) ->
-			let tau_r = if rw = RR then tau_v else unitTy in
-			Valid ("", ArrayIndexGF rw, (List.init i (fun _ -> tau_v), tau_r))
+				(* strictly speaking, it should return unit for the WRITE case,
+					but we need the inner type for code-gen *)
+			Valid ("", ArrayIndexGF rw, (List.init i (fun _ -> tau_v), tau_v))
 		| Some _ ->
 			let fName = if rw = RR then "_builtin_lookup" else "_builtin_update" in 
 			tc_fun_exp env (VarExp(CT, fName, p)) tau_a

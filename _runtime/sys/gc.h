@@ -54,7 +54,7 @@ typedef struct gc_obj {
 		- capacity: the current allocation for the array
 		- size: the RAW number of elements in the array
 		- data: a pointer to the raw data
-		~ followed by the array dimensions
+		~ for tensors, followed by the array dimensions
 	*/
 
 typedef struct gc_array {
@@ -123,11 +123,9 @@ extern void* gc_alloc(int32_t size, gc_type_t* type) {
 	_gc_alloc(size, type, 0);
 }
 
-extern void* gc_alloc_array(int32_t elemSize, int32_t dim, int32_t arrSize) {
+extern void* gc_alloc_array(int32_t elemSize, int32_t arrSize, int32_t exSize) {
 	// initialize gc object
-	int dimEx = 0;
-	if (dim > 1) dimEx = dim;
-	gc_array_t* array = (gc_array_t*) _gc_alloc(sizeof(gc_array_t) + sizeof(int32_t) * dimEx, NULL, 1);
+	gc_array_t* array = (gc_array_t*) _gc_alloc(sizeof(gc_array_t) + exSize, NULL, 1);
 	// allocate raw data
 	int32_t arrCap = 16;
 	if (arrSize > arrCap) arrCap = arrSize;

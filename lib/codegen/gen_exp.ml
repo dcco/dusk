@@ -41,6 +41,21 @@ let rec genProduct (cont: llvm_cont) (vl: llvalue list): llvalue = match vl with
 	| [v] -> v
 	| v :: vt -> let vt' = genProduct cont vt in build_mul v vt' "_mulT" cont.builder
 
+let genIndexProd (cont: llvm_cont) (va: llvalue) (vl: llvalue list) (dim: int): llvalue =
+	let dimsPtr = build_gep gcArrType va (Array.of_list [const_int iType 1]) "_dimsPT" cont.builder in
+	let rec gip_rec vl i = match vl with
+		[] -> failwith ("BUG: gen_exp.ml - Empty index list found while generating index product.")
+		| [v] -> v
+		| v :: vt ->
+			let vt' = gip_rec vt (i + 1) in
+			let sx = "_dim" ^ (string_of_int i) in
+			let sizePtr = build_gep (gcDimsType dim) dimsPtr 
+				(Array.of_list [const_int iType 0; const_int iType i]) (sx ^ "PT") cont.builder in
+			let v_size = build_load iType sizePtr (sx ^ "T") cont.builder in
+			let vm = build_mul vt' v_size "_mulT" cont.builder in
+			build_add v vm "_addT" cont.builder
+	in gip_rec vl 0
+
 let genBoxStore (cont: llvm_cont) (env: dusk_env) (boxId: int) (vx: llvalue): dusk_val =
 	match Hashtbl.find_opt env (DBox boxId) with
 		Some (DVal((vb, tb), alignOpt)) ->
@@ -132,25 +147,39 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		let v_size = genProduct cont (List.map fst res_l) in
 			(* initialize array *)
 		let e_size = const_int iType (size_of_type cont (genType tau)) in
-		let v_dim = const_int iType dim in
+		let dim_size = const_int iType (if dim <= 1 then 0 else size_of_type cont (gcDimsType dim)) in
 		let (new_arr, new_arr_type) = !(cont.gc).new_array in
-		let arrPtr = build_call new_arr_type new_arr (Array.of_list [e_size; v_dim; v_size]) "_arrPT" bx in
+		let arrPtr = build_call new_arr_type new_arr (Array.of_list [e_size; v_size; dim_size]) "_arrPT" bx in
 			(* initialize dimensions *)
 		(if dim <= 1 then () else
-			let dimsPtr = build_gep (gcArrType dim) arrPtr
-				(Array.of_list [const_int iType 0; const_int iType 3]) "_dimsPT" bx in
+			let dimsPtr = build_gep gcArrType arrPtr
+				(Array.of_list [const_int iType 1]) "_dimsPT" bx in
 			List.iteri (fun i vd ->
 				let dx = "_dim" ^ (string_of_int i) ^ "PT" in
-				let dimPtr = build_gep iType dimsPtr (Array.of_list [const_int iType i]) dx bx in
+				let dimPtr = build_gep (gcDimsType dim) dimsPtr
+					(Array.of_list [const_int iType 0; const_int iType i]) dx bx in
 				ignore (build_store vd dimPtr bx)
 			) (List.map fst res_l)
 			(*let dimsSlot = build_gep gcArrType arrPtr
 				(Array.of_list [const_int iType 0; const_int iType 1]) "_dimsS" bx in
 			let dimsPtr = build_load ptrType dimsSlot "_dimsPT" bx in*)
 		); (arrPtr, ptrType)
-	| ArrayIndexExpC(_, ea, el) ->
-		let (va, tau) = genExp cont env ea in
-		let _ = List.map (genExp cont env) el in (va, tau)
+	| ArrayIndexExpC(rw, ea, el, tau) ->
+			(* calculate sub-expressions *)
+		let (va, _) = genExp cont env ea in
+		let vl = List.map (fun e -> fst (genExp cont env e)) el in
+		let dim = List.length vl in
+		let t' = genType tau in
+			(* calculate index *)
+		let vi = if dim = 1 then List.hd vl else genIndexProd cont va vl dim in
+		let dataPtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 2]) "_dataS" bx in
+		let v_data = build_load ptrType dataPtr "_dataPT" bx in
+		let vPtr = build_gep t' v_data (Array.of_list [vi]) "_elemPT" bx in
+			(* read / write to index *)
+		(match rw with
+			RC -> (build_load t' vPtr "_elemT" bx, t')
+			| WC ev -> let (vv, _) = genExp cont env ev in (build_store vv vPtr bx, voidType)
+		)
 	| NewStructExpC(tx, el) ->
 		let res_l = List.map (genExp cont env) el in
 		let tau_l = List.map snd res_l in

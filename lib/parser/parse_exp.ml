@@ -152,10 +152,15 @@ let rec foldOpListL (e: n_exp) (eOpList: (n_exp * string * l_pos) list): n_exp =
 	[] -> e
 	| (ex, xOp, p) :: eOpTail -> foldOpListL (AppExp(VarExp(QT None, xOp, p), [e; ex], p)) eOpTail
 
+	(*
+		- the first loop in a sequence becomes the inner-most loop
+			(to mirror how array indexing is performed)
+	 *)
+
 let rec foldRangeList (rl: (string * range_type * n_exp) list) (body: n_stmt list): n_stmt = match rl with
 	[] -> failwith "BUG: Parsed for loop with no ranges"
 	| [(x, r, e)] -> ForStmt(x, r, e, body, ann_exp e)
-	| (x, r, e) :: rt -> ForStmt(x, r, e, [foldRangeList rt body], ann_exp e)
+	| (x, r, e) :: rt -> foldRangeList rt [ForStmt(x, r, e, body, ann_exp e)]
 
 	(* main expression parsing *)
 
