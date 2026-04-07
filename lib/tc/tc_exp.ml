@@ -217,6 +217,10 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_st
 		Some _ -> let* (e', _) = tc_exp env e in Valid (env, [AssignStmtC(x, e')], false)
 		| _ -> failwith "BUG: tc_exp.ml - Failed variable lookup during type-checking phase."
 	)
+	| ReturnStmt(eo, _) -> (match eo with
+		None -> Valid (env, [ReturnStmtC None], true)
+		| Some e -> let* (e', _) = tc_exp env e in Valid (env, [ReturnStmtC (Some e')], true)
+	)
 	| PatStmt(px, e, _) ->
 		let* (e', tau_e) = tc_exp env e in (match (px, tau_e) with
 			(VarPat x, _) ->
@@ -226,7 +230,7 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_st
 	| IfStmt(ec, b1, b2, _) ->
 		let* (ec', _) = tc_exp env ec in 
 		let* (_, b1', term1) = tc_body (nonLinCont cont) env b1 in
-		let* (_, b2', term2) = tc_body (nonLinCont cont) env b2 in Valid (env, [IfStmtC(ec', b1', term1, b2', term2)], false)
+		let* (_, b2', term2) = tc_body (nonLinCont cont) env b2 in Valid (env, [IfStmtC(ec', b1', term1, b2', term2)], term1 && term2)
 	| WhileStmt(ec, b, _) ->
 		let* (ec', _) = tc_exp env ec in
 		let* (_, b', _) = tc_body (nonLinCont cont) env b in Valid (env, [WhileStmtC(ec', b')], false)
@@ -252,13 +256,16 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_st
 		(*let bf' = if list_flag then AssignStmtC(i', ArrayIndexExpC(e', [x'], tau_x)) :: b'' else b'' in*)
 		Valid (env, [VarStmtC(i', ConstExpC (IConst 0), intTy); WhileStmtC(cond', b'')], false)
 	| GCCollectStmt _ -> Valid (env, [GCCollectStmtC], false)
-	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - statement case."
 and tc_body (cont: fun_cont) (env: type_env) (b: r_stmt list): (type_env * gen_stmt list * bool) tc_res = match b with
 	[] -> Valid (env, [], false)
 	| s :: st ->
-		let* (env2, s', term0) = tc_stmt cont env s in
-		if term0 then Error (EarlyReturn_Err (cont.f, ann_stmt s))
-		else let* (env3, st', termX) = tc_body cont env2 st in Valid (env3, s' @ st', termX)
+		let* (env2, s', term0) = tc_stmt cont env s in (match st with
+			[] -> Valid (env2, s', term0)
+			| _ ->
+				if term0 then Error (EarlyReturn_Err (cont.f, ann_stmt s))
+				else let* (env3, st', termX) = tc_body cont env2 st in Valid (env3, s' @ st', termX)
+		)
+		
 
 	(* declaration / sectional type-checking *)
 
@@ -270,11 +277,11 @@ let rec add_param_list (env: type_env) (pl: (string * g_type) list): type_env = 
 let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match d with
 	FunDec(Method(lf, f, pl, tau_r, b), p) ->
 		let tau_pl = List.map (fun (_, tau) -> tau) pl in
-			(* a function name cant be fully "canonized" until this stage *)
-		let fName = "_" ^ (tag_of_type (hd_opt tau_pl)) ^ f in
-		add_fun_tenv env fName (UserDefSym, (tau_pl, tau_r));
-		(*let env' = { env with local = StringMap.add fName (FunTy(tau_pl', tau_r')) } in*)
+			(* uses non-type-canon function name (to allow for overloads on lookup) *)
+		add_fun_tenv env f (UserDefSym, (tau_pl, tau_r));
 		let localEnv = add_param_list env pl in
+			(* use canon name for error messages + final declaration *)
+		let fName = "_" ^ (tag_of_type (hd_opt tau_pl)) ^ f in
 		let* (_, b', term) = tc_body { f = fName; lf = lf; } localEnv b in
 		if not term then (
 			if tau_r <> unitTy then Error (NoReturn_Err(fName, p))

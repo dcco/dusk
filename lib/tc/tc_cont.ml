@@ -108,8 +108,9 @@ let get_box_id_tenv (env: type_env): int =
 let lookup_fun_tenv (env: type_env) (f: string) (tau_o: g_type option): (string * sym_fun_type) option = match Hashtbl.find_opt env.globalFIds f with
 	None -> None (* this case should theoretically never come up *)
 	| Some rho ->
-		let tag = tag_of_type tau_o in (match disambig_ptype rho tag with
-			None -> None
+		let tag = tag_of_type tau_o in 
+		print_string ("TAG+F: " ^ tag ^ " _ " ^ f ^ "\n"); (match disambig_ptype rho tag with
+			None -> dump_tenv env; None
 			| Some res -> Some ("_" ^ tag ^ f, res)
 		)
 

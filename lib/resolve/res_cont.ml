@@ -38,6 +38,22 @@ type res_env = {
 	localIds: unit StringMap.t;
 }
 
+	(*
+		canonization functions
+	*)
+
+let canonize_scope (scope: string list) (x: string): string =
+	if List.length scope = 0 then "_" ^ x
+	else "_" ^ (String.concat "_" scope) ^ "_" ^ x
+
+let canonize_binding (env: res_env) (ox: bind_origin) (x: string): string = match ox with
+	PrimOr -> x
+	| LocalOr -> canonize_scope env.curPath x
+	| ImportOr handle -> (match Hashtbl.find_opt env.importPrefixes handle with
+		None -> failwith "BUG: res_cont.ml - Attempted to lookup unknown import handle."
+		| Some path -> canonize_scope path x
+	)
+
 	(* - standard resolution functions *)
 
 let lookup_env (env: res_env) (p: qual_tag) (x: string): (bind_origin * string) list = match p with
@@ -64,13 +80,21 @@ let add_import_env (env: res_env) (path: string list) (handle: string): unit =
 			)
 	) symList
 
-let add_local_dec_env (env: res_env) (x: string): unit =
-	match Hashtbl.find_opt env.importIds x with
+	(* - non-overload case: creates locally scoped name, even with conflict *)
+let add_local_dec_env (env: res_env) (x: string): string =
+	(match Hashtbl.find_opt env.importIds x with
 		None -> Hashtbl.add env.importIds x [(LocalOr, x)]
-		| Some l -> (match List.find_opt (fun (b, _) -> b = LocalOr) l with
-			None -> Hashtbl.replace env.importIds x ((LocalOr, x) :: l)
+		| Some xl -> (match List.find_opt (fun (b, _) -> b = LocalOr) xl with
+			None -> Hashtbl.replace env.importIds x ((LocalOr, x) :: xl)
 			| _ -> ()
 		)
+	); canonize_scope env.curPath x;;
+
+	(* - overload case: if conflict, automatically attempts to overload pre-existing name *)
+let add_local_dec_env_ol (env: res_env) (x: string): (bind_origin * string) list =
+	match Hashtbl.find_opt env.importIds x with
+		None -> Hashtbl.add env.importIds x [(LocalOr, x)]; [(LocalOr, x)]
+		| Some xl -> xl
 
 let builtin_env (treeMap: (m_virt_bind list) tree_map): res_env = let env = {
 	curPath = [];
@@ -99,21 +123,6 @@ let dump_renv (env: res_env): unit =
 	) l) env.importIds;
 	print_string "}\n";;
 
-	(*
-		canonization functions
-	*)
-
-let canonize_scope (scope: string list) (x: string): string =
-	if List.length scope = 0 then "_" ^ x
-	else "_" ^ (String.concat "_" scope) ^ "_" ^ x
-
-let canonize_binding (env: res_env) (ox: bind_origin) (x: string): string = match ox with
-	PrimOr -> x
-	| LocalOr -> canonize_scope env.curPath x
-	| ImportOr handle -> (match Hashtbl.find_opt env.importPrefixes handle with
-		None -> failwith "BUG: res_cont.ml - Attempted to lookup unknown import handle."
-		| Some path -> canonize_scope path x
-	)
 
 
 

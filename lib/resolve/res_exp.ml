@@ -80,16 +80,25 @@ and resolve_body (env: res_env) (b: n_stmt list): (res_env * r_stmt list) rs_res
 
 let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 	FunDec(Method(lf, f, param_l, tau_r, b), p) ->
-		let fName = canonize_scope env.curPath f in
-		let* param_l' = map_try_res (fun (x, tau_p) ->
-			let* tau_p' = resolve_type env p tau_p in Valid (x, tau_p')
-		) param_l in
-		let* tau_r' = resolve_type env p tau_r in
-		add_local_dec_env env f;
-		let* (_, b') = resolve_body env b in Valid (FunDec(Method(lf, fName, param_l', tau_r', b'), p))
+			(* resolve name as new function OR overload *)
+		let bind_l = add_local_dec_env_ol env f in
+		if List.length bind_l > 1 then Error (AmbiguousLookup_Err(QT None, f, p))
+		else (
+			let (ox, f') = List.hd bind_l in
+			let fName = canonize_binding env ox f' in
+				(* get parameter + return types *)
+			let* param_l' = map_try_res (fun (x, tau_p) ->
+				let* tau_p' = resolve_type env p tau_p in Valid (x, tau_p')
+			) param_l in
+			let* tau_r' = resolve_type env p tau_r in
+				(* update environment, resolve function body *)
+			let env' = List.fold_left (fun env' (x, _) ->
+				{ env' with localIds = StringMap.add x () env'.localIds }
+			) env param_l' in
+			let* (_, b') = resolve_body env' b in Valid (FunDec(Method(lf, fName, param_l', tau_r', b'), p))
+		)
 	| TDefDec(x, td, p) ->
-		let tName = canonize_scope env.curPath x in
-		add_local_dec_env env x;
+		let tName = add_local_dec_env env x in
 		let* td' = resolve_type_def env p td in	Valid (TDefDec(tName, td', p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with

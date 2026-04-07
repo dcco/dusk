@@ -87,6 +87,9 @@ let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"] then Valid (primTy x, tkRem)
 		else Valid (NamedTy(QT None, x), tkRem)
+	| (DIM i, _) :: tkRem ->
+		let* (tau, tkRem2) = parseBraceWrap parseType "Array Type" tkRem in
+		Valid (ArrayTy(i, tau), tkRem2)
 	| (LPAREN, _) :: _ ->
 		let* (tau_l, tkRem) = parseParenWrap (parseSepList parseType chkComma) "Tuple Type" tkList in
 		Valid (TupleTy tau_l, tkRem)
