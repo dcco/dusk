@@ -6,10 +6,12 @@
 
 #include "glad.h"
 #include "glfw3.h"
+#include "time_api.h"
 #include "exit_log.h"
 #include "sulfur_bindings.h"
 
 #include "gc.h"
+#include "input.h"
 #include "jas_string.h"
 #include "os.h"
 
@@ -39,8 +41,11 @@ int main(void) {
 	}
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+	glfwWindowHint(GLFW_DEPTH_BITS, 24);
+	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 
 	// initialize window
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Dusk", NULL, NULL);
@@ -49,6 +54,7 @@ int main(void) {
 		exit_log("Could not create GLFW window.", "");
 	}
 	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1);
 
 	// gl binding loader
 	if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -56,17 +62,25 @@ int main(void) {
 		exit_log("Loading OpenGL bindings failed.", "");
 	}
 
+	// check open gl version
+	if (glGetString(GL_VERSION)) {
+		printf("OpenGL Version: %s\n", glGetString(GL_VERSION));
+	} else {
+		exit_log("OpenGL context failed!", "");
+	}
+
+	// depth bits test
+	/*GLint depthBits = 0;
+	glGetIntegerv(GL_DEPTH_BITS, &depthBits);
+	printf("Depth bits: %d\n", depthBits);*/
+
+	// initialize input
+	kbm_input_t* input_local = initInput(window);
+	mainInput = input_local;
+
 	// initialize sulfur
 	sulfur_t* sulfur_local = initSulfur(WIDTH, HEIGHT);
 	sulfur = sulfur_local;
-
-	GLfloat zMat[16] = {
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-	//glyph_t g1 = { G_BOX, 10, 10, 20, 20 };
 
 	/*
 		SULFUR RUNTIME MULTI-THREAD SPLIT
@@ -78,10 +92,9 @@ int main(void) {
 
 	// basic render loop
 	while (!glfwWindowShouldClose(window)) {
-		render(zMat, sulfur_local);
 		updateRom(sulfur_local);
-		// , zMat, &g1
-		glfwSwapBuffers(window);
+
+		if (render(sulfur_local)) glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 

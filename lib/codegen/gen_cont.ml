@@ -89,6 +89,7 @@ type dusk_fval =
 type dusk_key =
 	DVar of string
 	| DStrLit of string
+	| DKeyLit of string
 	| DBox of int
 	| DTName of string
 	| DCtor of string
@@ -101,6 +102,7 @@ type dusk_env = (dusk_key, dusk_fval) Hashtbl.t
 let string_of_dkey (k: dusk_key): string = match k with
 	DVar x -> "VAR " ^ x
 	| DStrLit s -> "STRLIT " ^ s
+	| DKeyLit k -> "KLIT " ^ k
 	| DBox i -> "BOX " ^ (string_of_int i)
 	| DTName t -> "TNAME " ^ t
 	| DCtor c -> "CTOR " ^ c

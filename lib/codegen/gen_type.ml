@@ -11,6 +11,7 @@ open Gen_cont
 let voidType = void_type context
 let i8Type = i8_type context
 let iType = i32_type context
+let i64Type = i64_type context
 let fType = float_type context
 let bType = i1_type context
 let ptrType = pointer_type context;;
@@ -44,6 +45,8 @@ let genType (tau: g_type): lltype = match tau with
 	| PrimTy "Float" -> fType
 	| PrimTy "Bool" -> bType
 	| PrimTy "String" -> ptrType
+	| PrimTy "Long" -> i64Type
+	| PrimTy "Key" -> iType
 	| BuiltinTy _ -> ptrType
 	(*| TupleTy tau_l -> struct_type context (Array.of_list (List.map (genType env) tau_l)) *)
 	| NamedTy(_, _) -> ptrType

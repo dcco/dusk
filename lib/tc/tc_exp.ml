@@ -70,7 +70,8 @@ let is_heap_type (env: type_env) (tau: g_type): bool = match tau with
 	(* type-checking auxiliaries *)
 
 type g_fun =
-	BinaryGF of string
+	UnaryGF of string
+	| BinaryGF of string
 	| TupleIndexGF of int
 	| ArrayIndexGF of rw
 	| StructFieldGF of rw * int * string
@@ -93,9 +94,12 @@ let tc_const (c: const): g_type = match c with
 	| FConst _ -> floatTy
 	| SConst _ -> stringTy
 	| BConst _ -> boolTy
+	| LConst _ -> longTy
+	| KConst _ -> failwith "BUG: tc_const.ml - Type lookup performed directly on key constant."
 
 let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e with
-	ConstExp(c, _) -> Valid (ConstExpC c, tc_const c)
+	ConstExp(KConst k, _) -> Valid (ConstExpC(KConst k), keyTy)
+	| ConstExp(c, _) -> Valid (ConstExpC c, tc_const c)
 	| VarExp(_, x, _) -> (match StringMap.find_opt x env.localIds with
 		Some tau -> Valid (VarExpC x, tau)
 		| _ -> (match Hashtbl.find_opt env.globalIds x with
@@ -137,7 +141,8 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 		let tau_al = List.map snd et_l' in
 		let el' = List.map fst et_l' in
 		let* (f, d, (_, tau_r)) = tc_fun_exp env ef (hd_opt tau_al) in (match d with
-			BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_r)
+			UnaryGF fsm -> Valid (UnaryExpC(fsm, List.nth el' 0), tau_r)
+			| BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_r)
 			| TupleIndexGF i -> Valid (TupleIndexExpC(List.hd el', i, tau_r), tau_r)
 			| ArrayIndexGF rw ->
 				let (rw', tau_r', et') =
@@ -154,7 +159,8 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
 	VarExp(_, f, p) -> (match lookup_fun_tenv env f tau_a with
 		Some (f, (d, tau_f)) -> (match d with
-			BinaryASMSym fsm -> Valid (f, BinaryGF fsm, tau_f)
+			UnaryASMSym fsm -> Valid (f, UnaryGF fsm, tau_f)
+			| BinaryASMSym fsm -> Valid (f, BinaryGF fsm, tau_f)
 			| ExternalSym vl -> Valid (f, CallGF vl, tau_f)
 			| _ -> Valid (f, CallGF [], tau_f)
 		)

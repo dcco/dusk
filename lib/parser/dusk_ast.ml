@@ -12,6 +12,8 @@ type const =
 	| FConst of float
 	| SConst of string
 	| BConst of bool
+	| LConst of Int64.t
+	| KConst of string
 
 type rw = RR | WW
 

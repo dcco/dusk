@@ -20,7 +20,7 @@ let genStrLit (cont: llvm_cont) (env: dusk_env) (s: string): dusk_val =
 		(* create (pointer to) struct containing string + meta data *)
 	let structVal = const_struct context
 		[| const_int i8Type 0; const_int iType (String.length s); const_null ptrType; const_null ptrType; strRef |] in
-	let structRef = define_global ("_sz" ^ (string_of_int i)) structVal (cont.llmod) in
+	let structRef = define_global ("_sz" ^ (string_of_int i)) structVal cont.llmod in
 	let v = (structRef, ptrType) in 
 	Hashtbl.add env (DStrLit s) (DVal(v, None)); v
 
@@ -34,6 +34,15 @@ let genConst (cont: llvm_cont) (env: dusk_env) (c: const): dusk_val = match c wi
 		Some (DVal (v, _)) -> v
 		| _ -> genStrLit cont env s
 	)
+	| LConst l -> (const_of_int64 i64Type l true, i64Type)
+	| KConst k -> (match Hashtbl.find_opt env (DKeyLit k) with
+		Some (DVal ((v, _), _)) -> (build_load iType v "_kT" cont.builder, iType)
+		| _ ->
+			let v = declare_global iType ("K_" ^ k) cont.llmod in
+			Hashtbl.add env (DKeyLit k) (DVal((v, iType), None));
+			(build_load iType v "_kT" cont.builder, iType)
+	)
+
 		(* failwith "BUG: gen_exp.ml - Raw string literal in generation phase." *)
 
 let rec genProduct (cont: llvm_cont) (vl: llvalue list): llvalue = match vl with
@@ -77,6 +86,12 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		| Some _ -> failwith ("BUG: gen_exp.ml - Variable \"" ^ x ^ "\" resolved to non-value.")
 		| None -> failwith ("BUG: gen_exp.ml - Unexpected variable \"" ^ x ^ "\" encountered in generation phase.")
 	)
+	| UnaryExpC(xOp, e) ->
+		let (v, _) = genExp cont env e in (match xOp with
+			| "i64toi" -> (build_trunc v iType "_castT" bx, iType)
+			| "itoi64" -> (build_sext v i64Type "_castT" bx, i64Type)
+			| _ -> failwith ("BUG: gen_exp.ml - Unexpected operator \"" ^ xOp ^ "\" encountered in generation phase.")
+		)
 	| BinExpC(xOp, e1, e2) ->
 		let (v1, _) = genExp cont env e1 in
 		let (v2, _) = genExp cont env e2 in (match xOp with
@@ -93,6 +108,12 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "ilt" -> (build_icmp Icmp.Slt v1 v2 "_cmpT" bx, bType)
 			| "igeq" -> (build_icmp Icmp.Sge v1 v2 "_cmpT" bx, bType)
 			| "igt" -> (build_icmp Icmp.Sgt v1 v2 "_cmpT" bx, bType)
+			| "i64add" -> (build_add v1 v2 "_addT" bx, i64Type)
+			| "i64sub" -> (build_sub v1 v2 "_subT" bx, i64Type)
+			| "i64mul" -> (build_mul v1 v2 "_mulT" bx, i64Type)
+			| "i64div" -> (build_sdiv v1 v2 "_divT" bx, i64Type)
+			| "i64toi" -> (build_sext v1 iType "_castT" bx, iType)
+			| "itoi64" -> (build_sext v1 i64Type "_castT" bx, i64Type)
 			| _ -> failwith ("BUG: gen_exp.ml - Unexpected operator \"" ^ xOp ^ "\" encountered in generation phase.")
 		)
 	| CallExpC(ef, el, tau_r) ->

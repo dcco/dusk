@@ -49,6 +49,8 @@ rule token = parse
 	| ((numChar+) as i) "d" { lexWrap lexbuf (DIM (int_of_string i)) }
 	| ("-"? numChar+ "." numChar+) as f { lexWrap lexbuf (FLOAT (float_of_string f)) }
 	| ("-"? numChar+) as i { lexWrap lexbuf (INT (int_of_string i)) }
+	| (("-"? numChar+) as l) ("l" | "L") { lexWrap lexbuf (LONG (Int64.of_string l)) }
+	| "^" (['a'-'z']+ as k) { lexWrap lexbuf (KLIT k) }
 	| "_" { lexWrap lexbuf UNDERSCORE }
 	| ".." { lexWrap lexbuf ELLIP }
 	| "." { lexWrap lexbuf DOT }

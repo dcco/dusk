@@ -23,4 +23,12 @@ extern float _none_Sys_Os_randomFloat() {
 	return ((float) rand()) / ((float) RAND_MAX);
 }
 
+	/*
+		os - time
+	*/
+
+extern int64_t _none_Sys_Os_time() {
+	return time_ns();
+}
+
 #endif

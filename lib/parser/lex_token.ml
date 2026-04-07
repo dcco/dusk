@@ -1,6 +1,7 @@
 
 type raw_token = INT of int | FLOAT of float | TRUE | FALSE
-	| STRLIT of string | ID of string | TID of string | DIM of int
+	| STRLIT of string | KLIT of string | LONG of Int64.t
+	| ID of string | TID of string | DIM of int
 	| REFERENCES | MODULE | MODULES | END
 	| STRUCT
 	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
@@ -15,6 +16,8 @@ let string_of_raw_token tk = match tk with
 	INT i -> string_of_int i
 	| FLOAT f -> string_of_float f
 	| STRLIT s -> "\"" ^ (String.escaped s) ^ "\""
+	| KLIT s -> "^" ^ s
+	| LONG l -> (Int64.to_string l) ^ "l"
 	| DIM i -> (string_of_int i) ^ "d"
 	| TRUE -> "true"
 	| FALSE -> "false"

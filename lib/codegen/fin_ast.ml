@@ -11,6 +11,7 @@ type gen_exp =
 	ConstExpC of const
 	(*| LitExpC of int*)
 	| VarExpC of string
+	| UnaryExpC of string * gen_exp
 	| BinExpC of string * gen_exp * gen_exp
 	| CallExpC of gen_exp * gen_exp list * g_type
 		(* boxes a value inside a pointer *)
@@ -55,6 +56,7 @@ type gen_dec =
 
 let rec collect_box_exp (e: gen_exp): (int * g_type) list = match e with
 	BoxExpC(i, _, tau) -> [(i, tau)]
+	| UnaryExpC(_, e) -> collect_box_exp e
 	| BinExpC(_, e1, e2) -> (collect_box_exp e1) @ (collect_box_exp e2)
 	| CallExpC(ef, el, _) -> (collect_box_exp ef) @ (List.concat (List.map collect_box_exp el))
 	| TupleExpC(i, tau, el) -> (i, tau) :: (List.concat (List.map collect_box_exp el))

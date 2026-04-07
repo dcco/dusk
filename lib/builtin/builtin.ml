@@ -17,7 +17,8 @@ open Parser.Dusk_type
 	*)
 
 type sym =
-	BinaryASMSym of string
+	UnaryASMSym of string
+	| BinaryASMSym of string
 	| ExternalSym of int list
 	| UserDefSym
 
@@ -66,16 +67,31 @@ let builtinList =  [
 	("geq", BinaryASMSym "igeq", [intTy; intTy], boolTy);
 	("gt", BinaryASMSym "igt", [intTy; intTy], boolTy);
 
+	("add", BinaryASMSym "i64add", [longTy; longTy], longTy);
+	("sub", BinaryASMSym "i64sub", [longTy; longTy], longTy);
+	("mul", BinaryASMSym "i64mul", [longTy; longTy], longTy);
+	("div", BinaryASMSym "i64div", [longTy; longTy], longTy);
+
 	("add", ExternalSym [], [stringTy; stringTy], stringTy);
 	("toString", ExternalSym [], [intTy], stringTy);
 	("toString", ExternalSym [], [floatTy], stringTy);
+
+	("toInt", UnaryASMSym "i64toi", [longTy], intTy);
+	("toLong", UnaryASMSym "itoi64", [intTy], longTy);
 ]
 
 let osList = [
 	("print", ExternalSym [], [stringTy], unitTy);
 
 	("randomInt", ExternalSym [], [intTy], intTy);
-	("randomFloat", ExternalSym [], [], floatTy)
+	("randomFloat", ExternalSym [], [], floatTy);
+
+	("time", ExternalSym [], [], longTy)
+]
+
+let inputList = [
+	("update", ExternalSym [], [], unitTy);
+	("keyDown", ExternalSym [], [keyTy], boolTy)
 ]
 
 let sulfurList = [
@@ -101,7 +117,8 @@ let sulfurTypes = [
 let builtinTreeMap (): (m_virt_bind list) tree_map =
 	let m1 = single_tree ["builtin"] (toVirtList builtinList) in
 	let m2 = add_tree m1 ["Sys"; "Os"] (toVirtList osList) in
-	add_tree m2 ["Sys"; "Sulfur"] (sulfurTypes @ (toVirtList sulfurList))
+	let m3 = add_tree m2 ["Sys"; "Input"] (toVirtList inputList) in
+	add_tree m3 ["Sys"; "Sulfur"] (sulfurTypes @ (toVirtList sulfurList))
 
 (*
 let builtinQualList (): (string list * m_virt_bind) list =

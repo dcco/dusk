@@ -56,6 +56,9 @@ let floatTy = primTy "Float"
 let stringTy = primTy "String"
 let boolTy = primTy "Bool"
 
+let longTy = primTy "Long"
+let keyTy = primTy "Key"
+
 	(*
 		user-defined types:
 		- enum

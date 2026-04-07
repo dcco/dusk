@@ -181,6 +181,8 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (FALSE, p) :: tkRem -> Valid (ConstExp(BConst false, p), tkRem)
 	| (TRUE, p) :: tkRem -> Valid (ConstExp(BConst true, p), tkRem)
 	| (STRLIT s, p) :: tkRem -> Valid (ConstExp(SConst s, p), tkRem)
+	| (LONG l, p) :: tkRem -> Valid (ConstExp(LConst l, p), tkRem)
+	| (KLIT k, p) :: tkRem -> Valid (ConstExp(KConst k, p), tkRem)
 	| (ID x, p) :: tkRem -> Valid (VarExp(QT None, x, p), tkRem)
 	| (TID prefix, p) :: tkRem -> (match tkRem with
 		(DOT, _) :: tkRem2 -> parseIdAtomExp (QT (Some prefix)) tkRem2

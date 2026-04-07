@@ -87,7 +87,8 @@ sulfur_t* initSulfur(int width, int height) {
 	glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);     
 	return self;
 }
 
@@ -111,13 +112,13 @@ void swapBackBuffer(sulfur_t* sulfur) {
 
 void _clear(sulfur_t* sulfur) {
 	shader_t* shader = sulfur->sf2d->shader;
-	glUseProgram(shader->prog);
 	glViewport(0, 0, sulfur->width, sulfur->height);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(shader->prog);
 	glUniformMatrix4fv(shader->uPers, 1, 0, sulfur->pMat); 
 }
 
-void render(GLfloat *oMat, sulfur_t* sulfur) {
+int8_t render(sulfur_t* sulfur) {
 	// check if buffer is dirty
 	int8_t dirty = 0;
 	pthread_mutex_lock(&sulfur->bufferMutex);
@@ -129,19 +130,22 @@ void render(GLfloat *oMat, sulfur_t* sulfur) {
 		if (sulfur->rom->texArr != NULL) dirty = 1;
 	}
 	pthread_mutex_unlock(&sulfur->bufferMutex);
-	if (!dirty) return;
+	if (!dirty) return 0;
 
 	// clear and do initial 2d render
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	_clear(sulfur);
 	shader_t* shader = sulfur->sf2d->shader;
 
 	int32_t len = lenRList(sulfur->front_buffer);
 	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->rom->texArr, len, sulfur->front_buffer->data);
-
+	
 	// copy to capture card and re-render
 	copyCC(sulfur->cc);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->cc->capArr, 1, (void*) sulfur->cc->data);
+
+	return 1;
 }
 
 void updateRom(sulfur_t* sulfur) {
