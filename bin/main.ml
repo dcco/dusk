@@ -7,6 +7,7 @@ open Resolve
 open Resolve.Res_type
 open Resolve.Res_exp
 open Tc
+open Tc.Tc_err
 open Tc.Tc_exp
 open Codegen.Fin_ast
 open Codegen.Gen_exp

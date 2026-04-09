@@ -69,9 +69,9 @@ let rec parseSepListFull (pf: 'a parser) (readSep: raw_token -> 'b option): ('a 
 	(* [e] | [] <end> *)
 
 let parseOpt (pf: 'a parser) (chkAlt: raw_token -> bool): 'a option parser = fun tkList -> match tkList with
-	(tk, _) :: tkRem ->
+	(tk, _) :: _ ->
 		if chkAlt tk then Valid (None, tkList)
-		else let* (v, tkRem2) = pf tkRem in Valid (Some v, tkRem2) 
+		else let* (v, tkRem) = pf tkList in Valid (Some v, tkRem) 
 	| _ -> Valid (None, tkList)
 	
 	(* [e ...] | [] <end> *)

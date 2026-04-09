@@ -24,6 +24,10 @@ let gcArrType = struct_type context (Array.of_list [iType; iType; ptrType]);;
 
 let gcDimsType n = struct_type context (Array.of_list (List.init n (fun _ -> iType)));;
 
+let gcFullArrType n =
+	let l = [iType; iType; ptrType] @ (List.init n (fun _ -> iType)) in
+	struct_type context (Array.of_list l);;
+
 	(*
 		code generation related to types
 	*)

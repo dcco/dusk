@@ -6,6 +6,154 @@
 	.globl	@feat.00
 .set @feat.00, 0
 	.file	"dusk"
+	.def	_none_initGame;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_none_initGame
+	.p2align	4, 0x90
+_none_initGame:
+.seh_proc _none_initGame
+	subq	$72, %rsp
+	.seh_stackalloc 72
+	.seh_endprologue
+	movl	$4, %ecx
+	movl	$200, %edx
+	movl	$8, %r8d
+	callq	gc_alloc_array
+	movl	$10, 16(%rax)
+	movl	$20, 20(%rax)
+	movq	%rax, 64(%rsp)
+	movl	$0, 60(%rsp)
+.LBB0_1:
+	cmpl	$20, 60(%rsp)
+	jge	.LBB0_3
+	movl	$0, 56(%rsp)
+	jmp	.LBB0_4
+.LBB0_3:
+	movl	$12, %ecx
+	xorl	%eax, %eax
+	movl	%eax, %edx
+	callq	gc_alloc
+	movq	%rax, 40(%rsp)
+	movl	$0, (%rax)
+	movl	$4, 4(%rax)
+	movl	$0, 8(%rax)
+	movq	64(%rsp), %rax
+	movq	%rax, 48(%rsp)
+	movl	$16, %ecx
+	leaq	tc__Game(%rip), %rdx
+	callq	gc_alloc
+	movq	40(%rsp), %rdx
+	movq	48(%rsp), %rcx
+	movq	%rdx, (%rax)
+	movq	%rcx, 8(%rax)
+	addq	$72, %rsp
+	retq
+.LBB0_4:
+	cmpl	$10, 56(%rsp)
+	jge	.LBB0_6
+	movl	$2, %ecx
+	callq	_Int_Sys_Os_randomInt
+	cmpl	$1, %eax
+	jl	.LBB0_7
+	jmp	.LBB0_8
+.LBB0_6:
+	movl	60(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 60(%rsp)
+	jmp	.LBB0_1
+.LBB0_7:
+	movq	64(%rsp), %rax
+	movl	56(%rsp), %ecx
+	movl	60(%rsp), %edx
+	imull	16(%rax), %edx
+	addl	%edx, %ecx
+	movq	8(%rax), %rax
+	movslq	%ecx, %rcx
+	movl	$0, (%rax,%rcx,4)
+	jmp	.LBB0_9
+.LBB0_8:
+	movq	64(%rsp), %rax
+	movl	56(%rsp), %ecx
+	movl	60(%rsp), %edx
+	imull	16(%rax), %edx
+	addl	%edx, %ecx
+	movq	8(%rax), %rax
+	movslq	%ecx, %rcx
+	movl	$1, (%rax,%rcx,4)
+.LBB0_9:
+	movl	56(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 56(%rsp)
+	jmp	.LBB0_4
+	.seh_endproc
+
+	.def	__Game_Sys_Sulfur_draw;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Game_Sys_Sulfur_draw
+	.p2align	4, 0x90
+__Game_Sys_Sulfur_draw:
+.seh_proc __Game_Sys_Sulfur_draw
+	subq	$88, %rsp
+	.seh_stackalloc 88
+	.seh_endprologue
+	movq	%rcx, 80(%rsp)
+	movl	$0, 76(%rsp)
+.LBB1_1:
+	cmpl	$20, 76(%rsp)
+	jge	.LBB1_3
+	movl	$0, 72(%rsp)
+	jmp	.LBB1_4
+.LBB1_3:
+	addq	$88, %rsp
+	retq
+.LBB1_4:
+	cmpl	$10, 72(%rsp)
+	jge	.LBB1_6
+	movq	80(%rsp), %rax
+	movq	8(%rax), %rax
+	movl	72(%rsp), %ecx
+	movl	76(%rsp), %edx
+	imull	16(%rax), %edx
+	addl	%edx, %ecx
+	movq	8(%rax), %rax
+	movslq	%ecx, %rcx
+	cmpl	$1, (%rax,%rcx,4)
+	je	.LBB1_7
+	jmp	.LBB1_8
+.LBB1_6:
+	movl	76(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 76(%rsp)
+	jmp	.LBB1_1
+.LBB1_7:
+	movq	.refptr.C_SPRITE(%rip), %rax
+	movb	(%rax), %al
+	movl	72(%rsp), %ecx
+	shll	$3, %ecx
+	movl	76(%rsp), %edx
+	shll	$3, %edx
+	movq	_Sys_Rom_tset(%rip), %r8
+	movq	%r8, 56(%rsp)
+	movl	%edx, 48(%rsp)
+	movl	%ecx, 44(%rsp)
+	movb	%al, 40(%rsp)
+	movl	$2, 64(%rsp)
+	leaq	40(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
+	jmp	.LBB1_9
+.LBB1_8:
+	jmp	.LBB1_9
+.LBB1_9:
+	movl	72(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 72(%rsp)
+	jmp	.LBB1_4
+	.seh_endproc
+
 	.def	_none_main;
 	.scl	2;
 	.type	32;
@@ -14,253 +162,56 @@
 	.p2align	4, 0x90
 _none_main:
 .seh_proc _none_main
-	subq	$216, %rsp
-	.seh_stackalloc 216
+	subq	$88, %rsp
+	.seh_stackalloc 88
 	.seh_endprologue
-	movl	$4, %ecx
-	movl	$200, %edx
-	movl	$8, %r8d
-	callq	gc_alloc_array
+	callq	_none_initGame
 	movq	%rax, %rcx
-	movq	%rcx, 72(%rsp)
-	movl	$10, 16(%rcx)
-	movl	$20, 20(%rcx)
+	movq	%rcx, 32(%rsp)
 	callq	gc_new_root
-	movq	72(%rsp), %rax
-	movq	%rax, 208(%rsp)
-	movl	$0, 148(%rsp)
-.LBB0_1:
-	cmpl	$20, 148(%rsp)
-	jge	.LBB0_3
-	movl	$0, 144(%rsp)
-	jmp	.LBB0_4
-.LBB0_3:
-	movl	$4, %ecx
-	xorl	%eax, %eax
-	movl	%eax, %edx
-	callq	gc_alloc
-	movq	%rax, 56(%rsp)
-	movl	$3, (%rax)
-	movl	$16, %ecx
-	leaq	tc__MoveObj(%rip), %rdx
-	callq	gc_alloc
-	movq	%rax, %rcx
-	movq	56(%rsp), %rax
-	movq	%rcx, 64(%rsp)
-	movl	$0, (%rcx)
-	movl	$1, 4(%rcx)
-	movq	%rax, 8(%rcx)
-	callq	gc_new_root
-	movq	64(%rsp), %rax
-	movq	%rax, 192(%rsp)
-	movq	$60, 184(%rsp)
+	movq	32(%rsp), %rax
+	movq	%rax, 80(%rsp)
+	movq	$60, 72(%rsp)
 	movl	$1000000000, %eax
 	cqto
-	idivq	184(%rsp)
-	movq	%rax, 176(%rsp)
+	idivq	72(%rsp)
+	movq	%rax, 64(%rsp)
 	callq	_none_Sys_Os_time
-	movq	%rax, 168(%rsp)
-	jmp	.LBB0_10
-.LBB0_4:
-	cmpl	$10, 144(%rsp)
-	jge	.LBB0_6
-	movl	$2, %ecx
-	callq	_Int_Sys_Os_randomInt
-	cmpl	$1, %eax
-	jl	.LBB0_7
-	jmp	.LBB0_8
-.LBB0_6:
-	movl	148(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 148(%rsp)
-	jmp	.LBB0_1
-.LBB0_7:
-	movq	208(%rsp), %rax
-	movl	144(%rsp), %ecx
-	movl	148(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	movl	$1, (%rax,%rcx,4)
-	jmp	.LBB0_9
-.LBB0_8:
-	movq	208(%rsp), %rax
-	movl	144(%rsp), %ecx
-	movl	148(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	movl	$0, (%rax,%rcx,4)
-.LBB0_9:
-	movl	144(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 144(%rsp)
-	jmp	.LBB0_4
-.LBB0_10:
+	movq	%rax, 56(%rsp)
+.LBB2_1:
 	movb	$1, %al
 	testb	$1, %al
-	jne	.LBB0_11
-	jmp	.LBB0_12
-.LBB0_11:
+	jne	.LBB2_2
+	jmp	.LBB2_3
+.LBB2_2:
 	callq	_none_Sys_Os_time
-	movq	%rax, 160(%rsp)
-	movq	160(%rsp), %rax
-	subq	168(%rsp), %rax
-	cqto
-	idivq	176(%rsp)
-	movl	%eax, 156(%rsp)
-	movl	$0, 144(%rsp)
-	jmp	.LBB0_13
-.LBB0_12:
-	addq	$216, %rsp
-	retq
-.LBB0_13:
-	movl	144(%rsp), %eax
-	cmpl	156(%rsp), %eax
-	jge	.LBB0_15
-	movq	192(%rsp), %rax
-	cmpl	$240, (%rax)
-	jg	.LBB0_16
-	jmp	.LBB0_17
-.LBB0_15:
-	cmpl	$1, 156(%rsp)
-	jge	.LBB0_25
-	jmp	.LBB0_26
-.LBB0_16:
-	movq	192(%rsp), %rax
-	movl	$-1, 4(%rax)
-	jmp	.LBB0_18
-.LBB0_17:
-	movq	192(%rsp), %rax
-	cmpl	$0, (%rax)
-	jle	.LBB0_19
-	jmp	.LBB0_20
-.LBB0_18:
-	movq	192(%rsp), %rax
-	movq	192(%rsp), %rcx
-	movl	(%rcx), %ecx
-	movq	192(%rsp), %rdx
-	addl	4(%rdx), %ecx
-	movl	%ecx, (%rax)
-	movq	192(%rsp), %rax
 	movq	%rax, 48(%rsp)
-	movq	192(%rsp), %rax
-	movl	(%rax), %eax
-	movl	%eax, 44(%rsp)
-	movl	$4, %ecx
-	xorl	%eax, %eax
-	movl	%eax, %edx
-	callq	gc_alloc
-	movl	44(%rsp), %edx
-	movq	%rax, %rcx
 	movq	48(%rsp), %rax
-	movl	%edx, (%rcx)
-	movq	%rcx, 8(%rax)
-	callq	_none_Sys_Input_update
-	movq	.refptr.K_left(%rip), %rax
-	movl	(%rax), %ecx
-	callq	_Key_Sys_Input_keyDown
-	testb	$1, %al
-	jne	.LBB0_22
-	jmp	.LBB0_23
-.LBB0_19:
-	movq	192(%rsp), %rax
-	movl	$1, 4(%rax)
-	jmp	.LBB0_21
-.LBB0_20:
-	jmp	.LBB0_21
-.LBB0_21:
-	jmp	.LBB0_18
-.LBB0_22:
-	movq	192(%rsp), %rax
-	movl	$-1, 4(%rax)
-	jmp	.LBB0_24
-.LBB0_23:
-	jmp	.LBB0_24
-.LBB0_24:
-	movl	144(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 144(%rsp)
-	jmp	.LBB0_13
-.LBB0_25:
-	movl	$0, 148(%rsp)
-	jmp	.LBB0_28
-.LBB0_26:
-	jmp	.LBB0_27
-.LBB0_27:
-	jmp	.LBB0_10
-.LBB0_28:
-	cmpl	$20, 148(%rsp)
-	jge	.LBB0_30
-	movl	$0, 144(%rsp)
-	jmp	.LBB0_31
-.LBB0_30:
-	movq	.refptr.C_SPRITE(%rip), %rax
-	movb	(%rax), %cl
-	movq	192(%rsp), %rax
-	movl	(%rax), %edx
-	movq	8(%rax), %rax
-	movl	(%rax), %eax
-	addl	$20, %eax
-	movq	_Sys_Rom_tset(%rip), %r8
-	movq	%r8, 96(%rsp)
-	movl	%edx, 84(%rsp)
-	movb	%cl, 80(%rsp)
-	movl	%eax, 88(%rsp)
-	movl	$2, 104(%rsp)
-	leaq	80(%rsp), %rcx
-	callq	_Glyph_Sys_Sulfur_draw
+	subq	56(%rsp), %rax
+	cqto
+	idivq	64(%rsp)
+	movl	%eax, 44(%rsp)
+	cmpl	$1, 44(%rsp)
+	jge	.LBB2_4
+	jmp	.LBB2_5
+.LBB2_3:
+	addq	$88, %rsp
+	retq
+.LBB2_4:
+	movq	80(%rsp), %rcx
+	callq	__Game_Sys_Sulfur_draw
 	callq	_none_Sys_Sulfur_refresh
 	callq	gc_collect
-	movq	168(%rsp), %rax
-	movslq	156(%rsp), %rcx
-	imulq	176(%rsp), %rcx
+	movq	56(%rsp), %rax
+	movslq	44(%rsp), %rcx
+	imulq	64(%rsp), %rcx
 	addq	%rcx, %rax
-	movq	%rax, 168(%rsp)
-	jmp	.LBB0_27
-.LBB0_31:
-	cmpl	$10, 144(%rsp)
-	jge	.LBB0_33
-	movq	208(%rsp), %rax
-	movl	144(%rsp), %ecx
-	movl	148(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	cmpl	$1, (%rax,%rcx,4)
-	je	.LBB0_34
-	jmp	.LBB0_35
-.LBB0_33:
-	movl	148(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 148(%rsp)
-	jmp	.LBB0_28
-.LBB0_34:
-	movq	.refptr.C_SPRITE(%rip), %rax
-	movb	(%rax), %al
-	movl	144(%rsp), %ecx
-	shll	$3, %ecx
-	movl	148(%rsp), %edx
-	shll	$3, %edx
-	movq	_Sys_Rom_tset(%rip), %r8
-	movq	%r8, 128(%rsp)
-	movl	%edx, 120(%rsp)
-	movl	%ecx, 116(%rsp)
-	movb	%al, 112(%rsp)
-	movl	$2, 136(%rsp)
-	leaq	112(%rsp), %rcx
-	callq	_Glyph_Sys_Sulfur_draw
-	jmp	.LBB0_36
-.LBB0_35:
-	jmp	.LBB0_36
-.LBB0_36:
-	movl	144(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 144(%rsp)
-	jmp	.LBB0_31
+	movq	%rax, 56(%rsp)
+	jmp	.LBB2_6
+.LBB2_5:
+	jmp	.LBB2_6
+.LBB2_6:
+	jmp	.LBB2_1
 	.seh_endproc
 
 	.bss
@@ -324,25 +275,92 @@ comp_res_total:
 	.long	1
 
 	.data
-	.globl	tc_offs__MoveObj
+	.globl	_rawT
+	.p2align	4, 0x0
+_rawT:
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	1
+	.long	1
+	.long	1
+	.long	1
+	.long	0
+	.long	1
+	.long	1
+	.long	0
+	.long	0
+	.long	0
+	.long	1
+	.long	1
+	.long	0
+	.long	1
+	.long	1
+	.long	0
+	.long	1
+	.long	1
+	.long	0
+	.long	0
+	.long	0
+	.long	1
+	.long	0
+	.long	0
+	.long	1
+	.long	1
+	.long	1
+	.long	0
+	.long	0
+	.long	1
+	.long	1
+	.long	0
+	.long	0
+	.long	1
+	.long	1
+	.long	0
+	.long	0
+	.long	1
+	.long	0
+	.long	0
+	.long	0
+	.long	1
+	.long	1
+	.long	1
+	.long	0
+	.long	0
+	.long	1
+	.long	0
+	.long	1
+	.long	1
+	.long	1
+	.long	0
+
+	.globl	_pieces
+	.p2align	4, 0x0
+_pieces:
+	.long	56
+	.long	56
+	.quad	_rawT
+	.long	4
+	.long	2
+	.long	7
+	.zero	4
+
+	.globl	tc_offs__Game
 	.p2align	2, 0x0
-tc_offs__MoveObj:
+tc_offs__Game:
+	.long	0
 	.long	8
 
-	.globl	tc__MoveObj
+	.globl	tc__Game
 	.p2align	3, 0x0
-tc__MoveObj:
-	.long	1
+tc__Game:
+	.long	2
 	.zero	4
-	.quad	tc_offs__MoveObj
+	.quad	tc_offs__Game
 
 	.section	.rdata$.refptr.C_SPRITE,"dr",discard,.refptr.C_SPRITE
 	.p2align	3, 0x0
 	.globl	.refptr.C_SPRITE
 .refptr.C_SPRITE:
 	.quad	C_SPRITE
-	.section	.rdata$.refptr.K_left,"dr",discard,.refptr.K_left
-	.p2align	3, 0x0
-	.globl	.refptr.K_left
-.refptr.K_left:
-	.quad	K_left

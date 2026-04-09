@@ -31,7 +31,8 @@ type ('m, 'ann) exp =
 	| OpExp of x_op * 'ann
 		(* ctors *)
 	| TupleExp of ('m * string) option * ('m, 'ann) exp list * 'ann
-	| NewDimExp of int * ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
+	| DataArrayExp of int * ('m raw_type) option * ('m, 'ann) exp list * ('m, 'ann) exp list * 'ann
+	| FormatArrayExp of int * ('m, 'ann) exp list * ('m, 'ann) exp * 'ann
 	| NewStructExp of 'm * string * (string * ('m, 'ann) exp) list * 'ann
 		(* function call *)
 	| AppExp of ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
@@ -68,7 +69,8 @@ let ann_exp e = match e with
 	| OpExp(_, a) -> a
 	| VarExp(_, _, a) -> a
 	| TupleExp(_, _, a) -> a
-	| NewDimExp(_, _, _, a) -> a
+	| DataArrayExp(_, _, _, _, a) -> a
+	| FormatArrayExp(_, _, _, a) -> a
 	| NewStructExp(_, _, _, a) -> a
 	| AppExp(_, _, a) -> a
 
@@ -96,6 +98,7 @@ type ('m, 'ann) met =
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann
 	| TDefDec of string * 'm raw_tdef * 'ann
+	| ConstDec of string * ('m, 'ann) exp * 'ann
 
 type 'ann req =
 	ShortRefReq of string list * 'ann

@@ -23,9 +23,13 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 			let* x' = resolve_name env p prefix x in Valid (CT, x')
 		) ctor in
 		let* el' = resolve_exp_list env el in Valid (TupleExp(ctor', el', p))
-	| NewDimExp(i, ez, el, p) ->
-		let* ez' = resolve_exp env ez in
-		let* el' = resolve_exp_list env el in Valid (NewDimExp(i, ez', el', p))
+	| DataArrayExp(i, tau_o, dim_l, el, p) ->
+		let* tau_o' = opt_try_res (resolve_type env p) tau_o in
+		let* dim_l' = resolve_exp_list env dim_l in
+		let* el' = resolve_exp_list env el in Valid (DataArrayExp(i, tau_o', dim_l', el', p))
+	| FormatArrayExp(i, dim_l, e, p) ->
+		let* dim_l' = resolve_exp_list env dim_l in
+		let* e' = resolve_exp env e in Valid (FormatArrayExp(i, dim_l', e', p))
 	| NewStructExp(prefix, x, fl, p) ->
 		let* x' = resolve_name env p prefix x in
 		let* fl' = map_try_res (fun (f, e) ->
@@ -100,6 +104,10 @@ let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 	| TDefDec(x, td, p) ->
 		let tName = add_local_dec_env env x in
 		let* td' = resolve_type_def env p td in	Valid (TDefDec(tName, td', p))
+	| ConstDec(x, e, p) ->
+		let x' = add_local_dec_env env x in
+		let* e' = resolve_exp env e in
+		Valid (ConstDec(x', e', p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
 	[] -> Valid []

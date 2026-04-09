@@ -5,15 +5,15 @@ open Fin_type
 		representation for raw code
 	*)
 
-
-
 type gen_exp =
 	ConstExpC of const
-	(*| LitExpC of int*)
+	(*| LitExpC of int *)
 	| VarExpC of string
 	| UnaryExpC of string * gen_exp
 	| BinExpC of string * gen_exp * gen_exp
 	| CallExpC of gen_exp * gen_exp list * g_type
+		(* executes statements inside an expression *)
+	| SeqExpC of int * g_type * gen_stmt list * gen_exp
 		(* boxes a value inside a pointer *)
 	| BoxExpC of int * gen_exp * g_type
 		(* tuple operations (tuple creation also requires a box) *)
@@ -21,16 +21,19 @@ type gen_exp =
 	| TagTupleExpC of int * g_type * string * gen_exp list
 	| TupleIndexExpC of gen_exp * int * g_type
 		(* array operations *)
-	| NewArrayExpC of gen_exp list * g_type
-	| ArrayIndexExpC of gen_rw * gen_exp * gen_exp list * g_type
+	| ConstArrayExpC of int list * gen_exp list * g_type
+	| NewArrayExpC of gen_exp list * gen_exp list * g_type
+	| ArrayIndexExpC of gen_rw * gen_exp * gen_index * g_type
 		(* struct operations *)
 	| NewStructExpC of string * gen_exp list
 	| StructFieldExpC of gen_rw * gen_exp * int * string
 		(* garbage collection *)
 	| GCNewRootExpC of gen_exp
 and gen_rw = RC | WC of gen_exp
-
-type gen_stmt =
+and gen_index =
+	RawIndexC of gen_exp
+	| FullIndexC of gen_exp list
+and gen_stmt =
 	EvalStmtC of gen_exp
 	| AssignStmtC of string * gen_exp
 	| ReturnStmtC of gen_exp option
@@ -49,32 +52,45 @@ let type_of_method (MethodC(arg_l, tau_r, _): gen_met): g_type list * g_type =
 type gen_dec =
 	FunDecC of gen_met
 	| TDefDecC of g_tdef
+	| ConstDecC of gen_exp
 
 	(*
 		auxiliary gathering functions
 	*)
-
-let rec collect_box_exp (e: gen_exp): (int * g_type) list = match e with
-	BoxExpC(i, _, tau) -> [(i, tau)]
-	| UnaryExpC(_, e) -> collect_box_exp e
-	| BinExpC(_, e1, e2) -> (collect_box_exp e1) @ (collect_box_exp e2)
-	| CallExpC(ef, el, _) -> (collect_box_exp ef) @ (List.concat (List.map collect_box_exp el))
-	| TupleExpC(i, tau, el) -> (i, tau) :: (List.concat (List.map collect_box_exp el))
-	| TagTupleExpC(i, tau, _, el) -> (i, tau) :: (List.concat (List.map collect_box_exp el))
-	| TupleIndexExpC(e, _, _) -> collect_box_exp e
-	| _ -> []
-
-let rec collect_box_stmt (s: gen_stmt): (int * g_type) list = match s with
-	EvalStmtC e -> collect_box_exp e
-	| AssignStmtC(_, e) -> collect_box_exp e
-	| ReturnStmtC eo -> (match eo with None -> [] | Some e -> collect_box_exp e)
-	| VarStmtC(_, e, _) -> collect_box_exp e
-	| IfStmtC(e, b1, _, b2, _) -> (collect_box_exp e) @ (collect_box_body b1) @ (collect_box_body b2)
-	| WhileStmtC(e, b) -> (collect_box_exp e) @ (collect_box_body b)
+let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e with
+	SeqExpC(_, _, sl, e') -> (f e) @ (List.concat (List.map (collect_thru_stmt f) sl)) @ (collect_thru_exp f e')
+	| UnaryExpC(_, e) -> collect_thru_exp f e
+	| BinExpC(_, e1, e2) -> (collect_thru_exp f e1) @ (collect_thru_exp f e2)
+	| CallExpC(ef, el, _) -> (collect_thru_exp f ef) @ (List.concat (List.map (collect_thru_exp f) el))
+	| TupleExpC(_, _, el) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
+	| TagTupleExpC(_, _, _, el) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
+	| TupleIndexExpC(e, _, _) -> collect_thru_exp f e
+	| NewArrayExpC(dim_l, el, _) ->
+		(List.concat (List.map (collect_thru_exp f) dim_l)) @
+		(List.concat (List.map (collect_thru_exp f) el))
+	| ArrayIndexExpC(_, e, RawIndexC ei, _) -> (collect_thru_exp f e) @ (collect_thru_exp f ei)
+	| ArrayIndexExpC(_, e, FullIndexC el, _) -> (collect_thru_exp f e) @ (List.concat (List.map (collect_thru_exp f) el))
+	| NewStructExpC(_, el) -> List.concat (List.map (collect_thru_exp f) el)
+	| StructFieldExpC(_, e, _, _) -> collect_thru_exp f e
+	| _ -> f e
+and collect_thru_stmt (f: gen_exp -> 'a list) (s: gen_stmt): 'a list = match s with
+	EvalStmtC e -> collect_thru_exp f e
+	| AssignStmtC(_, e) -> collect_thru_exp f e
+	| ReturnStmtC eo -> (match eo with None -> [] | Some e -> collect_thru_exp f e)
+	| VarStmtC(_, e, _) -> collect_thru_exp f e
+	| IfStmtC(e, b1, _, b2, _) -> (collect_thru_exp f e) @ (collect_thru_body f b1) @ (collect_thru_body f b2)
+	| WhileStmtC(e, b) -> (collect_thru_exp f e) @ (collect_thru_body f b)
 	| GCCollectStmtC -> []
-and collect_box_body (b: gen_stmt list): (int * g_type) list = match b with
+and collect_thru_body (f: gen_exp -> 'a list) (b: gen_stmt list): (int * g_type) list = match b with
 	[] -> []
-	| s :: st -> (collect_box_stmt s) @ (collect_box_body st)
+	| s :: st -> (collect_thru_stmt f s) @ (collect_thru_body f st)
+
+let collect_box_body = collect_thru_body (fun e -> match e with
+	SeqExpC(i, tau, _, _) -> [(i, tau)]
+	| TupleExpC(i, tau, _) -> [(i, tau)]
+	| TagTupleExpC(i, tau, _, _) -> [(i, tau)]
+	| _ -> []
+)
 
 let rec collect_var_stmt (s: gen_stmt): (string * g_type) list = match s with
 	EvalStmtC _ -> []

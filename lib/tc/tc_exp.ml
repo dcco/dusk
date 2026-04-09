@@ -1,58 +1,13 @@
 open Commons.Try_log
 open Builtin
-open Parser.Lex_token
 open Parser.Dusk_type
 open Parser.Dusk_ast
 open Resolve.Res_cont
 open Codegen.Fin_type
 open Codegen.Fin_ast
 open Tc_cont
-
-	(* error types *)
-
-type tc_err =
-	BadType_Err of g_type * g_type * l_pos
-		(* functions *)
-	| NoOverload_Err of string * g_type option * l_pos
-		(* tuples *)
-	| NonTuple_Err of g_type * l_pos
-	| TupleIndexOOB_Err of g_type * int * l_pos
-		(* tag tuples *)
-	| NonCtor_Err of string * l_pos
-		(* structs *)
-	| NonStruct_Err of g_type * l_pos
-	| BadCtorStruct_Err of string * l_pos
-	| MissingField_Err of string * string * l_pos
-	| BadField_Err of string * string * l_pos
-		(* returns *)
-	| EarlyReturn_Err of string * l_pos
-	| NoReturn_Err of string * l_pos
-
-type 'a tc_res = ('a, tc_err) try_res
-
-let string_of_first_arg (t: g_type option): string = match t with
-	None -> "empty arg list"
-	| Some tau -> "type \"" ^ (string_of_type tau) ^ "\""
-
-let string_of_tc_err (e: tc_err) = match e with
-	| BadType_Err(s, t, p) -> "Expected type \"" ^ (string_of_type t) ^ "\" and received type \"" ^
-		(string_of_type s) ^ "\" at " ^ (string_of_pos p) ^ "."
-	| NoOverload_Err(f, t, p) -> "Function \"" ^ f ^ "\" does not have overload for " ^
-		(string_of_first_arg t) ^ " at " ^ (string_of_pos p) ^ "."
-	| NonTuple_Err(t, p) -> "Tuple operation called on non-tuple type \"" ^ (string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
-	| TupleIndexOOB_Err(t, i, p) -> "Attempted to access index " ^ (string_of_int i ) ^ " of tuple type \"" ^
-		(string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
-	| NonCtor_Err(t, p) -> "Type name \"" ^ t ^ "\" did not resolve to a constructor at " ^ (string_of_pos p) ^ "."
-	| NonStruct_Err(t, p) -> "Struct operation called on non-struct type \"" ^ (string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
-	| BadCtorStruct_Err(t, p) -> "Attempted to initialize struct with non-struct constructor \"" ^ t ^ "\" at " ^ (string_of_pos p) ^ "."
-	| MissingField_Err(t, x, p) -> "Initialization of struct \"" ^ t ^
-		"\" missing field \"" ^ x ^ "\" at " ^ (string_of_pos p) ^ "."
-	| BadField_Err(t, x, p) -> "Attempted to read non-existent field \"" ^ x ^
-		"\" from struct \"" ^ t ^ "\" at " ^ (string_of_pos p) ^ "."
-	| EarlyReturn_Err(f, p) ->
-		"Early return from function \"" ^ f ^ "\" producing unreachable code at " ^ (string_of_pos p) ^ "."
-	| NoReturn_Err(f, p) ->
-		"Declaration of function \"" ^ f ^ "\" does not return on all paths at " ^ (string_of_pos p) ^ "."
+open Tc_err
+open Calc_exp
 	
 	(* type-checking basics *)
 
@@ -120,10 +75,21 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				| _ -> Error (NonCtor_Err(cx, p))
 			)
 		)
-	| NewDimExp(i, ez, el, _) ->
-		let* (_, tau) = tc_exp env ez in
+	| DataArrayExp(i, tau_o, dim_l, el, _) ->
+		let* dt_l' = tc_exp_list env dim_l in
 		let* et_l' = tc_exp_list env el in
-		Valid (NewArrayExpC(List.map fst et_l', tau), ArrayTy(i, tau))
+		let tau = (match tau_o with None -> snd (List.hd et_l') | Some tau -> tau) in
+		Valid (NewArrayExpC(List.map fst dt_l', List.map fst et_l', tau), ArrayTy(i, tau))
+	| FormatArrayExp(i, dim_l, e, _) ->
+		let* dt_l' = tc_exp_list env dim_l in
+		let* (_, tau) = tc_exp env e in
+		let tau_a = ArrayTy(i, tau) in
+		let s_a = VarStmtC("__a", NewArrayExpC(List.map fst dt_l', [], tau), tau_a) in 
+		Valid (SeqExpC(get_box_id_tenv env, tau_a, [s_a], VarExpC "__a"), tau_a)
+	(*| FormatArrayExp(i, dim_l, e, _) ->
+		let* dt_l' = tc_exp_list env dim_l in
+		let* (e', tau) = tc_exp env e in
+		Valid (FormatArrayExpC(List.map fst dt_l', e', tau), ArrayTy(i, tau))*)
 	| NewStructExp(_, cx, fl, p) ->
 		let* ftl' = map_try_res (fun (x, e) -> let* (e', t) = tc_exp env e in Valid (x, e', t)) fl in
 		let* el' = (match Hashtbl.find_opt env.globalTIds cx with
@@ -148,12 +114,14 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				let (rw', tau_r', et') =
 					if rw = RR then (RC, tau_r, List.tl el')
 					else (WC (List.nth el' 1), unitTy, List.tl (List.tl el')) in
-				Valid (ArrayIndexExpC(rw', List.hd el', et', tau_r), tau_r')
+				Valid (ArrayIndexExpC(rw', List.hd el', FullIndexC et', tau_r), tau_r')
 			| StructFieldGF(rw, i, cx) ->
 				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
 				Valid (StructFieldExpC(rw', List.nth el' 0, i, cx), tau_r)
-			| CallGF vl ->
-				let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
+			| CallGF _ ->
+				(*let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
+				*)
+				let elx = List.map (fun (e', _) -> e') et_l' in
 				Valid (CallExpC(VarExpC f, elx, tau_r), tau_r)
 		)
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
@@ -266,7 +234,6 @@ and tc_body (cont: fun_cont) (env: type_env) (b: r_stmt list): (type_env * gen_s
 				else let* (env3, st', termX) = tc_body cont env2 st in Valid (env3, s' @ st', termX)
 		)
 		
-
 	(* declaration / sectional type-checking *)
 
 let rec add_param_list (env: type_env) (pl: (string * g_type) list): type_env = match pl with
@@ -288,6 +255,9 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 	| TDefDec(x, td, _) -> Hashtbl.add env.globalTIds x (TcTDef td); Valid [(x, TDefDecC td)]
+	| ConstDec(x, e, _) ->
+		let* (e', _) = tc_exp env e in
+		let* ef = calc_exp env e' in Valid [(x, ConstDecC ef)]
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =
 	let rec tcs_rec dl = match dl with

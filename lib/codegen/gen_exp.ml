@@ -72,20 +72,21 @@ let genBoxStore (cont: llvm_cont) (env: dusk_env) (boxId: int) (vx: llvalue): du
 			Option.iter (fun align -> set_alignment align vs) alignOpt; (vb, tb)
 		| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
 
+let genVar (cont: llvm_cont) (env: dusk_env) (k: dusk_key) (name: string): dusk_val = match Hashtbl.find_opt env k with
+	Some (DFunVal (v, t)) -> (v, t)
+	| Some (DVal ((v, t), alignOpt)) ->
+		let vx = build_load t v name cont.builder in
+		Option.iter (fun align -> set_alignment align vx) alignOpt; (vx, t)
+	| Some _ -> failwith ("BUG: gen_exp.ml - Variable \"" ^ name ^ "\" resolved to non-value.")
+	| None -> failwith ("BUG: gen_exp.ml - Unexpected variable \"" ^ name ^ "\" encountered in generation phase.")
+
 let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx = cont.builder in match e with
 	ConstExpC c -> genConst cont env c
 	(*| LitExpC i -> (match Hashtbl.find env (DLitId i) with
 		DVal (v, t) -> (v, t)
 		| _ -> failwith ("BUG: gen_exp.ml - String literal incorrectly resolved in generation phase.")
 	)*)
-	| VarExpC x -> (match Hashtbl.find_opt env (DVar x) with
-		Some (DFunVal (v, t)) -> (v, t)
-		| Some (DVal ((v, t), alignOpt)) ->
-			let vx = build_load t v x bx in
-			Option.iter (fun align -> set_alignment align vx) alignOpt; (vx, t)
-		| Some _ -> failwith ("BUG: gen_exp.ml - Variable \"" ^ x ^ "\" resolved to non-value.")
-		| None -> failwith ("BUG: gen_exp.ml - Unexpected variable \"" ^ x ^ "\" encountered in generation phase.")
-	)
+	| VarExpC x -> genVar cont env (DVar x) x 
 	| UnaryExpC(xOp, e) ->
 		let (v, _) = genExp cont env e in (match xOp with
 			| "i64toi" -> (build_trunc v iType "_castT" bx, iType)
@@ -127,6 +128,13 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 				Option.iter (fun align -> set_alignment align vs) alignOpt; (vb, tb)
 			| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
 		)*)
+	| SeqExpC(i, _, _, _) ->
+		let (ve, _) = genExp cont env e in (match Hashtbl.find_opt env (DBox i) with
+			Some (DVal ((vb, tb), alignOpt)) ->
+				let vs = build_store ve vb bx in
+				Option.iter (fun align -> set_alignment align vs) alignOpt; (vb, tb)
+			| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
+		)
 	| BoxExpC(_, _, _) -> failwith "BUG: gen_exp.ml - Box expression encountered (currently unused feature.)"
 	| TupleExpC(boxId, _, el) ->
 		 	(* compile the sub-expressions *)
@@ -161,9 +169,9 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		(*let sVal = build_load vp bx "_structT" in*)
 		let elem = build_extractvalue vp i "_elemT" bx in
 		(elem, genType tau_v)
-	| NewArrayExpC(el, tau) ->
+	| NewArrayExpC(dim_l, el, tau) ->
 			(* calculate size *)
-		let res_l = List.map (genExp cont env) el in
+		let res_l = List.map (genExp cont env) dim_l in
 		let dim = List.length res_l in
 		let v_size = genProduct cont (List.map fst res_l) in
 			(* initialize array *)
@@ -181,18 +189,30 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 					(Array.of_list [const_int iType 0; const_int iType i]) dx bx in
 				ignore (build_store vd dimPtr bx)
 			) (List.map fst res_l)
-			(*let dimsSlot = build_gep gcArrType arrPtr
-				(Array.of_list [const_int iType 0; const_int iType 1]) "_dimsS" bx in
-			let dimsPtr = build_load ptrType dimsSlot "_dimsPT" bx in*)
-		); (arrPtr, ptrType)
-	| ArrayIndexExpC(rw, ea, el, tau) ->
-			(* calculate sub-expressions *)
-		let (va, _) = genExp cont env ea in
-		let vl = List.map (fun e -> fst (genExp cont env e)) el in
-		let dim = List.length vl in
+		);
+			(* calculate array index pointer *)
 		let t' = genType tau in
+		let dataSlot = build_gep gcArrType arrPtr (Array.of_list [const_int iType 0; const_int iType 2]) "_dataS" bx in
+		let dataPtr = build_load ptrType dataSlot "_dataPT" bx in
+			(* store each value *)
+		List.iteri (fun i e ->
+			let eName = "_e" ^ (string_of_int i) ^ "PT" in
+			let vPtr = build_gep t' dataPtr (Array.of_list [const_int iType i]) eName bx in
+			let (vv, _) = genExp cont env e in
+			ignore (build_store vv vPtr bx)
+		) el; (arrPtr, ptrType)
+	| ArrayIndexExpC(rw, ea, ix, tau) ->
 			(* calculate index *)
-		let vi = if dim = 1 then List.hd vl else genIndexProd cont va vl dim in
+		let (va, _) = genExp cont env ea in
+		let vi = (match ix with
+			RawIndexC e -> fst (genExp cont env e)
+			| FullIndexC el ->
+				let vl = List.map (fun e -> fst (genExp cont env e)) el in
+				let dim = List.length vl in
+				if dim = 1 then List.hd vl else genIndexProd cont va vl dim
+		) in
+			(* calculate array index pointer *)
+		let t' = genType tau in
 		let dataPtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 2]) "_dataS" bx in
 		let v_data = build_load ptrType dataPtr "_dataPT" bx in
 		let vPtr = build_gep t' v_data (Array.of_list [vi]) "_elemPT" bx in
@@ -235,6 +255,26 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		let (v, t) = genExp cont env e in
 		let (new_root_fun, new_root_type) = !(cont.gc).gc_new_root in
 		ignore (build_call new_root_type new_root_fun (Array.of_list [v]) "" bx); (v, t)
+	| ConstArrayExpC(_, _, _) ->
+		failwith "BUG: gen_exp.ml - Wrong generation function used for constant-only expression." 
+
+	(* special expression generation that only gives constants *)
+
+let rec genConstExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = (*let bx = cont.builder in*) match e with
+	ConstExpC c -> genConst cont env c
+	| ConstArrayExpC(dims, el, tau) ->
+		let size = List.fold_left (fun i v -> i * v) 1 dims in
+		let res_l = List.map (genConstExp cont env) el in
+		let aVal = const_array (genType tau) (Array.of_list (List.map fst res_l)) in
+		let rVal = define_global "_rawT" aVal cont.llmod in
+		let sVal = const_struct context (Array.of_list ([
+			const_int iType size;
+			const_int iType size;
+			rVal] @ (List.map (const_int iType) dims)
+		)) in
+		(sVal, gcFullArrType (List.length dims))
+		(*let size = List.fold_left (fun i v -> i * v) 1 dims in*)
+	| _ -> failwith "BUG: gen_exp.ml - Non-constant initializer for global declaration encountered in generation phase."
 
 	(* statement generation *)
 
@@ -353,7 +393,7 @@ let genStructTD (cont: llvm_cont) (env: dusk_env) (f: string) (fl: (string * g_t
 let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (d: gen_dec): unit = match d with
 	FunDecC (MethodC(pl, tau_r, b)) ->
 		let fType = genFunType pl tau_r in
-		let fVal = declare_function f fType (cont.llmod) in
+		let fVal = declare_function f fType cont.llmod in
 		let block = append_block context "entry" fVal in
 		position_at_end block (cont.builder);
 		Hashtbl.add env (DVar f) (DFunVal(fVal, fType));
@@ -362,6 +402,10 @@ let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (d: gen_dec): unit = ma
 		ignore (genBody cont env' (1, fVal) b)
 	| TDefDecC (StructTD fl) -> genStructTD cont env f fl
 	| TDefDecC _ -> failwith "UNIMPLEMENTED: gen_exp.ml - type definition"
+	| ConstDecC e ->
+		let (v, _) = genConstExp cont env e in
+		let cVal = define_global f v cont.llmod in
+		Hashtbl.add env (DVar f) (DGlobal cVal)
 
 let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): unit =
 	let _ = List.map (fun (f, d) -> genDec cont env f d) dl in ()

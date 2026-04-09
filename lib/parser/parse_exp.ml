@@ -47,7 +47,15 @@ let chkUniEnd (tk: raw_token): bool = match tk with
 	| _ -> true
 
 let chkBrackR (tk: raw_token): bool = match tk with
-	RBRACK -> true
+	RPAREN -> true
+	| RBRACE -> true
+	| RBRACK -> true
+	| _ -> false
+
+let chkTypeStart (tk: raw_token): bool = match tk with
+	TID _ -> true
+	| DIM _ -> true
+	| LPAREN -> true
 	| _ -> false
 
 let readUniOp (tk: raw_token): string option = match tk with
@@ -195,9 +203,25 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 		| _ -> parseIdAtomExp (QT None) tkList
 	)
 	| (NEW, p) :: tkRem -> (match tkRem with
-		(DIM i, _) :: tkRem2 ->
-			let* ((tau, el), tkRem3) = parseBraceWrap parseArrayInner "Array Initializer" tkRem2 in
-			Valid (NewDimExp(i, tau, el, p), tkRem3)
+		(DIM i, _) :: tkRem2 -> (match tkRem2 with
+			(LPAREN, _) :: _ ->
+				let* (dim_l, tkRem3) = parseParenWrap (parseSepList parseExp chkComma) "Array Initializer" tkRem2 in
+				let* (el, tkRem4) = parseBraceWrap (fun tkList ->
+					let* (_, tkRem) = parseTk ELLIP "Array Initializer" tkList in parseExp tkRem
+				) "Array Initializer" tkRem3 in
+				Valid (FormatArrayExp(i, dim_l, el, p), tkRem4)
+			| _ ->
+				let* ((tau_ox, el_x), tkRem3) = parseBraceWrap parseArrayInner "Array Initializer" tkRem2 in
+				(match tkRem3 with
+					(LBRACE, p') :: _ ->
+						if tau_ox <> None then Error (BadToken_Err((LBRACE, p'), "Post-Array Initializer"))
+						else let* ((tau_o, el), tkRem4) = parseBraceWrap parseArrayInner "Array Initializer" tkRem3 in
+							Valid (DataArrayExp(i, tau_o, el_x, el, p), tkRem4)
+					| _ ->
+						let en = ConstExp (IConst (List.length el_x), p) in
+						Valid (DataArrayExp(i, tau_ox, [en], el_x, p), tkRem3)
+				)
+		)
 		| (TID x, _) :: tkRem2 ->
 			let* (fl, tkRem3) = parseBrackWrap
 				(parseOrEmpty (parseSepList parseStructInit chkComma) chkBrackR) "Struct Initializer" tkRem2 in
@@ -220,10 +244,33 @@ and parseArgList: n_exp list parser = fun tkList -> match tkList with
 	(RPAREN, _) :: _ -> Valid ([], tkList)
 	| _ -> parseSepList parseExp chkComma tkList
 
-and parseArrayInner: (n_exp * n_exp list) parser = fun tkList ->
-	let* (ez, tkRem) = parseExp tkList in
-	let* (_, tkRem2) = parseTk ELLIP "Array Initializer" tkRem in
-	let* (el, tkRem3) = parseSepList parseExp chkBy tkRem2 in Valid ((ez, el), tkRem3)
+and parseArrayInner: (m_type option * n_exp list) parser = fun tkList -> match tkList with
+	(tk, _) :: _ ->
+		if chkTypeStart tk then
+			let* (tau, tkRem) = parseType tkList in
+			Valid ((Some tau, []), tkRem)
+		else let* (el, tkRem) = parseSepList parseExp chkComma tkList in
+			Valid ((None, el), tkRem)
+	| _ -> Error (EOF_Err "Array Initializer")
+
+(*
+and parseArrayInner: (n_exp list * n_exp list * bool) parser = fun tkList ->
+	let* (e0, tkRem) = parseExp tkList in (match tkRem with
+		(BY, _) :: tkRem2 ->
+			let* (dim_l, tkRem3) = parseSepList parseExp chkBy tkRem2 in
+			let* (_, tkRem4) = parseTk BAR "Array Initializer (Bar)" tkRem3 in
+			let* ((el, b), tkRem5) = parseArrayEnd tkRem4 in
+			Valid ((e0 :: dim_l, el, b), tkRem5)
+		| (COMMA, _) :: tkRem2 ->
+			let* ((el, b), tkRem3) = parseArrayEnd tkRem2 in
+			Valid (([], e0 :: el, b), tkRem3)
+		| _ -> Valid (([], [e0], false), tkRem)
+	)*)
+
+and parseArrayEnd: (n_exp list * bool) parser = fun tkList ->
+	let* (el, tkRem) = parseSepList parseExp chkComma tkList in
+	let* (ellip, tkRem2) = parseOpt (parseTk ELLIP "Array Initializer (Ellip)") chkBrackR tkRem in
+	Valid ((el, ellip <> None), tkRem2)
 
 and parseStructInit: (string * n_exp) parser = fun tkList ->
 	let* (x, tkRem) = parseId tkList in
@@ -413,6 +460,11 @@ let parseDec: n_dec parser = fun tkList -> match tkList with
 		let* (x, tkRem2) = parseTId tkRem in
 		let* (fl, tkRem3) = parseBrackWrap (parseSepList parseFieldDef chkComma) "Struct Definition" tkRem2 in
 		Valid (TDefDec(x, StructTD fl, p), tkRem3)
+	| (CONST, p) :: tkRem ->
+		let* (x, tkRem2) = parseId tkRem in
+		let* (_, tkRem3) = parseTk EQ "Constant Declaration" tkRem2 in
+		let* (e, tkRem4) = parseExp tkRem3 in
+		Valid (ConstDec(x, e, p), tkRem4)
 	| tk :: _ -> Error (BadToken_Err(tk, "Dec"))
 	| _ -> Error (EOF_Err "Dec")
 
