@@ -113,7 +113,7 @@ and parseTypeListFull: m_type list parser = fun tkList -> match tkList with
 
 and parseRetTy: m_type parser = fun tkList -> match tkList with
 	(TID _, _) :: (DOT, _) :: _ -> Valid (unitTy, tkList)
-	| (TID _, _) :: _ | (LBRACE, _) :: _ | (LPAREN, _) :: _ | (LANGLE, _) :: _ -> parseType tkList
+	| (tk, _) :: _ -> if chkTypeStart tk then parseType tkList else Valid (unitTy, tkList)
 	| _ -> Valid (unitTy, tkList)
 
 	(* auxiliary application parse objects *)

@@ -51,6 +51,7 @@ void addGlyphRList(renderList_t* rl, glyph_t* g) {
 		draw_dat2d_t* dat = (draw_dat2d_t*) nextRList(rl);
 		dat->aPos[0] = (float) sg->x;
 		dat->aPos[1] = (float) sg->y;
+		dat->aPos[2] = (float) -lenRList(rl);
 		dat->aSize[0] = (float) spritePtr->tw;
 		dat->aSize[1] = (float) spritePtr->th;
 		dat->aTexId = imagePtr->index;

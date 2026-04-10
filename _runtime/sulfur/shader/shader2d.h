@@ -9,17 +9,19 @@ const char *BASE2_VS = "#version 300 es \n\
 precision highp float; \n\
 layout (location = 0) in vec3 bPos; \n\
 layout (location = 1) in vec2 bTex; \n\
-layout (location = 2) in vec2 aPos; \n\
+layout (location = 2) in vec3 aPos; \n\
 layout (location = 3) in vec2 aSize; \n\
 layout (location = 4) in float aTexId; \n\
 layout (location = 5) in vec2 aTexUVPos; \n\
 layout (location = 6) in vec2 aTexUVSize; \n\
 uniform mat4 uPMat; \n\
+uniform int uTotal; \n\
 out vec2 vTex; \n\
 out float vTexId; \n\
 void main(void) { \n\
-	vec2 pos = (bPos.xy * aSize) + aPos; \n\
+	vec2 pos = (bPos.xy * aSize) + aPos.xy; \n\
 	gl_Position = uPMat * vec4(pos, 0.0, 1.0); \n\
+	gl_Position.z = aPos.z / float(uTotal); \n\
 	vTex = (bTex * aTexUVSize) + aTexUVPos; \n\
 	vTexId = aTexId; \n\
 }";
@@ -47,7 +49,8 @@ void main(void) { \n\
 	*/
 
 typedef struct draw_dat2d {
-	float aPos[2];
+	float aPos[3];
+	float aDepth;
 	float aSize[2];
 	float aTexId;
 	float aTexUVPos[2];
@@ -61,7 +64,7 @@ typedef struct draw_dat2d {
 const struct shader_attr_def BASE2_ATTR_LIST[7] = {
 	{ 1, 3, (void*) offsetof(vertex_t, pos) },
 	{ 3, 2, (void*) offsetof(vertex_t, uv) },
-	{ 0, 2, (void*) offsetof(draw_dat2d_t, aPos) },
+	{ 0, 3, (void*) offsetof(draw_dat2d_t, aPos) },
 	{ 0, 2, (void*) offsetof(draw_dat2d_t, aSize) },
 	{ 0, 1, (void*) offsetof(draw_dat2d_t, aTexId) },
 	{ 0, 2, (void*) offsetof(draw_dat2d_t, aTexUVPos) },
@@ -69,7 +72,7 @@ const struct shader_attr_def BASE2_ATTR_LIST[7] = {
 };
 
 const struct shader_def BASE2_DEF = {
-	7, sizeof(draw_dat2d_t), BASE2_ATTR_LIST, "uSampler", "uPMat"
+	7, sizeof(draw_dat2d_t), BASE2_ATTR_LIST, "uSampler", "uTotal", "uPMat"
 };
 
 #endif 

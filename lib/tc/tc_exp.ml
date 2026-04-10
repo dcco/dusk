@@ -80,8 +80,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 		let* et_l' = tc_exp_list env el in
 		let tau = (match tau_o with None -> snd (List.hd et_l') | Some tau -> tau) in
 		Valid (NewArrayExpC(List.map fst dt_l', List.map fst et_l', tau), ArrayTy(i, tau))
-	| FormatArrayExp(_, _, _, p) ->
-		Error (NestedFormat_Err p)
+	| FormatArrayExp(_, _, _, p) -> Error (NestedFormat_Err p)
 	(*| FormatArrayExp(i, dim_l, e, _) ->
 		let* dt_l' = tc_exp_list env dim_l in
 		let* (e', tau) = tc_exp env e in
@@ -172,6 +171,19 @@ and tc_exp_list (env: type_env) (el: r_exp list): ((gen_exp * g_type) list) tc_r
 		let* res = tc_exp env e in
 		let* res_t = tc_exp_list env et in Valid (res :: res_t)
 
+let tc_extra_exp (env: type_env) (e: r_exp) (x: string): (gen_exp * g_type * gen_stmt list) tc_res = match e with
+	FormatArrayExp(i, dim_l, e, _) ->
+		let* dt_l' = tc_exp_list env dim_l in
+		let* (e', tau) = tc_exp env e in
+		let b = [
+			VarStmtC("__i", ConstExpC (IConst 0), intTy);
+			WhileStmtC(BinExpC("ilt", VarExpC "__i", ArrayLengthExpC (VarExpC x)), [
+				EvalStmtC (ArrayIndexExpC(WC e', VarExpC x, RawIndexC (VarExpC "__i"), tau));
+				AssignStmtC("__i", BinExpC("iadd", VarExpC "__i", ConstExpC (IConst 1)))
+			])
+		] in Valid (NewArrayExpC(List.map fst dt_l', [], tau), ArrayTy(i, tau), b)
+	| _ -> let* (e', tau) = tc_exp env e in Valid (e', tau, [])
+
 	(* statement type-checking *)
 
 let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_stmt list * bool) tc_res = match s with
@@ -185,28 +197,12 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_st
 		None -> Valid (env, [ReturnStmtC None], true)
 		| Some e -> let* (e', _) = tc_exp env e in Valid (env, [ReturnStmtC (Some e')], true)
 	)
-	| PatStmt(px, FormatArrayExp(i, dim_l, e, _), _) ->
-		let* x = (match px with
-			VarPat x -> Valid x
-			| _ -> failwith "Unimplemented: tc_exp.ml - Patterns error."
-		) in
-		let* dt_l' = tc_exp_list env dim_l in
-		let* (e', tau) = tc_exp env e in
-		let tau_a = ArrayTy(i, tau) in
-		let b = [
-			VarStmtC(x, NewArrayExpC(List.map fst dt_l', [], tau), tau_a);
-			VarStmtC("__i", ConstExpC (IConst 0), intTy);
-			WhileStmtC(BinExpC("ilt", VarExpC "__i", ArrayLengthExpC (VarExpC x)), [
-				EvalStmtC (ArrayIndexExpC(WC e', VarExpC x, RawIndexC (VarExpC "__i"), tau));
-				AssignStmtC("__i", BinExpC("iadd", VarExpC "__i", ConstExpC (IConst 0)))
-			])
-		] in Valid (env, b, false)
-	| PatStmt(px, e, _) ->
-		let* (e', tau_e) = tc_exp env e in (match (px, tau_e) with
-			(VarPat x, _) ->
-				let ef = if cont.lf = Lin && is_heap_type env tau_e then GCNewRootExpC e' else e' in
-				Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, [VarStmtC(x, ef, tau_e)], false)
-			| _ -> failwith "Unimplemented: tc_exp.ml - Patterns.")
+	| PatStmt(px, e, _) -> (match px with
+		VarPat x ->
+			let* (e', tau_e, b) = tc_extra_exp env e x in 
+			let ef = if cont.lf = Lin && is_heap_type env tau_e then GCNewRootExpC e' else e' in
+			Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, (VarStmtC(x, ef, tau_e)) :: b, false)
+		| _ -> failwith "Unimplemented: tc_exp.ml - Patterns.")
 	| IfStmt(ec, b1, b2, _) ->
 		let* (ec', _) = tc_exp env ec in 
 		let* (_, b1', term1) = tc_body (nonLinCont cont) env b1 in
@@ -268,8 +264,10 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 	| TDefDec(x, td, _) -> Hashtbl.add env.globalTIds x (TcTDef td); Valid [(x, TDefDecC td)]
 	| ConstDec(x, e, _) ->
-		let* (e', _) = tc_exp env e in
-		let* ef = calc_exp env e' in Valid [(x, ConstDecC ef)]
+		let* (e', tau) = tc_exp env e in
+		let* ef = calc_exp env e' in
+		Hashtbl.add env.globalIds x tau;
+		Valid [(x, ConstDecC ef)]
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =
 	let rec tcs_rec dl = match dl with

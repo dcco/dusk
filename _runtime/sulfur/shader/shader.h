@@ -51,6 +51,7 @@ typedef struct shader_def {
 	GLsizei instSize;		// size of a unit in the render list
 	const shader_attr_def_t* attrList;
 	const char* uSampler;
+	const char* uTotal;		// name of uniform for total (can be NULL)
 	const char* uPers;		// name of perspective matrix (can be NULL)
 } shader_def_t;
 
@@ -67,6 +68,7 @@ typedef struct shader {
 	GLint instVBO;
 	GLsizei instSize;
 	GLint uSampler;
+	GLint uTotal;	// total, may be -1
 	GLint uPers;	// reference to perspective uniform, may be -1
 } shader_t;
 
@@ -126,6 +128,15 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 	shader->uSampler = glGetUniformLocation(prog, sDef->uSampler);
 	if (shader->uSampler < 0) exit_log("shader.h - Could not load shader uniform %s", sDef->uSampler);
 
+	// initialize total uniform when relevant
+	const char* uTotal = sDef->uTotal;
+	if (uTotal == NULL) {
+		shader->uTotal = -1;
+	} else {
+		shader->uTotal = glGetUniformLocation(prog, uTotal);
+		if (shader->uTotal < 0) exit_log("shader.h - Could not load shader uniform %s", uTotal);
+	}
+
 	// initialize perspective uniform when relevant
 	const char* uPers = sDef->uPers;
 	if (uPers == NULL) {
@@ -156,6 +167,7 @@ void drawDataShader(shader_t* shader, mesh_t* mesh, tex_array_t* texArr, int tot
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texArr->id);
 	glUniform1i(shader->uSampler, 0);
+	if (shader->uTotal != -1) glUniform1i(shader->uTotal, total);
 
 	glDrawArraysInstanced(GL_TRIANGLES, 0, mesh->vertexTotal, total);
 }	

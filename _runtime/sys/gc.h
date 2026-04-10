@@ -189,6 +189,7 @@ void _gc_mark() {
 	// if completed gray set, prep for sweep phase
 	gc_phase = PHASE_SWEEP;
 	gc_sweep = gc_head;
+	gc_prev_sweep = NULL;
 }
 
 void _gc_sweep() {

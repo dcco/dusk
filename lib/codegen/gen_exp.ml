@@ -77,6 +77,7 @@ let genVar (cont: llvm_cont) (env: dusk_env) (k: dusk_key) (name: string): dusk_
 	| Some (DVal ((v, t), alignOpt)) ->
 		let vx = build_load t v name cont.builder in
 		Option.iter (fun align -> set_alignment align vx) alignOpt; (vx, t)
+	| Some (DGlobal v) -> v
 	| Some _ -> failwith ("BUG: gen_exp.ml - Variable \"" ^ name ^ "\" resolved to non-value.")
 	| None -> failwith ("BUG: gen_exp.ml - Unexpected variable \"" ^ name ^ "\" encountered in generation phase.")
 
@@ -89,6 +90,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 	| VarExpC x -> genVar cont env (DVar x) x 
 	| UnaryExpC(xOp, e) ->
 		let (v, _) = genExp cont env e in (match xOp with
+			"bnot" -> (build_not v "_notT" bx, bType)
 			| "i64toi" -> (build_trunc v iType "_castT" bx, iType)
 			| "itoi64" -> (build_sext v i64Type "_castT" bx, i64Type)
 			| _ -> failwith ("BUG: gen_exp.ml - Unexpected operator \"" ^ xOp ^ "\" encountered in generation phase.")
@@ -100,6 +102,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "isub" -> (build_sub v1 v2 "_subT" bx, iType)
 			| "imul" -> (build_mul v1 v2 "_mulT" bx, iType)
 			| "idiv" -> (build_sdiv v1 v2 "_divT" bx, iType)
+			| "imod" -> (build_srem v1 v2 "_modT" bx, iType)
 			| "fadd" -> (build_fadd v1 v2 "_addT" bx, fType)
 			| "fsub" -> (build_fsub v1 v2 "_subT" bx, fType)
 			| "fmul" -> (build_fmul v1 v2 "_mulT" bx, fType)
@@ -109,6 +112,8 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "ilt" -> (build_icmp Icmp.Slt v1 v2 "_cmpT" bx, bType)
 			| "igeq" -> (build_icmp Icmp.Sge v1 v2 "_cmpT" bx, bType)
 			| "igt" -> (build_icmp Icmp.Sgt v1 v2 "_cmpT" bx, bType)
+			| "band" -> (build_and v1 v2 "_andT" bx, bType)
+			| "bor" -> (build_or v1 v2 "_orT" bx, bType)
 			| "i64add" -> (build_add v1 v2 "_addT" bx, i64Type)
 			| "i64sub" -> (build_sub v1 v2 "_subT" bx, i64Type)
 			| "i64mul" -> (build_mul v1 v2 "_mulT" bx, i64Type)
@@ -143,7 +148,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			(* find the tag literal *)
 		let tagLit = (match Hashtbl.find_opt env (DCtor tag) with
 			Some (DEnum i) -> const_int i8Type i
-			| Some (DGlobal p) -> build_load i8Type p "_G" bx
+			| Some (DGlobal (p, _)) -> build_load i8Type p "_G" bx
 			| Some _ -> failwith ("BUG: gen_out.ml - Enum constructor \"" ^ tag ^ "\" resolved to non-enum constructor.")
 			| None -> failwith ("BUG: gen_out.ml - Unexpected enum \"" ^ tag ^ "\" encountered in generation phase.")
 		) in
@@ -400,9 +405,9 @@ let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (d: gen_dec): unit = ma
 	| TDefDecC (StructTD fl) -> genStructTD cont env f fl
 	| TDefDecC _ -> failwith "UNIMPLEMENTED: gen_exp.ml - type definition"
 	| ConstDecC e ->
-		let (v, _) = genConstExp cont env e in
+		let (v, t) = genConstExp cont env e in
 		let cVal = define_global f v cont.llmod in
-		Hashtbl.add env (DVar f) (DGlobal cVal)
+		Hashtbl.add env (DVar f) (DGlobal (cVal, t))
 
 let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): unit =
 	let _ = List.map (fun (f, d) -> genDec cont env f d) dl in ()
@@ -431,7 +436,7 @@ let rec genEnum (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enum_
 	[] -> ()
 	| (name, _, ext_o) :: ct -> let v = (match ext_o with
 			None ->	DEnum i 
-			| Some ext -> DGlobal (declare_global i8Type ext cont.llmod)
+			| Some ext -> DGlobal (declare_global i8Type ext cont.llmod, i8Type)
 		) in
 		Hashtbl.add env (DCtor name) v;
 		genEnum cont env (i + 1) ct

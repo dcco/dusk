@@ -81,7 +81,7 @@ type dusk_val = llvalue * lltype
 
 type dusk_fval =
 	DVal of dusk_val * int option
-	| DGlobal of llvalue
+	| DGlobal of dusk_val
 	| DFunVal of llvalue * lltype
 	| DTDef of dusk_tdef
 	| DEnum of int

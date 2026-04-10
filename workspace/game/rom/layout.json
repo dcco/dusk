@@ -2,6 +2,6 @@
 	"presets": [
 	],
 	"sprites": [
-		["TSET", "x1", "tset", [0, 0], 10]
+		["TSET", "x1", "tset", [0, 0], 8]
 	]
 }

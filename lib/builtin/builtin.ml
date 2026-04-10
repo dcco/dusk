@@ -55,6 +55,7 @@ let builtinList =  [
 	("sub", BinaryASMSym "isub", [intTy; intTy], intTy);
 	("mul", BinaryASMSym "imul", [intTy; intTy], intTy);
 	("div", BinaryASMSym "idiv", [intTy; intTy], intTy);
+	("mod", BinaryASMSym "imod", [intTy; intTy], intTy);
 
 	("add", BinaryASMSym "fadd", [floatTy; floatTy], floatTy);
 	("sub", BinaryASMSym "fsub", [floatTy; floatTy], floatTy);
@@ -66,6 +67,10 @@ let builtinList =  [
 	("lt", BinaryASMSym "ilt", [intTy; intTy], boolTy);
 	("geq", BinaryASMSym "igeq", [intTy; intTy], boolTy);
 	("gt", BinaryASMSym "igt", [intTy; intTy], boolTy);
+
+	("not", UnaryASMSym "bnot", [boolTy], boolTy);
+	("and", BinaryASMSym "band", [boolTy; boolTy], boolTy);
+	("or", BinaryASMSym "bor", [boolTy; boolTy], boolTy);
 
 	("add", BinaryASMSym "i64add", [longTy; longTy], longTy);
 	("sub", BinaryASMSym "i64sub", [longTy; longTy], longTy);
@@ -91,7 +96,8 @@ let osList = [
 
 let inputList = [
 	("update", ExternalSym [], [], unitTy);
-	("keyDown", ExternalSym [], [keyTy], boolTy)
+	("keyDown", ExternalSym [], [keyTy], boolTy);
+	("keyPress", ExternalSym [], [keyTy], boolTy)
 ]
 
 let sulfurList = [
