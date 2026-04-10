@@ -35,14 +35,14 @@ struct Game{
 }
 
 fn initGame() Game
-	var grid = new 2d(10, 20)[.. 0]
-	for i < 10, j < 20 do
+	var grid = new 2d[1, 1][0]
+	(*for i < 10, j < 20 do
 		if randomInt(2) < 1 then
 			grid[i, j] = 0
 		else
 			grid[i, j] = 1
 		end
-	end(*
+	end
 	for i < 4, j < 2 do
 		grid[i, j] = pieces[i, j, 3]
 	end*)

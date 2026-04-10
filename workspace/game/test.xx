@@ -14,79 +14,37 @@
 	.p2align	4, 0x90
 _none_initGame:
 .seh_proc _none_initGame
-	subq	$72, %rsp
-	.seh_stackalloc 72
+	subq	$56, %rsp
+	.seh_stackalloc 56
 	.seh_endprologue
 	movl	$4, %ecx
-	movl	$200, %edx
+	movl	$1, %edx
 	movl	$8, %r8d
 	callq	gc_alloc_array
-	movl	$10, 16(%rax)
-	movl	$20, 20(%rax)
-	movq	%rax, 64(%rsp)
-	movl	$0, 60(%rsp)
-.LBB0_1:
-	cmpl	$20, 60(%rsp)
-	jge	.LBB0_3
-	movl	$0, 56(%rsp)
-	jmp	.LBB0_4
-.LBB0_3:
+	movl	$1, 16(%rax)
+	movl	$1, 20(%rax)
+	movq	8(%rax), %rcx
+	movl	$0, (%rcx)
+	movq	%rax, 48(%rsp)
 	movl	$12, %ecx
 	xorl	%eax, %eax
 	movl	%eax, %edx
 	callq	gc_alloc
-	movq	%rax, 40(%rsp)
+	movq	%rax, 32(%rsp)
 	movl	$0, (%rax)
 	movl	$4, 4(%rax)
 	movl	$0, 8(%rax)
-	movq	64(%rsp), %rax
-	movq	%rax, 48(%rsp)
+	movq	48(%rsp), %rax
+	movq	%rax, 40(%rsp)
 	movl	$16, %ecx
 	leaq	tc__Game(%rip), %rdx
 	callq	gc_alloc
-	movq	40(%rsp), %rdx
-	movq	48(%rsp), %rcx
+	movq	32(%rsp), %rdx
+	movq	40(%rsp), %rcx
 	movq	%rdx, (%rax)
 	movq	%rcx, 8(%rax)
-	addq	$72, %rsp
+	addq	$56, %rsp
 	retq
-.LBB0_4:
-	cmpl	$10, 56(%rsp)
-	jge	.LBB0_6
-	movl	$2, %ecx
-	callq	_Int_Sys_Os_randomInt
-	cmpl	$1, %eax
-	jl	.LBB0_7
-	jmp	.LBB0_8
-.LBB0_6:
-	movl	60(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 60(%rsp)
-	jmp	.LBB0_1
-.LBB0_7:
-	movq	64(%rsp), %rax
-	movl	56(%rsp), %ecx
-	movl	60(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	movl	$0, (%rax,%rcx,4)
-	jmp	.LBB0_9
-.LBB0_8:
-	movq	64(%rsp), %rax
-	movl	56(%rsp), %ecx
-	movl	60(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	movl	$1, (%rax,%rcx,4)
-.LBB0_9:
-	movl	56(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 56(%rsp)
-	jmp	.LBB0_4
 	.seh_endproc
 
 	.def	__Game_Sys_Sulfur_draw;

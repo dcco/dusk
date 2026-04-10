@@ -80,12 +80,8 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 		let* et_l' = tc_exp_list env el in
 		let tau = (match tau_o with None -> snd (List.hd et_l') | Some tau -> tau) in
 		Valid (NewArrayExpC(List.map fst dt_l', List.map fst et_l', tau), ArrayTy(i, tau))
-	| FormatArrayExp(i, dim_l, e, _) ->
-		let* dt_l' = tc_exp_list env dim_l in
-		let* (_, tau) = tc_exp env e in
-		let tau_a = ArrayTy(i, tau) in
-		let s_a = VarStmtC("__a", NewArrayExpC(List.map fst dt_l', [], tau), tau_a) in 
-		Valid (SeqExpC(get_box_id_tenv env, tau_a, [s_a], VarExpC "__a"), tau_a)
+	| FormatArrayExp(_, _, _, p) ->
+		Error (NestedFormat_Err p)
 	(*| FormatArrayExp(i, dim_l, e, _) ->
 		let* dt_l' = tc_exp_list env dim_l in
 		let* (e', tau) = tc_exp env e in
@@ -189,12 +185,28 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_st
 		None -> Valid (env, [ReturnStmtC None], true)
 		| Some e -> let* (e', _) = tc_exp env e in Valid (env, [ReturnStmtC (Some e')], true)
 	)
+	| PatStmt(px, FormatArrayExp(i, dim_l, e, _), _) ->
+		let* x = (match px with
+			VarPat x -> Valid x
+			| _ -> failwith "Unimplemented: tc_exp.ml - Patterns error."
+		) in
+		let* dt_l' = tc_exp_list env dim_l in
+		let* (e', tau) = tc_exp env e in
+		let tau_a = ArrayTy(i, tau) in
+		let b = [
+			VarStmtC(x, NewArrayExpC(List.map fst dt_l', [], tau), tau_a);
+			VarStmtC("__i", ConstExpC (IConst 0), intTy);
+			WhileStmtC(BinExpC("ilt", VarExpC "__i", ArrayLengthExpC (VarExpC x)), [
+				EvalStmtC (ArrayIndexExpC(WC e', VarExpC x, RawIndexC (VarExpC "__i"), tau));
+				AssignStmtC("__i", BinExpC("iadd", VarExpC "__i", ConstExpC (IConst 0)))
+			])
+		] in Valid (env, b, false)
 	| PatStmt(px, e, _) ->
 		let* (e', tau_e) = tc_exp env e in (match (px, tau_e) with
 			(VarPat x, _) ->
 				let ef = if cont.lf = Lin && is_heap_type env tau_e then GCNewRootExpC e' else e' in
 				Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, [VarStmtC(x, ef, tau_e)], false)
-			| _ -> failwith "Unimplemented: res_out.ml - Patterns.")
+			| _ -> failwith "Unimplemented: tc_exp.ml - Patterns.")
 	| IfStmt(ec, b1, b2, _) ->
 		let* (ec', _) = tc_exp env ec in 
 		let* (_, b1', term1) = tc_body (nonLinCont cont) env b1 in

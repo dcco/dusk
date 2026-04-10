@@ -127,15 +127,8 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 				let vs = build_store ve vb bx in
 				Option.iter (fun align -> set_alignment align vs) alignOpt; (vb, tb)
 			| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
-		)*)
-	| SeqExpC(i, _, _, _) ->
-		let (ve, _) = genExp cont env e in (match Hashtbl.find_opt env (DBox i) with
-			Some (DVal ((vb, tb), alignOpt)) ->
-				let vs = build_store ve vb bx in
-				Option.iter (fun align -> set_alignment align vs) alignOpt; (vb, tb)
-			| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
 		)
-	| BoxExpC(_, _, _) -> failwith "BUG: gen_exp.ml - Box expression encountered (currently unused feature.)"
+	| BoxExpC(_, _, _) -> failwith "BUG: gen_exp.ml - Box expression encountered (currently unused feature.)"*)
 	| TupleExpC(boxId, _, el) ->
 		 	(* compile the sub-expressions *)
 		let res_l = List.map (fun e -> genExp cont env e) el in
@@ -221,6 +214,10 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			RC -> (build_load t' vPtr "_elemT" bx, t')
 			| WC ev -> let (vv, _) = genExp cont env ev in (build_store vv vPtr bx, voidType)
 		)
+	| ArrayLengthExpC ea ->
+		let (va, _) = genExp cont env ea in
+		let sizePtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 1]) "_sizePT" bx in
+		let vSize = build_load iType sizePtr "_sizeT" bx in (vSize, iType)
 	| NewStructExpC(tx, el) ->
 		let res_l = List.map (genExp cont env) el in
 		let tau_l = List.map snd res_l in
