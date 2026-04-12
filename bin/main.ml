@@ -29,6 +29,28 @@ let load_token_list (fname: string): (Lex_token.token list) try_log_res =
 		let tkList = lex_iter [] in
 		(close_in fc; validLog tkList);;
 
+let rec pre_compile_lib (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
+	(main_dir: string) (l: string option): ((string * gen_dec) list) try_log_res = match l with
+	None -> pre_compile_file resEnv typeEnv main_dir "main.dm"
+	| Some libName ->
+			(* - lex / parse the library TOC *)
+		let*! tkList = load_token_list (main_dir ^ "/" ^ libName ^ "toc.dt") in
+		let*! rawAst = tryWithErrLog string_of_parse_err (parseToc tkList) in
+			(* - process the table_of_contents *)
+		
+and pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
+	(main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
+		(* PHASE 1. lexing / parsing *)
+	let*! tkList = load_token_list (main_dir ^ "/" ^ f) in
+	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
+		(* PHASE 2. namespace resolution *)
+	let missingLibList = precheck_section resEnv rawAst in
+		(* - recursively load libraries when needed *)
+	let resEnv' = Res_cont.freeze_env resEnv [] in
+	let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' rawAst) in
+		(* PHASE 3. type-checking *)
+	tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst)
+(*
 let pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 	(main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
 		(* PHASE 1. lexing / parsing *)
@@ -36,10 +58,9 @@ let pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
 		(* PHASE 2. namespace resolution *)
 	let resEnv' = Res_cont.freeze_env resEnv [] in
-	(* tryWithErrLog string_of_rs_err (resolve_section resEnv rawAst) *)
 	let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' rawAst) in
 		(* PHASE 3. type-checking *)
-	tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst)
+	tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst)*)
 
 	(* command line argument state *)
 

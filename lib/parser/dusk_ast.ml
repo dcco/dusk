@@ -109,7 +109,16 @@ type ('m, 'ann) section =
 
 	(* table of contents *)
 	
+type 'ann toc_dec =
+	ModuleDec of string * string list * 'ann
+
+type 'ann toc =
+	Toc of 'ann req list * 'ann toc_dec list
+
 type n_met = (qual_tag, l_pos) met
 type n_dec = (qual_tag, l_pos) dec
 type n_req = l_pos req
 type n_section = (qual_tag, l_pos) section
+
+type n_toc_dec = l_pos toc_dec
+type n_toc = l_pos toc

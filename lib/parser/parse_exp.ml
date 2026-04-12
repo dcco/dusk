@@ -93,7 +93,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 
 let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
-		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"] then Valid (primTy x, tkRem)
+		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "Long"] then Valid (primTy x, tkRem)
 		else Valid (NamedTy(QT None, x), tkRem)
 	| (DIM i, _) :: tkRem ->
 		let* (tau, tkRem2) = parseBraceWrap parseType "Array Type" tkRem in
@@ -487,3 +487,21 @@ let parseReq: n_req parser = fun tkList -> match tkList with
 let parseMain (tkList: token list): n_section parse_res =
 	let* (rList, tkRem) = (parseList parseReq chkReqEnd) tkList in 
 	let* (dList, _) = (parseList parseDec neverEnd) tkRem in Valid (Section(rList, dList))
+
+	(* table of contents parsing *)
+
+let parseChapter: string parser = fun tkList ->
+	let* (_, tkRem) = parseTk CHAPTER "Module Chapter" tkList in
+	let* (x, tkRem2) = parseTId tkRem in Valid (x, tkRem2)
+
+let parseTocDec: n_toc_dec parser = fun tkList -> match tkList with
+	(MODULE, p) :: tkRem ->
+		let* (m, tkRem2) = parseTId tkRem in
+		let* (xl, tkRem3) = (parseList parseChapter chkPureEnd) tkRem2 in
+		Valid (ModuleDec(m, xl, p), tkRem3)
+	| tk :: _ -> Error (BadToken_Err(tk, "TOC Declaration"))
+	| _ -> Error (EOF_Err "TOC Declaration")
+
+let parseToc (tkList: token list): n_toc parse_res =
+	let* (rList, tkRem) = (parseList parseReq chkReqEnd) tkList in
+	let* (dList, _) = (parseList parseTocDec neverEnd) tkRem in Valid (Toc(rList, dList))

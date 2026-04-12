@@ -26,6 +26,10 @@ let rec open_path_tree (tree: 'a tree_map) (path: string list): bool = match (pa
 		| Some child -> open_path_tree child xt
 	)
 
+let has_branch_tree (tree: 'a tree_map) (p: string): bool = match tree with
+	Leaf _ -> false
+	| Branch childMap -> StringMap.mem p childMap
+
 let rec has_path_tree (tree: 'a tree_map) (path: string list): bool = match (path, tree) with
 	([], Leaf _) -> true
 	| (x :: xt, Branch childMap) -> (match StringMap.find_opt x childMap with

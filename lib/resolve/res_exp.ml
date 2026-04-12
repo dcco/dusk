@@ -1,4 +1,5 @@
 open Commons.Try_log
+open Commons.Tree_map
 open Parser.Lex_token
 open Parser.Dusk_type
 open Parser.Dusk_ast
@@ -137,3 +138,18 @@ let resolve_section (env: res_env) (s: n_section): r_section rs_res = match s wi
 	Section(rl, dl) ->
 		resolve_req_list env rl;
 		let* dl' = resolve_dec_list env dl in Valid (SectionR dl')
+
+	(*
+		pre-check, looks at list of requirements and compiles if needed
+	*)
+
+
+let precheck_section (env: res_env) (s: n_section): string list = match s with
+	Section(rl, _) -> List.concat (List.map (fun r -> match r with
+		ShortRefReq(path, _) ->
+			let p = List.hd path in
+			if has_branch_tree env.globalModules p then [p] else []
+		| LongRefReq(path, _, _) ->
+			let p = List.hd path in
+			if has_branch_tree env.globalModules p then [p] else []
+	) rl)
