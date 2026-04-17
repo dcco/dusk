@@ -6,1078 +6,168 @@
 	.globl	@feat.00
 .set @feat.00, 0
 	.file	"dusk"
-	.def	_Int_colData;
+	.def	_Float_Commons_Sys_asRatio;
 	.scl	2;
 	.type	32;
 	.endef
-	.globl	_Int_colData
+	.section	.rdata,"dr"
+	.p2align	2, 0x0
+.LCPI0_0:
+	.long	0x3f800000
+	.text
+	.globl	_Float_Commons_Sys_asRatio
 	.p2align	4, 0x90
-_Int_colData:
-.seh_proc _Int_colData
+_Float_Commons_Sys_asRatio:
+.seh_proc _Float_Commons_Sys_asRatio
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movss	%xmm0, 36(%rsp)
+	movss	%xmm1, 32(%rsp)
+	movss	36(%rsp), %xmm0
+	movss	.LCPI0_0(%rip), %xmm1
+	ucomiss	%xmm1, %xmm0
+	jbe	.LBB0_2
+	movss	.LCPI0_0(%rip), %xmm0
+	movss	%xmm0, 36(%rsp)
+	jmp	.LBB0_3
+.LBB0_2:
+	jmp	.LBB0_3
+.LBB0_3:
+	movss	.LCPI0_0(%rip), %xmm0
+	subss	36(%rsp), %xmm0
+	movss	32(%rsp), %xmm1
+	callq	_Float_builtin_expo
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	_Float_Commons_Sys_dist;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_Float_Commons_Sys_dist
+	.p2align	4, 0x90
+_Float_Commons_Sys_dist:
+.seh_proc _Float_Commons_Sys_dist
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movss	%xmm0, 36(%rsp)
+	movss	%xmm1, 32(%rsp)
+	movss	36(%rsp), %xmm0
+	mulss	36(%rsp), %xmm0
+	movss	32(%rsp), %xmm1
+	mulss	32(%rsp), %xmm1
+	addss	%xmm1, %xmm0
+	callq	_Float_builtin_sqrt
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	_Float_Commons_Sys_distPt;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_Float_Commons_Sys_distPt
+	.p2align	4, 0x90
+_Float_Commons_Sys_distPt:
+.seh_proc _Float_Commons_Sys_distPt
+	subq	$56, %rsp
+	.seh_stackalloc 56
+	.seh_endprologue
+	movss	%xmm0, 52(%rsp)
+	movss	%xmm1, 48(%rsp)
+	movss	%xmm2, 44(%rsp)
+	movss	%xmm3, 40(%rsp)
+	movss	52(%rsp), %xmm0
+	subss	44(%rsp), %xmm0
+	callq	_Float_builtin_abs
+	movss	%xmm0, 36(%rsp)
+	movss	48(%rsp), %xmm0
+	subss	40(%rsp), %xmm0
+	callq	_Float_builtin_abs
+	movss	%xmm0, 32(%rsp)
+	movss	36(%rsp), %xmm0
+	mulss	36(%rsp), %xmm0
+	movss	32(%rsp), %xmm1
+	mulss	32(%rsp), %xmm1
+	addss	%xmm1, %xmm0
+	callq	_Float_builtin_sqrt
+	nop
+	addq	$56, %rsp
+	retq
+	.seh_endproc
+
+	.def	_Int_Commons_Sys_newClock;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_Int_Commons_Sys_newClock
+	.p2align	4, 0x90
+_Int_Commons_Sys_newClock:
+.seh_proc _Int_Commons_Sys_newClock
 	subq	$72, %rsp
 	.seh_stackalloc 72
 	.seh_endprologue
 	movl	%ecx, 68(%rsp)
-	movl	%edx, 64(%rsp)
-	movl	$4, %ecx
-	movl	$16, %edx
-	movl	$8, %r8d
-	callq	gc_alloc_array
-	movl	$4, 16(%rax)
-	movl	$4, 20(%rax)
-	movq	8(%rax), %rcx
-	movq	%rcx, 40(%rsp)
-	movl	$0, (%rcx)
-	movl	$0, 4(%rcx)
-	movl	$0, 8(%rcx)
-	movl	$0, 12(%rcx)
-	movl	$0, 16(%rcx)
-	movl	$0, 20(%rcx)
-	movl	$0, 24(%rcx)
-	movl	$0, 28(%rcx)
-	movl	$0, 32(%rcx)
-	movl	$0, 36(%rcx)
-	movl	$0, 40(%rcx)
-	movl	$0, 44(%rcx)
-	movl	$0, 48(%rcx)
-	movl	$0, 52(%rcx)
-	movl	$0, 56(%rcx)
-	movl	$0, 60(%rcx)
+	movslq	68(%rsp), %rcx
+	movl	$1000000000, %eax
+	cqto
+	idivq	%rcx
 	movq	%rax, 56(%rsp)
-	movl	$0, 52(%rsp)
-.LBB0_1:
-	cmpl	$2, 52(%rsp)
-	jge	.LBB0_3
-	movl	$0, 48(%rsp)
-	jmp	.LBB0_4
-.LBB0_3:
 	movq	56(%rsp), %rax
-	addq	$72, %rsp
-	retq
-.LBB0_4:
-	cmpl	$4, 48(%rsp)
-	jge	.LBB0_6
-	cmpl	$1, 64(%rsp)
-	je	.LBB0_7
-	jmp	.LBB0_8
-.LBB0_6:
-	movl	52(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 52(%rsp)
-	jmp	.LBB0_1
-.LBB0_7:
-	movq	56(%rsp), %rax
-	movl	$2, %ecx
-	subl	52(%rsp), %ecx
-	movl	48(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movl	48(%rsp), %r8d
-	movl	52(%rsp), %edx
-	movl	68(%rsp), %r9d
-	imull	_pieces+20(%rip), %r9d
-	addl	%r9d, %edx
-	imull	_pieces+16(%rip), %edx
-	addl	%edx, %r8d
-	movq	_pieces+8(%rip), %rdx
-	movslq	%r8d, %r9
-	movl	(%rdx,%r9,4), %edx
-	movslq	%ecx, %rcx
-	movslq	%r8d, %r8
-	movl	%edx, (%rax,%rcx,4)
-	jmp	.LBB0_9
-.LBB0_8:
-	cmpl	$2, 64(%rsp)
-	je	.LBB0_10
-	jmp	.LBB0_11
-.LBB0_9:
-	movl	48(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 48(%rsp)
-	jmp	.LBB0_4
-.LBB0_10:
-	movq	56(%rsp), %rax
-	movl	$3, %ecx
-	subl	48(%rsp), %ecx
-	movl	$2, %edx
-	subl	52(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movl	48(%rsp), %r8d
-	movl	52(%rsp), %edx
-	movl	68(%rsp), %r9d
-	imull	_pieces+20(%rip), %r9d
-	addl	%r9d, %edx
-	imull	_pieces+16(%rip), %edx
-	addl	%edx, %r8d
-	movq	_pieces+8(%rip), %rdx
-	movslq	%r8d, %r9
-	movl	(%rdx,%r9,4), %edx
-	movslq	%ecx, %rcx
-	movslq	%r8d, %r8
-	movl	%edx, (%rax,%rcx,4)
-	jmp	.LBB0_12
-.LBB0_11:
-	cmpl	$3, 64(%rsp)
-	je	.LBB0_13
-	jmp	.LBB0_14
-.LBB0_12:
-	jmp	.LBB0_9
-.LBB0_13:
-	movq	56(%rsp), %rax
-	movl	52(%rsp), %ecx
-	addl	$1, %ecx
-	movl	$3, %edx
-	subl	48(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movl	48(%rsp), %r8d
-	movl	52(%rsp), %edx
-	movl	68(%rsp), %r9d
-	imull	_pieces+20(%rip), %r9d
-	addl	%r9d, %edx
-	imull	_pieces+16(%rip), %edx
-	addl	%edx, %r8d
-	movq	_pieces+8(%rip), %rdx
-	movslq	%r8d, %r9
-	movl	(%rdx,%r9,4), %edx
-	movslq	%ecx, %rcx
-	movslq	%r8d, %r8
-	movl	%edx, (%rax,%rcx,4)
-	jmp	.LBB0_15
-.LBB0_14:
-	movq	56(%rsp), %rax
-	movl	48(%rsp), %ecx
-	movl	52(%rsp), %edx
-	addl	$1, %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movl	48(%rsp), %r8d
-	movl	52(%rsp), %edx
-	movl	68(%rsp), %r9d
-	imull	_pieces+20(%rip), %r9d
-	addl	%r9d, %edx
-	imull	_pieces+16(%rip), %edx
-	addl	%edx, %r8d
-	movq	_pieces+8(%rip), %rdx
-	movslq	%r8d, %r9
-	movl	(%rdx,%r9,4), %edx
-	movslq	%ecx, %rcx
-	movslq	%r8d, %r8
-	movl	%edx, (%rax,%rcx,4)
-.LBB0_15:
-	jmp	.LBB0_12
-	.seh_endproc
-
-	.def	_none_initGame;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	_none_initGame
-	.p2align	4, 0x90
-_none_initGame:
-.seh_proc _none_initGame
-	subq	$72, %rsp
-	.seh_stackalloc 72
-	.seh_endprologue
-	movl	$4, %ecx
-	movl	$200, %edx
-	movl	$8, %r8d
-	callq	gc_alloc_array
-	movl	$10, 16(%rax)
-	movl	$20, 20(%rax)
-	movq	%rax, 64(%rsp)
-	movl	$0, 60(%rsp)
-.LBB1_1:
-	movl	60(%rsp), %eax
-	movq	64(%rsp), %rcx
-	cmpl	4(%rcx), %eax
-	jge	.LBB1_3
-	movq	64(%rsp), %rax
-	movl	60(%rsp), %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	movl	$0, (%rax,%rcx,4)
-	movl	60(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 60(%rsp)
-	jmp	.LBB1_1
-.LBB1_3:
+	movq	%rax, 32(%rsp)
+	callq	_none_Sys_Os_time
+	movq	%rax, 40(%rsp)
 	movl	$16, %ecx
 	xorl	%eax, %eax
 	movl	%eax, %edx
 	callq	gc_alloc
-	movq	%rax, 40(%rsp)
-	movl	$1, (%rax)
-	movl	$0, 4(%rax)
-	movl	$3, 8(%rax)
-	movl	$-1, 12(%rax)
-	movq	64(%rsp), %rax
+	movq	32(%rsp), %rdx
+	movq	40(%rsp), %rcx
+	movq	%rdx, (%rax)
+	movq	%rcx, 8(%rax)
 	movq	%rax, 48(%rsp)
-	movl	$24, %ecx
-	leaq	tc__Game(%rip), %rdx
-	callq	gc_alloc
-	movq	40(%rsp), %rdx
-	movq	48(%rsp), %rcx
-	movl	$0, (%rax)
-	movq	%rdx, 8(%rax)
-	movq	%rcx, 16(%rax)
+	movq	48(%rsp), %rax
 	addq	$72, %rsp
 	retq
 	.seh_endproc
 
-	.def	__Game_isSolid;
+	.def	__Commons_Sys_FPSClock_Commons_Sys_tick;
 	.scl	2;
 	.type	32;
 	.endef
-	.globl	__Game_isSolid
+	.globl	__Commons_Sys_FPSClock_Commons_Sys_tick
 	.p2align	4, 0x90
-__Game_isSolid:
-.seh_proc __Game_isSolid
-	subq	$16, %rsp
-	.seh_stackalloc 16
-	.seh_endprologue
-	movq	%rcx, 8(%rsp)
-	movl	%edx, 4(%rsp)
-	movl	%r8d, (%rsp)
-	cmpl	$0, 4(%rsp)
-	setl	%al
-	cmpl	$10, 4(%rsp)
-	setge	%cl
-	orb	%cl, %al
-	cmpl	$20, (%rsp)
-	setge	%cl
-	orb	%cl, %al
-	testb	$1, %al
-	jne	.LBB2_1
-	jmp	.LBB2_2
-.LBB2_1:
-	movb	$1, %al
-	addq	$16, %rsp
-	retq
-.LBB2_2:
-	cmpl	$0, (%rsp)
-	jl	.LBB2_4
-	jmp	.LBB2_5
-.LBB2_3:
-	movq	8(%rsp), %rax
-	movq	16(%rax), %rax
-	movl	4(%rsp), %ecx
-	movl	(%rsp), %edx
-	movl	16(%rax), %r8d
-	imull	%r8d, %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	movl	(%rax,%rcx,4), %eax
-	testl	%eax, %eax
-	setne	%al
-	addq	$16, %rsp
-	retq
-.LBB2_4:
-	xorl	%eax, %eax
-	addq	$16, %rsp
-	retq
-.LBB2_5:
-	jmp	.LBB2_6
-.LBB2_6:
-	jmp	.LBB2_3
-	.seh_endproc
-
-	.def	__Game_tryMove;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	__Game_tryMove
-	.p2align	4, 0x90
-__Game_tryMove:
-.seh_proc __Game_tryMove
-	subq	$88, %rsp
-	.seh_stackalloc 88
-	.seh_endprologue
-	movq	%rcx, 80(%rsp)
-	movl	%edx, 76(%rsp)
-	movl	%r8d, 72(%rsp)
-	movq	80(%rsp), %rax
-	movq	8(%rax), %rax
-	movq	%rax, 64(%rsp)
-	movq	64(%rsp), %rax
-	movl	(%rax), %ecx
-	movq	64(%rsp), %rax
-	movl	4(%rax), %edx
-	callq	_Int_colData
-	movq	%rax, 56(%rsp)
-	movl	$0, 52(%rsp)
-.LBB3_1:
-	cmpl	$4, 52(%rsp)
-	jge	.LBB3_3
-	movl	$0, 48(%rsp)
-	jmp	.LBB3_4
-.LBB3_3:
-	movq	64(%rsp), %rax
-	movl	76(%rsp), %ecx
-	movl	%ecx, 8(%rax)
-	movq	64(%rsp), %rax
-	movl	72(%rsp), %ecx
-	movl	%ecx, 12(%rax)
-	movb	$1, %al
-	addq	$88, %rsp
-	retq
-.LBB3_4:
-	cmpl	$4, 48(%rsp)
-	jge	.LBB3_6
-	movq	56(%rsp), %rax
-	movl	48(%rsp), %ecx
-	movl	52(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	cmpl	$1, (%rax,%rcx,4)
-	sete	%al
-	movb	%al, 47(%rsp)
-	movq	80(%rsp), %rcx
-	movl	76(%rsp), %edx
-	addl	48(%rsp), %edx
-	movl	72(%rsp), %r8d
-	addl	52(%rsp), %r8d
-	callq	__Game_isSolid
-	movb	%al, %cl
-	movb	47(%rsp), %al
-	andb	%cl, %al
-	testb	$1, %al
-	jne	.LBB3_7
-	jmp	.LBB3_8
-.LBB3_6:
-	movl	52(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 52(%rsp)
-	jmp	.LBB3_1
-.LBB3_7:
-	xorl	%eax, %eax
-	addq	$88, %rsp
-	retq
-.LBB3_8:
-	jmp	.LBB3_9
-.LBB3_9:
-	movl	48(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 48(%rsp)
-	jmp	.LBB3_4
-	.seh_endproc
-
-	.def	__Game_tryOrient;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	__Game_tryOrient
-	.p2align	4, 0x90
-__Game_tryOrient:
-.seh_proc __Game_tryOrient
-	subq	$88, %rsp
-	.seh_stackalloc 88
-	.seh_endprologue
-	movq	%rcx, 80(%rsp)
-	movl	%edx, 76(%rsp)
-	movl	%r8d, 72(%rsp)
-	movl	%r9d, 68(%rsp)
-	movq	80(%rsp), %rax
-	movq	8(%rax), %rax
-	movq	%rax, 56(%rsp)
-	movq	56(%rsp), %rax
-	movl	(%rax), %ecx
-	movl	76(%rsp), %edx
-	callq	_Int_colData
-	movq	%rax, 48(%rsp)
-	movl	$0, 44(%rsp)
-.LBB4_1:
-	cmpl	$4, 44(%rsp)
-	jge	.LBB4_3
-	movl	$0, 40(%rsp)
-	jmp	.LBB4_4
-.LBB4_3:
-	movq	56(%rsp), %rax
-	movl	76(%rsp), %ecx
-	movl	%ecx, 4(%rax)
-	movq	56(%rsp), %rax
-	movl	8(%rax), %ecx
-	movl	72(%rsp), %edx
-	addl	%edx, %ecx
-	movl	%ecx, 8(%rax)
-	movq	56(%rsp), %rax
-	movl	12(%rax), %ecx
-	movl	68(%rsp), %edx
-	addl	%edx, %ecx
-	movl	%ecx, 12(%rax)
-	movb	$1, %al
-	addq	$88, %rsp
-	retq
-.LBB4_4:
-	cmpl	$4, 40(%rsp)
-	jge	.LBB4_6
-	movq	48(%rsp), %rax
-	movl	40(%rsp), %ecx
-	movl	44(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	cmpl	$1, (%rax,%rcx,4)
-	sete	%al
-	movb	%al, 39(%rsp)
-	movq	80(%rsp), %rcx
-	movq	56(%rsp), %rax
-	movl	8(%rax), %edx
-	addl	40(%rsp), %edx
-	addl	72(%rsp), %edx
-	movq	56(%rsp), %rax
-	movl	12(%rax), %r8d
-	addl	44(%rsp), %r8d
-	addl	68(%rsp), %r8d
-	callq	__Game_isSolid
-	movb	%al, %cl
-	movb	39(%rsp), %al
-	andb	%cl, %al
-	testb	$1, %al
-	jne	.LBB4_7
-	jmp	.LBB4_8
-.LBB4_6:
-	movl	44(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 44(%rsp)
-	jmp	.LBB4_1
-.LBB4_7:
-	xorl	%eax, %eax
-	addq	$88, %rsp
-	retq
-.LBB4_8:
-	jmp	.LBB4_9
-.LBB4_9:
-	movl	40(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 40(%rsp)
-	jmp	.LBB4_4
-	.seh_endproc
-
-	.def	__Game_clearLine;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	__Game_clearLine
-	.p2align	4, 0x90
-__Game_clearLine:
-.seh_proc __Game_clearLine
-	subq	$24, %rsp
-	.seh_stackalloc 24
-	.seh_endprologue
-	movq	%rcx, 16(%rsp)
-	movl	%edx, 12(%rsp)
-	movl	$0, 8(%rsp)
-.LBB5_1:
-	movl	8(%rsp), %eax
-	movl	12(%rsp), %ecx
-	subl	$1, %ecx
-	cmpl	%ecx, %eax
-	jge	.LBB5_3
-	movl	$0, 4(%rsp)
-	jmp	.LBB5_4
-.LBB5_3:
-	addq	$24, %rsp
-	retq
-.LBB5_4:
-	cmpl	$10, 4(%rsp)
-	jge	.LBB5_6
-	movl	12(%rsp), %eax
-	subl	8(%rsp), %eax
-	movl	%eax, (%rsp)
-	movq	16(%rsp), %rax
-	movq	16(%rax), %rax
-	movl	4(%rsp), %ecx
-	movl	(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movq	16(%rsp), %rdx
-	movq	16(%rdx), %rdx
-	movl	4(%rsp), %r8d
-	movl	(%rsp), %r9d
-	subl	$1, %r9d
-	imull	16(%rdx), %r9d
-	addl	%r9d, %r8d
-	movq	8(%rdx), %rdx
-	movslq	%r8d, %r9
-	movl	(%rdx,%r9,4), %edx
-	movslq	%ecx, %rcx
-	movslq	%r8d, %r8
-	movl	%edx, (%rax,%rcx,4)
-	movl	4(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 4(%rsp)
-	jmp	.LBB5_4
-.LBB5_6:
-	movl	8(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 8(%rsp)
-	jmp	.LBB5_1
-	.seh_endproc
-
-	.def	__Game_clearLines;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	__Game_clearLines
-	.p2align	4, 0x90
-__Game_clearLines:
-.seh_proc __Game_clearLines
+__Commons_Sys_FPSClock_Commons_Sys_tick:
+.seh_proc __Commons_Sys_FPSClock_Commons_Sys_tick
 	subq	$56, %rsp
 	.seh_stackalloc 56
 	.seh_endprologue
 	movq	%rcx, 48(%rsp)
-	movl	$0, 44(%rsp)
-.LBB6_1:
-	cmpl	$20, 44(%rsp)
-	jge	.LBB6_3
-	movb	$1, 43(%rsp)
-	movl	$0, 36(%rsp)
-	jmp	.LBB6_4
-.LBB6_3:
+	callq	_none_Sys_Os_time
+	movq	%rax, 40(%rsp)
+	movq	40(%rsp), %rax
+	movq	48(%rsp), %rcx
+	subq	8(%rcx), %rax
+	movq	48(%rsp), %rcx
+	cqto
+	idivq	(%rcx)
+	movl	%eax, 36(%rsp)
+	movq	48(%rsp), %rax
+	movq	48(%rsp), %rcx
+	movq	8(%rcx), %rcx
+	movslq	36(%rsp), %rdx
+	movq	48(%rsp), %r8
+	imulq	(%r8), %rdx
+	addq	%rdx, %rcx
+	movq	%rcx, 8(%rax)
+	movl	36(%rsp), %eax
 	addq	$56, %rsp
 	retq
-.LBB6_4:
-	cmpl	$10, 36(%rsp)
-	jge	.LBB6_6
-	movq	48(%rsp), %rax
-	movq	16(%rax), %rax
-	movl	36(%rsp), %ecx
-	movl	44(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	cmpl	$0, (%rax,%rcx,4)
-	je	.LBB6_7
-	jmp	.LBB6_8
-.LBB6_6:
-	testb	$1, 43(%rsp)
-	jne	.LBB6_10
-	jmp	.LBB6_11
-.LBB6_7:
-	movb	$0, 43(%rsp)
-	jmp	.LBB6_9
-.LBB6_8:
-	jmp	.LBB6_9
-.LBB6_9:
-	movl	36(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 36(%rsp)
-	jmp	.LBB6_4
-.LBB6_10:
-	movq	48(%rsp), %rcx
-	movl	44(%rsp), %edx
-	callq	__Game_clearLine
-	jmp	.LBB6_12
-.LBB6_11:
-	jmp	.LBB6_12
-.LBB6_12:
-	movl	44(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 44(%rsp)
-	jmp	.LBB6_1
-	.seh_endproc
-
-	.def	__Game_dropPiece;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	__Game_dropPiece
-	.p2align	4, 0x90
-__Game_dropPiece:
-.seh_proc __Game_dropPiece
-	subq	$88, %rsp
-	.seh_stackalloc 88
-	.seh_endprologue
-	movq	%rcx, 80(%rsp)
-	movq	80(%rsp), %rax
-	movq	8(%rax), %rax
-	movq	%rax, 72(%rsp)
-	movq	72(%rsp), %rax
-	movl	(%rax), %ecx
-	movq	72(%rsp), %rax
-	movl	4(%rax), %edx
-	callq	_Int_colData
-	movq	%rax, 64(%rsp)
-	movl	$0, 60(%rsp)
-.LBB7_1:
-	cmpl	$4, 60(%rsp)
-	jge	.LBB7_3
-	movl	$0, 56(%rsp)
-	jmp	.LBB7_4
-.LBB7_3:
-	movq	80(%rsp), %rax
-	movq	%rax, 40(%rsp)
-	movl	$7, %ecx
-	callq	_Int_Sys_Os_randomInt
-	movl	%eax, 36(%rsp)
-	movl	$16, %ecx
-	xorl	%eax, %eax
-	movl	%eax, %edx
-	callq	gc_alloc
-	movl	36(%rsp), %edx
-	movq	%rax, %rcx
-	movq	40(%rsp), %rax
-	movl	%edx, (%rcx)
-	movl	$0, 4(%rcx)
-	movl	$3, 8(%rcx)
-	movl	$-1, 12(%rcx)
-	movq	%rcx, 8(%rax)
-	movq	80(%rsp), %rcx
-	callq	__Game_clearLines
-	nop
-	addq	$88, %rsp
-	retq
-.LBB7_4:
-	cmpl	$4, 56(%rsp)
-	jge	.LBB7_6
-	movl	60(%rsp), %eax
-	movq	72(%rsp), %rcx
-	addl	12(%rcx), %eax
-	movl	%eax, 52(%rsp)
-	cmpl	$0, 52(%rsp)
-	setge	%al
-	movq	64(%rsp), %rcx
-	movl	56(%rsp), %edx
-	movl	60(%rsp), %r8d
-	imull	16(%rcx), %r8d
-	addl	%r8d, %edx
-	movq	8(%rcx), %rcx
-	movslq	%edx, %rdx
-	cmpl	$0, (%rcx,%rdx,4)
-	setne	%cl
-	andb	%cl, %al
-	testb	$1, %al
-	jne	.LBB7_7
-	jmp	.LBB7_8
-.LBB7_6:
-	movl	60(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 60(%rsp)
-	jmp	.LBB7_1
-.LBB7_7:
-	movq	80(%rsp), %rax
-	movq	16(%rax), %rax
-	movq	72(%rsp), %rcx
-	movl	8(%rcx), %ecx
-	addl	56(%rsp), %ecx
-	movl	52(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movq	72(%rsp), %rdx
-	movl	(%rdx), %edx
-	addl	$1, %edx
-	movslq	%ecx, %rcx
-	movl	%edx, (%rax,%rcx,4)
-	jmp	.LBB7_9
-.LBB7_8:
-	jmp	.LBB7_9
-.LBB7_9:
-	movl	56(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 56(%rsp)
-	jmp	.LBB7_4
-	.seh_endproc
-
-	.def	__Game_Sys_Input_update;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	__Game_Sys_Input_update
-	.p2align	4, 0x90
-__Game_Sys_Input_update:
-.seh_proc __Game_Sys_Input_update
-	subq	$72, %rsp
-	.seh_stackalloc 72
-	.seh_endprologue
-	movq	%rcx, 64(%rsp)
-	movq	64(%rsp), %rax
-	movq	8(%rax), %rax
-	movq	%rax, 56(%rsp)
-	movq	64(%rsp), %rax
-	movq	64(%rsp), %rcx
-	movl	(%rcx), %ecx
-	addl	$1, %ecx
-	movl	%ecx, (%rax)
-	movq	64(%rsp), %rax
-	cmpl	$55, (%rax)
-	jl	.LBB8_2
-	movq	64(%rsp), %rcx
-	movq	56(%rsp), %rax
-	movl	8(%rax), %edx
-	movq	56(%rsp), %rax
-	movl	12(%rax), %r8d
-	addl	$1, %r8d
-	callq	__Game_tryMove
-	andb	$1, %al
-	movb	%al, 38(%rsp)
-	movb	38(%rsp), %al
-	xorb	$-1, %al
-	testb	$1, %al
-	jne	.LBB8_4
-	jmp	.LBB8_5
-.LBB8_2:
-	jmp	.LBB8_3
-.LBB8_3:
-	movq	.refptr.K_left(%rip), %rax
-	movl	(%rax), %ecx
-	callq	_Key_Sys_Input_keyPress
-	testb	$1, %al
-	jne	.LBB8_7
-	jmp	.LBB8_8
-.LBB8_4:
-	movq	64(%rsp), %rcx
-	callq	__Game_dropPiece
-	jmp	.LBB8_6
-.LBB8_5:
-	jmp	.LBB8_6
-.LBB8_6:
-	movq	64(%rsp), %rax
-	movl	$0, (%rax)
-	jmp	.LBB8_3
-.LBB8_7:
-	movq	64(%rsp), %rcx
-	movq	56(%rsp), %rax
-	movl	8(%rax), %edx
-	subl	$1, %edx
-	movq	56(%rsp), %rax
-	movl	12(%rax), %r8d
-	callq	__Game_tryMove
-	jmp	.LBB8_9
-.LBB8_8:
-	movq	.refptr.K_right(%rip), %rax
-	movl	(%rax), %ecx
-	callq	_Key_Sys_Input_keyPress
-	testb	$1, %al
-	jne	.LBB8_10
-	jmp	.LBB8_11
-.LBB8_9:
-	movq	.refptr.K_z(%rip), %rax
-	movl	(%rax), %ecx
-	callq	_Key_Sys_Input_keyPress
-	testb	$1, %al
-	jne	.LBB8_16
-	jmp	.LBB8_17
-.LBB8_10:
-	movq	64(%rsp), %rcx
-	movq	56(%rsp), %rax
-	movl	8(%rax), %edx
-	addl	$1, %edx
-	movq	56(%rsp), %rax
-	movl	12(%rax), %r8d
-	callq	__Game_tryMove
-	jmp	.LBB8_12
-.LBB8_11:
-	movq	.refptr.K_down(%rip), %rax
-	movl	(%rax), %ecx
-	callq	_Key_Sys_Input_keyPress
-	testb	$1, %al
-	jne	.LBB8_13
-	jmp	.LBB8_14
-.LBB8_12:
-	jmp	.LBB8_9
-.LBB8_13:
-	movq	64(%rsp), %rcx
-	movq	56(%rsp), %rax
-	movl	8(%rax), %edx
-	movq	56(%rsp), %rax
-	movl	12(%rax), %r8d
-	addl	$1, %r8d
-	callq	__Game_tryMove
-	jmp	.LBB8_15
-.LBB8_14:
-	jmp	.LBB8_15
-.LBB8_15:
-	jmp	.LBB8_12
-.LBB8_16:
-	movq	56(%rsp), %rax
-	movl	4(%rax), %eax
-	addl	$3, %eax
-	movl	$4, %ecx
-	cltd
-	idivl	%ecx
-	movl	%edx, 40(%rsp)
-	movq	64(%rsp), %rcx
-	movl	40(%rsp), %edx
-	xorl	%r9d, %r9d
-	movl	%r9d, %r8d
-	callq	__Game_tryOrient
-	andb	$1, %al
-	movb	%al, 39(%rsp)
-	movb	39(%rsp), %al
-	xorb	$-1, %al
-	testb	$1, %al
-	jne	.LBB8_19
-	jmp	.LBB8_20
-.LBB8_17:
-	movq	.refptr.K_x(%rip), %rax
-	movl	(%rax), %ecx
-	callq	_Key_Sys_Input_keyPress
-	testb	$1, %al
-	jne	.LBB8_25
-	jmp	.LBB8_26
-.LBB8_18:
-	movq	.refptr.K_up(%rip), %rax
-	movl	(%rax), %ecx
-	callq	_Key_Sys_Input_keyPress
-	testb	$1, %al
-	jne	.LBB8_34
-	jmp	.LBB8_35
-.LBB8_19:
-	movq	64(%rsp), %rcx
-	movl	40(%rsp), %edx
-	movl	$1, %r8d
-	xorl	%r9d, %r9d
-	callq	__Game_tryOrient
-	andb	$1, %al
-	movb	%al, 39(%rsp)
-	jmp	.LBB8_21
-.LBB8_20:
-	jmp	.LBB8_21
-.LBB8_21:
-	movb	39(%rsp), %al
-	xorb	$-1, %al
-	testb	$1, %al
-	jne	.LBB8_22
-	jmp	.LBB8_23
-.LBB8_22:
-	movq	64(%rsp), %rcx
-	movl	40(%rsp), %edx
-	movl	$4294967295, %r8d
-	xorl	%r9d, %r9d
-	callq	__Game_tryOrient
-	jmp	.LBB8_24
-.LBB8_23:
-	jmp	.LBB8_24
-.LBB8_24:
-	jmp	.LBB8_18
-.LBB8_25:
-	movq	56(%rsp), %rax
-	movl	4(%rax), %eax
-	addl	$1, %eax
-	movl	$4, %ecx
-	cltd
-	idivl	%ecx
-	movl	%edx, 40(%rsp)
-	movq	64(%rsp), %rcx
-	movl	40(%rsp), %edx
-	xorl	%r9d, %r9d
-	movl	%r9d, %r8d
-	callq	__Game_tryOrient
-	andb	$1, %al
-	movb	%al, 39(%rsp)
-	movb	39(%rsp), %al
-	xorb	$-1, %al
-	testb	$1, %al
-	jne	.LBB8_28
-	jmp	.LBB8_29
-.LBB8_26:
-	jmp	.LBB8_27
-.LBB8_27:
-	jmp	.LBB8_18
-.LBB8_28:
-	movq	64(%rsp), %rcx
-	movl	40(%rsp), %edx
-	movl	$4294967295, %r8d
-	xorl	%r9d, %r9d
-	callq	__Game_tryOrient
-	andb	$1, %al
-	movb	%al, 39(%rsp)
-	jmp	.LBB8_30
-.LBB8_29:
-	jmp	.LBB8_30
-.LBB8_30:
-	movb	39(%rsp), %al
-	xorb	$-1, %al
-	testb	$1, %al
-	jne	.LBB8_31
-	jmp	.LBB8_32
-.LBB8_31:
-	movq	64(%rsp), %rcx
-	movl	40(%rsp), %edx
-	movl	$1, %r8d
-	xorl	%r9d, %r9d
-	callq	__Game_tryOrient
-	jmp	.LBB8_33
-.LBB8_32:
-	jmp	.LBB8_33
-.LBB8_33:
-	jmp	.LBB8_27
-.LBB8_34:
-	movb	$1, 38(%rsp)
-	jmp	.LBB8_37
-.LBB8_35:
-	jmp	.LBB8_36
-.LBB8_36:
-	addq	$72, %rsp
-	retq
-.LBB8_37:
-	testb	$1, 38(%rsp)
-	jne	.LBB8_38
-	jmp	.LBB8_39
-.LBB8_38:
-	movq	64(%rsp), %rcx
-	movq	56(%rsp), %rax
-	movl	8(%rax), %edx
-	movq	56(%rsp), %rax
-	movl	12(%rax), %r8d
-	addl	$1, %r8d
-	callq	__Game_tryMove
-	andb	$1, %al
-	movb	%al, 38(%rsp)
-	jmp	.LBB8_37
-.LBB8_39:
-	movq	64(%rsp), %rcx
-	callq	__Game_dropPiece
-	movq	64(%rsp), %rax
-	movl	$0, (%rax)
-	jmp	.LBB8_36
-	.seh_endproc
-
-	.def	__Game_Sys_Sulfur_draw;
-	.scl	2;
-	.type	32;
-	.endef
-	.globl	__Game_Sys_Sulfur_draw
-	.p2align	4, 0x90
-__Game_Sys_Sulfur_draw:
-.seh_proc __Game_Sys_Sulfur_draw
-	pushq	%rsi
-	.seh_pushreg %rsi
-	subq	$144, %rsp
-	.seh_stackalloc 144
-	.seh_endprologue
-	movq	%rcx, 136(%rsp)
-	movl	$0, 108(%rsp)
-.LBB9_1:
-	cmpl	$20, 108(%rsp)
-	jge	.LBB9_3
-	movl	$0, 104(%rsp)
-	jmp	.LBB9_4
-.LBB9_3:
-	movq	136(%rsp), %rax
-	movq	8(%rax), %rax
-	movq	%rax, 120(%rsp)
-	movq	120(%rsp), %rax
-	movl	(%rax), %ecx
-	movq	120(%rsp), %rax
-	movl	4(%rax), %edx
-	callq	_Int_colData
-	movq	%rax, 112(%rsp)
-	movl	$0, 108(%rsp)
-	jmp	.LBB9_7
-.LBB9_4:
-	cmpl	$10, 104(%rsp)
-	jge	.LBB9_6
-	movq	.refptr.C_SPRITE(%rip), %rax
-	movb	(%rax), %cl
-	movl	104(%rsp), %r10d
-	movl	%r10d, %eax
-	leal	64(,%rax,8), %edx
-	movl	108(%rsp), %r11d
-	movl	%r11d, %eax
-	leal	32(,%rax,8), %r8d
-	movq	_Sys_Rom_tset(%rip), %r9
-	movq	136(%rsp), %rax
-	movq	16(%rax), %rax
-	movl	16(%rax), %esi
-	imull	%esi, %r11d
-	addl	%r11d, %r10d
-	movq	8(%rax), %rax
-	movslq	%r10d, %r10
-	movl	(%rax,%r10,4), %eax
-	incl	%eax
-	movq	%r9, 80(%rsp)
-	movl	%r8d, 72(%rsp)
-	movl	%edx, 68(%rsp)
-	movb	%cl, 64(%rsp)
-	movl	%eax, 88(%rsp)
-	leaq	64(%rsp), %rcx
-	callq	_Glyph_Sys_Sulfur_draw
-	movl	104(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 104(%rsp)
-	jmp	.LBB9_4
-.LBB9_6:
-	movl	108(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 108(%rsp)
-	jmp	.LBB9_1
-.LBB9_7:
-	cmpl	$4, 108(%rsp)
-	jge	.LBB9_9
-	movl	$0, 104(%rsp)
-	jmp	.LBB9_10
-.LBB9_9:
-	addq	$144, %rsp
-	popq	%rsi
-	retq
-.LBB9_10:
-	cmpl	$4, 104(%rsp)
-	jge	.LBB9_12
-	movq	120(%rsp), %rax
-	movl	8(%rax), %eax
-	addl	104(%rsp), %eax
-	movl	%eax, 100(%rsp)
-	movq	120(%rsp), %rax
-	movl	12(%rax), %eax
-	addl	108(%rsp), %eax
-	movl	%eax, 96(%rsp)
-	movq	112(%rsp), %rax
-	movl	104(%rsp), %ecx
-	movl	108(%rsp), %edx
-	imull	16(%rax), %edx
-	addl	%edx, %ecx
-	movq	8(%rax), %rax
-	movslq	%ecx, %rcx
-	cmpl	$1, (%rax,%rcx,4)
-	je	.LBB9_13
-	jmp	.LBB9_14
-.LBB9_12:
-	movl	108(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 108(%rsp)
-	jmp	.LBB9_7
-.LBB9_13:
-	movq	.refptr.C_SPRITE(%rip), %rax
-	movb	(%rax), %r8b
-	movl	100(%rsp), %ecx
-	movl	%ecx, %eax
-	leal	64(,%rax,8), %eax
-	movl	96(%rsp), %edx
-	movl	%edx, %ecx
-	leal	32(,%rcx,8), %ecx
-	movq	_Sys_Rom_tset(%rip), %r9
-	movq	120(%rsp), %rdx
-	movl	(%rdx), %edx
-	addl	$2, %edx
-	movq	%r9, 48(%rsp)
-	movb	%r8b, 32(%rsp)
-	movl	%edx, 56(%rsp)
-	movl	%ecx, 40(%rsp)
-	movl	%eax, 36(%rsp)
-	leaq	32(%rsp), %rcx
-	callq	_Glyph_Sys_Sulfur_draw
-	jmp	.LBB9_15
-.LBB9_14:
-	jmp	.LBB9_15
-.LBB9_15:
-	movl	104(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 104(%rsp)
-	jmp	.LBB9_10
 	.seh_endproc
 
 	.def	_none_main;
@@ -1091,71 +181,64 @@ _none_main:
 	subq	$88, %rsp
 	.seh_stackalloc 88
 	.seh_endprologue
-	callq	_none_initGame
+	movl	$60, %ecx
+	callq	_Int_Commons_Sys_newClock
 	movq	%rax, %rcx
 	movq	%rcx, 32(%rsp)
 	callq	gc_new_root
 	movq	32(%rsp), %rax
 	movq	%rax, 80(%rsp)
-	movq	$60, 72(%rsp)
-	movl	$1000000000, %eax
-	cqto
-	idivq	72(%rsp)
-	movq	%rax, 64(%rsp)
-	callq	_none_Sys_Os_time
-	movq	%rax, 56(%rsp)
-.LBB10_1:
+.LBB5_1:
 	movb	$1, %al
 	testb	$1, %al
-	jne	.LBB10_2
-	jmp	.LBB10_3
-.LBB10_2:
-	callq	_none_Sys_Os_time
-	movq	%rax, 48(%rsp)
-	movq	48(%rsp), %rax
-	subq	56(%rsp), %rax
-	cqto
-	idivq	64(%rsp)
-	movl	%eax, 44(%rsp)
-	movl	$0, 40(%rsp)
-	jmp	.LBB10_4
-.LBB10_3:
+	jne	.LBB5_2
+	jmp	.LBB5_3
+.LBB5_2:
+	movq	80(%rsp), %rcx
+	callq	__Commons_Sys_FPSClock_Commons_Sys_tick
+	movl	%eax, 76(%rsp)
+	cmpl	$1, 76(%rsp)
+	jge	.LBB5_4
+	jmp	.LBB5_5
+.LBB5_3:
 	addq	$88, %rsp
 	retq
-.LBB10_4:
-	movl	40(%rsp), %eax
-	cmpl	44(%rsp), %eax
-	jge	.LBB10_6
-	callq	_none_Sys_Input_update
-	movq	80(%rsp), %rcx
-	callq	__Game_Sys_Input_update
-	movl	40(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 40(%rsp)
-	jmp	.LBB10_4
-.LBB10_6:
-	cmpl	$1, 44(%rsp)
-	jl	.LBB10_8
-	movq	80(%rsp), %rcx
-	callq	__Game_Sys_Sulfur_draw
+.LBB5_4:
+	movq	.refptr.C_TEXT(%rip), %rax
+	movb	(%rax), %al
+	movq	_Sys_Rom_sfont(%rip), %rcx
+	leaq	_sz0(%rip), %rdx
+	movq	%rdx, 72(%rsp)
+	movq	%rcx, 48(%rsp)
+	movb	%al, 40(%rsp)
+	movl	$4, 64(%rsp)
+	movl	$16, 60(%rsp)
+	movl	$16, 56(%rsp)
+	leaq	40(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
 	callq	_none_Sys_Sulfur_refresh
 	callq	gc_collect
-	movq	56(%rsp), %rax
-	movslq	44(%rsp), %rcx
-	imulq	64(%rsp), %rcx
-	addq	%rcx, %rax
-	movq	%rax, 56(%rsp)
-	jmp	.LBB10_9
-.LBB10_8:
-	jmp	.LBB10_9
-.LBB10_9:
-	jmp	.LBB10_1
+	jmp	.LBB5_6
+.LBB5_5:
+	jmp	.LBB5_6
+.LBB5_6:
+	jmp	.LBB5_1
 	.seh_endproc
 
 	.bss
+	.globl	_Sys_Rom_text
+	.p2align	3, 0x0
+_Sys_Rom_text:
+	.quad	0
+
 	.globl	_Sys_Rom_x1
 	.p2align	3, 0x0
 _Sys_Rom_x1:
+	.quad	0
+
+	.globl	_Sys_Rom_sfont
+	.p2align	3, 0x0
+_Sys_Rom_sfont:
 	.quad	0
 
 	.globl	_Sys_Rom_tset
@@ -1167,20 +250,25 @@ _Sys_Rom_tset:
 .Lurl_0:
 	.asciz	"intro/x1.png"
 
+.Lurl_1:
+	.asciz	"intro/text.png"
+
 	.globl	res_url_list
 	.p2align	3, 0x0
 res_url_list:
 	.quad	.Lurl_0
+	.quad	.Lurl_1
 
 	.globl	res_ptr_list
 	.p2align	3, 0x0
 res_ptr_list:
 	.quad	_Sys_Rom_x1
+	.quad	_Sys_Rom_text
 
 	.globl	res_total
 	.p2align	2, 0x0
 res_total:
-	.long	1
+	.long	2
 
 	.globl	cr_iargs0
 	.p2align	2, 0x0
@@ -1197,138 +285,48 @@ cr_arg0:
 	.quad	_Sys_Rom_x1
 
 	.section	.rdata,"dr"
+	.globl	cr_iargs1
+	.p2align	2, 0x0
+cr_iargs1:
+	.long	0
+	.long	0
+	.long	13
+
+	.data
+	.globl	cr_arg1
+	.p2align	3, 0x0
+cr_arg1:
+	.quad	cr_iargs1
+	.quad	_Sys_Rom_text
+
+	.section	.rdata,"dr"
 	.globl	comp_res_arg_list
 	.p2align	3, 0x0
 comp_res_arg_list:
 	.quad	cr_arg0
+	.quad	cr_arg1
 
 	.globl	comp_res_ptr_list
 	.p2align	3, 0x0
 comp_res_ptr_list:
 	.quad	_Sys_Rom_tset
+	.quad	_Sys_Rom_sfont
 
 	.globl	comp_res_total
 	.p2align	2, 0x0
 comp_res_total:
-	.long	1
+	.long	2
 
 	.data
-	.globl	_rawT
+	.globl	_sz0
 	.p2align	4, 0x0
-_rawT:
-	.long	1
-	.long	1
-	.long	1
-	.long	1
-	.long	0
-	.long	0
-	.long	0
-	.long	0
-	.long	1
-	.long	1
-	.long	0
-	.long	0
-	.long	0
-	.long	1
-	.long	1
-	.long	0
-	.long	0
-	.long	1
-	.long	1
-	.long	0
-	.long	1
-	.long	1
-	.long	0
-	.long	0
-	.long	0
-	.long	1
-	.long	0
-	.long	0
-	.long	1
-	.long	1
-	.long	1
-	.long	0
-	.long	0
-	.long	1
-	.long	1
-	.long	0
-	.long	0
-	.long	1
-	.long	1
-	.long	0
-	.long	1
-	.long	0
-	.long	0
-	.long	0
-	.long	1
-	.long	1
-	.long	1
-	.long	0
-	.long	0
-	.long	0
-	.long	1
-	.long	0
-	.long	1
-	.long	1
-	.long	1
-	.long	0
+_sz0:
+	.long	12
+	.asciz	"HELLO WORLD!"
+	.zero	3
 
-	.globl	_pieces
-	.p2align	4, 0x0
-_pieces:
-	.long	56
-	.long	56
-	.quad	_rawT
-	.long	4
-	.long	2
-	.long	7
-	.zero	4
-
-	.globl	tc_offs__Game
-	.p2align	2, 0x0
-tc_offs__Game:
-	.long	8
-	.long	16
-
-	.globl	tc__Game
+	.section	.rdata$.refptr.C_TEXT,"dr",discard,.refptr.C_TEXT
 	.p2align	3, 0x0
-tc__Game:
-	.long	2
-	.zero	4
-	.quad	tc_offs__Game
-
-	.section	.rdata$.refptr.C_SPRITE,"dr",discard,.refptr.C_SPRITE
-	.p2align	3, 0x0
-	.globl	.refptr.C_SPRITE
-.refptr.C_SPRITE:
-	.quad	C_SPRITE
-	.section	.rdata$.refptr.K_down,"dr",discard,.refptr.K_down
-	.p2align	3, 0x0
-	.globl	.refptr.K_down
-.refptr.K_down:
-	.quad	K_down
-	.section	.rdata$.refptr.K_left,"dr",discard,.refptr.K_left
-	.p2align	3, 0x0
-	.globl	.refptr.K_left
-.refptr.K_left:
-	.quad	K_left
-	.section	.rdata$.refptr.K_right,"dr",discard,.refptr.K_right
-	.p2align	3, 0x0
-	.globl	.refptr.K_right
-.refptr.K_right:
-	.quad	K_right
-	.section	.rdata$.refptr.K_up,"dr",discard,.refptr.K_up
-	.p2align	3, 0x0
-	.globl	.refptr.K_up
-.refptr.K_up:
-	.quad	K_up
-	.section	.rdata$.refptr.K_x,"dr",discard,.refptr.K_x
-	.p2align	3, 0x0
-	.globl	.refptr.K_x
-.refptr.K_x:
-	.quad	K_x
-	.section	.rdata$.refptr.K_z,"dr",discard,.refptr.K_z
-	.p2align	3, 0x0
-	.globl	.refptr.K_z
-.refptr.K_z:
-	.quad	K_z
+	.globl	.refptr.C_TEXT
+.refptr.C_TEXT:
+	.quad	C_TEXT

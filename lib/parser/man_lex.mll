@@ -49,6 +49,7 @@ rule token = parse
 	| ("_"? ['a'-'z'] idChar*) as x { lexWrap lexbuf (ID x) }
 	| ("_"? ['A'-'Z'] idChar*) as x { lexWrap lexbuf (TID x) }
 	| ((numChar+) as i) "d" { lexWrap lexbuf (DIM (int_of_string i)) }
+	| ("-"? "0x" hexChar+) as h { lexWrap lexbuf (INT (int_of_string h)) }
 	| ("-"? numChar+ "." numChar+) as f { lexWrap lexbuf (FLOAT (float_of_string f)) }
 	| ("-"? numChar+) as i { lexWrap lexbuf (INT (int_of_string i)) }
 	| (("-"? numChar+) as l) ("l" | "L") { lexWrap lexbuf (LONG (Int64.of_string l)) }
@@ -70,6 +71,7 @@ rule token = parse
 	| "**" { lexWrap lexbuf EXPO }
 	| "*" { lexWrap lexbuf STAR }
 	| "/" { lexWrap lexbuf SLASH }
+	| "/." { lexWrap lexbuf FLDIV }
 	| "%" { lexWrap lexbuf PERC }
 	| "(" { lexWrap lexbuf LPAREN }
 	| ")" { lexWrap lexbuf RPAREN }

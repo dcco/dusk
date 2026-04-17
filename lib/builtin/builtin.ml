@@ -60,6 +60,7 @@ let builtinList =  [
 	("add", BinaryASMSym "fadd", [floatTy; floatTy], floatTy);
 	("sub", BinaryASMSym "fsub", [floatTy; floatTy], floatTy);
 	("mul", BinaryASMSym "fmul", [floatTy; floatTy], floatTy);
+	("flDiv", BinaryASMSym "fdiv", [floatTy; floatTy], floatTy);
 
 	("eq", BinaryASMSym "ieq", [intTy; intTy], boolTy);
 	("neq", BinaryASMSym "ineq", [intTy; intTy], boolTy);
@@ -67,6 +68,13 @@ let builtinList =  [
 	("lt", BinaryASMSym "ilt", [intTy; intTy], boolTy);
 	("geq", BinaryASMSym "igeq", [intTy; intTy], boolTy);
 	("gt", BinaryASMSym "igt", [intTy; intTy], boolTy);
+
+	("eq", BinaryASMSym "feq", [floatTy; floatTy], boolTy);
+	("neq", BinaryASMSym "fneq", [floatTy; floatTy], boolTy);
+	("leq", BinaryASMSym "fleq", [floatTy; floatTy], boolTy);
+	("lt", BinaryASMSym "flt", [floatTy; floatTy], boolTy);
+	("geq", BinaryASMSym "fgeq", [floatTy; floatTy], boolTy);
+	("gt", BinaryASMSym "fgt", [floatTy; floatTy], boolTy);
 
 	("not", UnaryASMSym "bnot", [boolTy], boolTy);
 	("and", BinaryASMSym "band", [boolTy; boolTy], boolTy);
@@ -81,9 +89,20 @@ let builtinList =  [
 	("toString", ExternalSym [], [intTy], stringTy);
 	("toString", ExternalSym [], [floatTy], stringTy);
 
+	("toInt", UnaryASMSym "ftoi", [floatTy], intTy);
 	("toInt", UnaryASMSym "i64toi", [longTy], intTy);
+	("toFloat", UnaryASMSym "itof", [intTy], floatTy);
 	("toLong", UnaryASMSym "itoi64", [intTy], longTy);
+	("floor", ExternalSym [], [floatTy], floatTy);
+
+	("expo", ExternalSym [], [floatTy; floatTy], floatTy);
+	("sqrt", ExternalSym [], [floatTy], floatTy);
+	("abs", ExternalSym [], [floatTy], floatTy);
+
+	("measure", ExternalSym [], [stringTy], intTy)
 ]
+
+let prngTy = builtinTy "PRNG"
 
 let osList = [
 	("print", ExternalSym [], [stringTy], unitTy);
@@ -91,7 +110,11 @@ let osList = [
 	("randomInt", ExternalSym [], [intTy], intTy);
 	("randomFloat", ExternalSym [], [], floatTy);
 
-	("time", ExternalSym [], [], longTy)
+	("newPRNG", ExternalSym [], [intTy], prngTy);
+	("randomInt", ExternalSym [], [prngTy; intTy], intTy);
+	("randomFloat", ExternalSym [], [prngTy], floatTy);
+	
+	("time", ExternalSym [], [], longTy);
 ]
 
 let inputList = [
@@ -110,9 +133,10 @@ let spriteTy = builtinTy "Sprite"
 
 let sulfurTypes = [
 	(QT None, "Glyph", TDefVD (EnumTD [
-		("Nop", [], Some "C_NOP");
-		("Box", [intTy; intTy; intTy; intTy], Some "C_BOX");
-		("Sprite", [intTy; intTy; imageTy; intTy], Some "C_SPRITE")
+		("GNop", [], Some "C_NOP");
+		("GBox", [intTy; intTy; intTy; intTy; intTy], Some "C_BOX");
+		("GSprite", [intTy; intTy; spriteTy; intTy], Some "C_SPRITE");
+		("GText", [spriteTy; stringTy], Some "C_TEXT")
 	]))
 ]
 

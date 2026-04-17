@@ -11,6 +11,8 @@ open Res_cont
 type resolve_err =
 	BadLookup_Err of qual_tag * string * l_pos
 	| AmbiguousLookup_Err of qual_tag * string * l_pos
+	| NonEmptyReqList_Err of l_pos
+	| BadReq_Err of string list * l_pos
 
 type 'a rs_res = ('a, resolve_err) try_res
 
@@ -21,6 +23,8 @@ let string_of_name (prefix: qual_tag) (x: string): string = match prefix with
 let string_of_rs_err (e: resolve_err) = match e with
 	BadLookup_Err(prefix, x, p) -> "Bad lookup of \"" ^ (string_of_name prefix x) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| AmbiguousLookup_Err(prefix, x, p) -> "Ambiguous lookup of \"" ^ (string_of_name prefix x) ^ "\" at " ^ (string_of_pos p) ^ "."
+	| NonEmptyReqList_Err p -> "Requirement given outside of TOC / top-level at " ^ (string_of_pos p) ^ "."
+	| BadReq_Err(xl, p) -> "Bad requirement \"" ^ (String.concat "." xl) ^ "\" at " ^ (string_of_pos p) ^ "."
 
 	(*
 		type resolution
@@ -76,7 +80,7 @@ let resolve_virt_dec (env: res_env) (vd: qual_tag virt_dec): canon_tag virt_dec 
 let resolve_virt_bindings (env: res_env) (bindings: (string list * m_virt_bind) list): g_virt_bind list =
 		(* add all builtin symbols to environment with default import strategy *)
 	let env' = freeze_env env [] in
-	let pl = paths_tree (env.globalModules) in
+	let pl = paths_tree !(env.globalModules) in
 	List.iter (fun path ->
 		let i = List.length path - 1 in
 		add_import_env env' path (List.nth path i)

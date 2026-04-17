@@ -23,6 +23,7 @@ type gen_exp =
 	| NewArrayExpC of gen_exp list * gen_exp list * g_type
 	| ArrayIndexExpC of gen_rw * gen_exp * gen_index * g_type
 	| ArrayLengthExpC of gen_exp
+	| ArrayDimsExpC of int * gen_exp
 		(* struct operations *)
 	| NewStructExpC of string * gen_exp list
 	| StructFieldExpC of gen_rw * gen_exp * int * string

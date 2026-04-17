@@ -4,7 +4,7 @@ struct FPSClock{
 	Long prevTime
 }
 
-fn newClock(Int fps)
+fn newClock(Int fps) FPSClock
 	var nspf = 1000000000L / toLong(fps)
 	var clock = new FPSClock{
 		nsPerFrame = nspf,

@@ -66,6 +66,7 @@ let readUniOp (tk: raw_token): string option = match tk with
 let readMulOp (tk: raw_token): string option = match tk with
 	STAR -> Some "mul"
 	| SLASH -> Some "div"
+	| FLDIV -> Some "flDiv"
 	| PERC -> Some "mod"
 	| EXPO -> Some "expo"
 	| _ -> None
@@ -94,6 +95,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "Long"] then Valid (primTy x, tkRem)
+		else if List.mem x ["PRNG"; "Image"; "Sprite"] then Valid (builtinTy x, tkRem)
 		else Valid (NamedTy(QT None, x), tkRem)
 	| (DIM i, _) :: tkRem ->
 		let* (tau, tkRem2) = parseBraceWrap parseType "Array Type" tkRem in
@@ -175,6 +177,11 @@ let rec foldRangeList (rl: (string * range_type * n_exp) list) (body: n_stmt lis
 
 	(* main expression parsing *)
 
+let forceIntList (el: n_exp list): (int list) parse_res = map_try_res (fun e -> match e with
+		ConstExp(IConst i, _) -> Valid i
+		| e -> Error (NonIntExp_Err (ann_exp e))
+	) el
+
 let rec parseIdAtomExp (prefix: qual_tag): n_exp parser = fun tkList -> match tkList with
 	(ID x, p) :: tkRem -> Valid (VarExp(prefix, x, p), tkRem)
 	| (TID m, p) :: tkRem -> (match tkRem with
@@ -216,10 +223,9 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 					(LBRACE, p') :: _ ->
 						if tau_ox <> None then Error (BadToken_Err((LBRACE, p'), "Post-Array Initializer"))
 						else let* ((tau_o, el), tkRem4) = parseBraceWrap parseArrayInner "Array Initializer" tkRem3 in
-							Valid (DataArrayExp(i, tau_o, el_x, el, p), tkRem4)
-					| _ ->
-						let en = ConstExp (IConst (List.length el_x), p) in
-						Valid (DataArrayExp(i, tau_ox, [en], el_x, p), tkRem3)
+							let* il = forceIntList el_x in
+							Valid (DataArrayExp(i, tau_o, il, el, p), tkRem4)
+					| _ -> Valid (DataArrayExp(i, tau_ox, [List.length el_x], el_x, p), tkRem3)
 				)
 		)
 		| (TID x, _) :: tkRem2 ->
@@ -235,8 +241,8 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 		else Valid (TupleExp(None, el, p), tkRem)
 	| (BAR, p) :: tkRem ->
 		let* (e, tkRem2) = parseExp tkRem in
-		let* (_, tkRem3) = parseTk BAR "Length Operator" tkRem2 in
-		Valid (AppExp(VarExp(QT None, "length", p), [e], p), tkRem3)
+		let* (_, tkRem3) = parseTk BAR "Measure Operator" tkRem2 in
+		Valid (AppExp(OpExp(MeasureOp, p), [e], p), tkRem3)
 	| tk :: _ -> Error (BadToken_Err(tk, "Exp"))
 	| _ -> Error (EOF_Err "Exp")
 
@@ -494,14 +500,13 @@ let parseChapter: string parser = fun tkList ->
 	let* (_, tkRem) = parseTk CHAPTER "Module Chapter" tkList in
 	let* (x, tkRem2) = parseTId tkRem in Valid (x, tkRem2)
 
-let parseTocDec: n_toc_dec parser = fun tkList -> match tkList with
-	(MODULE, p) :: tkRem ->
-		let* (m, tkRem2) = parseTId tkRem in
-		let* (xl, tkRem3) = (parseList parseChapter chkPureEnd) tkRem2 in
-		Valid (ModuleDec(m, xl, p), tkRem3)
-	| tk :: _ -> Error (BadToken_Err(tk, "TOC Declaration"))
-	| _ -> Error (EOF_Err "TOC Declaration")
+let parseModule: n_mod parser = fun tkList ->
+	let* (p, tkRem) = parseTk MODULE "Module" tkList in
+	let* (m, tkRem2) = parseTId tkRem in
+	let* (rList, tkRem3) = (parseList parseReq chkReqEnd) tkRem2 in
+	let* (xl, tkRem4) = (parseList parseChapter chkPureEnd) tkRem3 in
+	let* (_, tkRem5) = parseTk END "Module Chapter" tkRem4 in
+	Valid (Module(m, rList, xl, p), tkRem5)
 
 let parseToc (tkList: token list): n_toc parse_res =
-	let* (rList, tkRem) = (parseList parseReq chkReqEnd) tkList in
-	let* (dList, _) = (parseList parseTocDec neverEnd) tkRem in Valid (Toc(rList, dList))
+	let* (mList, _) = (parseList parseModule neverEnd) tkList in Valid (Toc mList)

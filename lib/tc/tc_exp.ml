@@ -1,5 +1,6 @@
 open Commons.Try_log
 open Builtin
+open Parser.Lex_token
 open Parser.Dusk_type
 open Parser.Dusk_ast
 open Resolve.Res_cont
@@ -29,6 +30,8 @@ type g_fun =
 	| BinaryGF of string
 	| TupleIndexGF of int
 	| ArrayIndexGF of rw
+	| ArrayLengthGF
+	| ArrayDimsGF of int
 	| StructFieldGF of rw * int * string
 	| CallGF of int list
 
@@ -41,6 +44,30 @@ let lookup_field_list (fl: (string * g_type) list) (x: string): (g_type * int) o
 		[] -> None
 		| (y, tau) :: ft -> if x = y then Some (tau, i) else lfl_rec ft (i + 1)
 	in lfl_rec fl 0
+
+	(* basic type checks *)
+
+let rec is_subtype (s: g_type) (t: g_type): bool = match (s, t) with
+	(PrimTy s', PrimTy t') -> s' = t'
+	| (BuiltinTy s', BuiltinTy t') -> s' = t'
+	| (NamedTy(_, s'), NamedTy(_, t')) -> s' = t'
+	| (TupleTy _sl, TupleTy _tl) ->
+		if List.length _sl <> List.length _tl then false
+		else List.for_all (fun (s, t) -> is_subtype s t) (List.combine _sl _tl)
+	| (ArrayTy(i, s'), ArrayTy(j, t')) -> i = j && is_subtype s' t'
+	| _ -> false
+
+let tc_type (s: g_type) (t: g_type) (p: l_pos): unit tc_res =
+	if is_subtype s t then Valid () else Error (BadType_Err(s, t, p))
+
+let tc_type_list (_sl: g_type list) (_tl: g_type list) (p: l_pos): unit tc_res =
+	if List.length _sl <> List.length _tl then Error (MismatchedArgNum_Err(List.length _sl, List.length _tl, p))
+	else let rec tctl_rec _sl _tl = match (_sl, _tl) with
+		([], []) -> Valid ()
+		| (s :: st, t :: tt) ->
+			let* _ = tc_type s t p in tctl_rec st tt
+		| _ -> failwith "BUG: tc_exp.ml - Type-checking for mismatched arguments reached unexpected location."
+	in tctl_rec _sl _tl
 
 	(* expression type-checking *)
 
@@ -75,11 +102,12 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				| _ -> Error (NonCtor_Err(cx, p))
 			)
 		)
-	| DataArrayExp(i, tau_o, dim_l, el, _) ->
-		let* dt_l' = tc_exp_list env dim_l in
+	| DataArrayExp(i, tau_o, dim_l, el, p) ->
 		let* et_l' = tc_exp_list env el in
 		let tau = (match tau_o with None -> snd (List.hd et_l') | Some tau -> tau) in
-		Valid (NewArrayExpC(List.map fst dt_l', List.map fst et_l', tau), ArrayTy(i, tau))
+		let dim_prod = List.fold_left (fun i p -> i * p) 1 dim_l in
+		if dim_prod <> List.length el then Error (MismatchedArrayDim_Err (dim_l, dim_prod, List.length el, p))
+		else Valid (NewArrayExpC(List.map (fun i -> ConstExpC (IConst i)) dim_l, List.map fst et_l', tau), ArrayTy(i, tau))
 	| FormatArrayExp(_, _, _, p) -> Error (NestedFormat_Err p)
 	(*| FormatArrayExp(i, dim_l, e, _) ->
 		let* dt_l' = tc_exp_list env dim_l in
@@ -97,27 +125,30 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			| Some _ -> Error (BadCtorStruct_Err(cx, p))
 			| _ -> Error (NonCtor_Err(cx, p))
 		) in Valid (NewStructExpC(cx, el'), NamedTy(CT, cx))
-	| AppExp(ef, el, _) ->
+	| AppExp(ef, el, p) ->
 		let* et_l' = tc_exp_list env el in
 		let tau_al = List.map snd et_l' in
 		let el' = List.map fst et_l' in
-		let* (f, d, (_, tau_r)) = tc_fun_exp env ef (hd_opt tau_al) in (match d with
-			UnaryGF fsm -> Valid (UnaryExpC(fsm, List.nth el' 0), tau_r)
-			| BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_r)
-			| TupleIndexGF i -> Valid (TupleIndexExpC(List.hd el', i, tau_r), tau_r)
+		let* (f, d, (tau_pl, tau_rn)) = tc_fun_exp env ef (hd_opt tau_al) in
+		let* _ = tc_type_list tau_al tau_pl p in (match d with
+			UnaryGF fsm -> Valid (UnaryExpC(fsm, List.nth el' 0), tau_rn)
+			| BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_rn)
+			| TupleIndexGF i -> Valid (TupleIndexExpC(List.hd el', i, List.hd tau_pl), tau_rn)
 			| ArrayIndexGF rw ->
 				let (rw', tau_r', et') =
-					if rw = RR then (RC, tau_r, List.tl el')
+					if rw = RR then (RC, tau_rn, List.tl el')
 					else (WC (List.nth el' 1), unitTy, List.tl (List.tl el')) in
-				Valid (ArrayIndexExpC(rw', List.hd el', FullIndexC et', tau_r), tau_r')
+				Valid (ArrayIndexExpC(rw', List.hd el', FullIndexC et', tau_rn), tau_r')
+			| ArrayLengthGF -> Valid (ArrayLengthExpC (List.hd el'), tau_rn)
+			| ArrayDimsGF i -> Valid (ArrayDimsExpC(i, List.hd el'), tau_rn)
 			| StructFieldGF(rw, i, cx) ->
 				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
-				Valid (StructFieldExpC(rw', List.nth el' 0, i, cx), tau_r)
+				Valid (StructFieldExpC(rw', List.nth el' 0, i, cx), tau_rn)
 			| CallGF _ ->
 				(*let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
 				*)
 				let elx = List.map (fun (e', _) -> e') et_l' in
-				Valid (CallExpC(VarExpC f, elx, tau_r), tau_r)
+				Valid (CallExpC(VarExpC f, elx, tau_rn), tau_rn)
 		)
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
 	VarExp(_, f, p) -> (match lookup_fun_tenv env f tau_a with
@@ -142,7 +173,9 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 		| Some (ArrayTy(i, tau_v)) ->
 				(* strictly speaking, it should return unit for the WRITE case,
 					but we need the inner type for code-gen *)
-			Valid ("", ArrayIndexGF rw, (List.init i (fun _ -> tau_v), tau_v))
+			let tau_i = List.init i (fun _ -> intTy) in
+			let tau_il = if rw = RR then tau_i else tau_v :: tau_i in
+			Valid ("", ArrayIndexGF rw, (ArrayTy(i, tau_v) :: tau_il, tau_v))
 		| Some _ ->
 			let fName = if rw = RR then "_builtin_lookup" else "_builtin_update" in 
 			tc_fun_exp env (VarExp(CT, fName, p)) tau_a
@@ -163,6 +196,13 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 			| _ -> Error (NonStruct_Err(NamedTy(CT, cx), p))
 		)
 		| Some tau -> Error (NonStruct_Err(tau, p))
+	)
+	| OpExp(MeasureOp, p) -> (match tau_a with
+		None -> failwith "BUG: tc_exp.ml - No argument for measure operation."
+		| Some (ArrayTy(i, tau_v)) ->
+			if i = 1 then Valid ("", ArrayLengthGF, ([ArrayTy(i, tau_v)], intTy))
+			else Valid ("", ArrayDimsGF i, ([ArrayTy(i, tau_v)], TupleTy (List.init i (fun _ -> intTy))))
+		| Some _ -> tc_fun_exp env (VarExp(CT, "_builtin_measure", p)) tau_a
 	)
 	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - function non-var case."
 and tc_exp_list (env: type_env) (el: r_exp list): ((gen_exp * g_type) list) tc_res = match el with

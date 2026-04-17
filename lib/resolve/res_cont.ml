@@ -32,7 +32,7 @@ type r_section = SectionR of r_dec list
 
 type res_env = {
 	curPath: string list;
-	globalModules: ((prim_flag * string) list) tree_map;
+	globalModules: (((prim_flag * string) list) tree_map) ref;
 	importPrefixes: (string, string list) Hashtbl.t;
 	importIds: (string, (bind_origin * string) list) Hashtbl.t;
 	localIds: unit StringMap.t;
@@ -66,9 +66,12 @@ let lookup_env (env: res_env) (p: qual_tag) (x: string): (bind_origin * string) 
 
 	(* - environment construction functions *)
 
+let valid_path_import_env (env: res_env) (path: string list): bool =
+	has_path_tree !(env.globalModules) path
+
 let add_import_env (env: res_env) (path: string list) (handle: string): unit =
 	Hashtbl.add env.importPrefixes handle path;
-	let symList = lookup_tree env.globalModules path in
+	let symList = lookup_tree !(env.globalModules) path in
 	List.iter (fun (pf, x) ->
 		let ox = (match pf with PF -> PrimOr | _ -> ImportOr handle) in
 		let binding = (ox, x) in
@@ -98,7 +101,7 @@ let add_local_dec_env_ol (env: res_env) (x: string): (bind_origin * string) list
 
 let builtin_env (treeMap: (m_virt_bind list) tree_map): res_env = let env = {
 	curPath = [];
-	globalModules = map_tree extractSymbols treeMap;
+	globalModules = ref (map_tree extractSymbols treeMap);
 	importPrefixes = Hashtbl.create 5;
 	importIds = Hashtbl.create 20;
 	localIds = StringMap.empty
@@ -112,10 +115,20 @@ let freeze_env (env: res_env) (path: string list): res_env = let env = {
 	localIds = StringMap.empty
 } in add_import_env env ["builtin"] ""; env
 
+	(* - saves all locally declared bindings under a specific import path *)
+let save_local_dec_env (env: res_env) (path: string list): unit =
+	let bindings = Hashtbl.fold (fun x ol bindings ->
+		if List.exists (fun (ox, _) -> match ox with
+			LocalOr -> true | _ -> false
+		) ol then (NPF, x) :: bindings else bindings
+	) env.importIds [] in
+	env.globalModules := add_tree !(env.globalModules) path bindings
+
 	(* - TEST fun: used to dump *)
 
 let dump_renv (env: res_env): unit =
 	print_string "#RESOLUTION_ENV {\n";
+	dump_tree (fun _ -> "< bindings >") !(env.globalModules);
 	Hashtbl.iter (fun x l -> List.iter (fun (ox, _) -> match ox with
 		PrimOr -> print_string ("prim: " ^ x ^ "\n")
 		| LocalOr -> print_string ("local: " ^ x ^ "\n")

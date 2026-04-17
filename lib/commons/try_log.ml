@@ -44,3 +44,9 @@ let printLogRes (LogRes(_, lx): 'a try_log_res) =
 let hookLogRes (err: string -> unit) (LogRes(v, lx): 'a try_log_res): unit = match v with
 	None -> err (String.concat "\n" lx)
 	| _ -> ()
+
+let rec mapLogRes (f: 'a -> 'b try_log_res) (l: 'a list): ('b list) try_log_res = match l with
+	[] -> LogRes(Some [], [])
+	| v :: t ->
+		let*! v' = f v in
+		let*! t' = mapLogRes f t in LogRes (Some (v' :: t'), [])

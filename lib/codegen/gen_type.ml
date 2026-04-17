@@ -66,6 +66,10 @@ let genType (tau: g_type): lltype = match tau with
 	| ArrayTy(_, _) -> ptrType
 	| _ -> failwith "BUG: gen_type.ml - Unimplemented type."
 
+let rec genInnerType (env: dusk_env) (tau: g_type): lltype = match tau with
+	TupleTy tau_l -> struct_type context (Array.of_list (List.map (genInnerType env) tau_l))
+	| tau -> genType tau
+
 let genAlign (env: dusk_env) (tau: g_type): int option = match tau with
 	NamedTy(_, x) -> (match Hashtbl.find_opt env (DTName x) with
 		Some (DTDef td) -> (match td with

@@ -20,6 +20,10 @@ const int8_t PHASE_NEW = 0;
 const int8_t PHASE_MARK = 1;
 const int8_t PHASE_SWEEP = 2;
 
+const int8_t ARR_NO = 0;
+const int8_t ARR_FLAT = 1;
+const int8_t ARR_NEST = 2;
+
 	/*
 		gc_type:
 			defines the layout of the memory for the mark phase's pointer lookup.
@@ -37,7 +41,7 @@ typedef struct gc_type {
 		- next: used to link all gc objects in a single list
 		- type: type layout information used to traverse through sub-pointers
 		- color: "color" used to mark the accessibility of a pointer
-		- arrFlag: whether or not the object is an array/vector
+		- arrFlag: whether or not the object is an array/vector + whether it contains nested pointers
 		~ followed by either raw data OR array/vector header
 	*/
 
@@ -45,7 +49,7 @@ typedef struct gc_obj {
 	struct gc_obj* next;
 	gc_type_t* type;
 	unsigned int color : 2;
-	unsigned int arrFlag : 1;
+	unsigned int arrFlag : 2;
 } gc_obj_t;
 
 	/*
@@ -75,6 +79,9 @@ static gc_obj_t* gc_sweep = NULL;
 
 static gc_obj_t* gc_roots[MAX_ROOTS];
 static int32_t gc_root_total = 0; 
+
+	// debug variables
+static int32_t gc_obj_total = 0;
 
 	/*
 		gray set definition / API
@@ -116,6 +123,7 @@ inline static void* _gc_alloc(int32_t size, gc_type_t* type, int8_t arrFlag) {
 	obj->arrFlag = arrFlag;
 	// update gc state
 	gc_head = obj;
+	gc_obj_total = gc_obj_total + 1;
 	return (void*) (obj + 1);
 }
 
@@ -123,9 +131,9 @@ extern void* gc_alloc(int32_t size, gc_type_t* type) {
 	_gc_alloc(size, type, 0);
 }
 
-extern void* gc_alloc_array(int32_t elemSize, int32_t arrSize, int32_t exSize) {
+extern void* gc_alloc_array(int32_t elemSize, int32_t arrSize, int32_t exSize, int32_t nestFlag) {
 	// initialize gc object
-	gc_array_t* array = (gc_array_t*) _gc_alloc(sizeof(gc_array_t) + exSize, NULL, 1);
+	gc_array_t* array = (gc_array_t*) _gc_alloc(sizeof(gc_array_t) + exSize, NULL, nestFlag ? ARR_NEST : ARR_FLAT);
 	// allocate raw data
 	int32_t arrCap = 16;
 	if (arrSize > arrCap) arrCap = arrSize;
@@ -144,6 +152,7 @@ void* gc_free(gc_obj_t* obj) {
 	}
 	// free the object
 	free(obj);
+	gc_obj_total = gc_obj_total - 1;
 }
 
 extern void gc_new_root(void* ptr) {
@@ -154,9 +163,25 @@ extern void gc_new_root(void* ptr) {
 	gc_root_total = gc_root_total + 1;
 }
 
+void _gc_mark_array(gc_array_t* array) {
+	gc_obj_t** data = (gc_obj_t**) array->data;
+	for (int i = 0; i < array->size; i++) {
+		gc_obj_t* subObj = data[i] - 1;
+		if (subObj != NULL && subObj->color == GC_WHITE) {
+			subObj->color = GC_GRAY;
+			_gray_push(subObj);
+		}
+	}
+}
+
 void _gc_mark_obj(gc_obj_t* obj) {
 	// mark as safe
 	obj->color = GC_BLACK;
+	// array (with nested pointers) case
+	if (obj->arrFlag == ARR_NEST) {
+		_gc_mark_array((gc_array_t*) (obj + 1));
+		return;
+	} else if (obj->arrFlag == ARR_FLAT) return;
 	// find raw ptr, use gc_type info to find each sub-pointer
 	gc_type_t* type = obj->type;
 	if (type == NULL) return;

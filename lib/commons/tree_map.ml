@@ -16,6 +16,10 @@ let rec single_tree (path: string list) (v: 'a): 'a tree_map = match path with
 	[] -> Leaf v
 	| x :: xt -> Branch (StringMap.singleton x (single_tree xt v))
 
+let rec single_stub_tree (path: string list): 'a tree_map = match path with
+	[] -> Branch StringMap.empty
+	| x :: xt -> Branch (StringMap.singleton x (single_stub_tree xt))
+
 	(* - lookup / search *)
 
 let rec open_path_tree (tree: 'a tree_map) (path: string list): bool = match (path, tree) with
@@ -54,6 +58,15 @@ let rec add_tree (tree: 'a tree_map) (path: string list) (v: 'a): 'a tree_map = 
 			| Some child -> Some (add_tree child xt v)
 		) childMap)
 
+let rec stub_tree (tree: 'a tree_map) (path: string list): 'a tree_map = match (path, tree) with
+	(_, Leaf _) -> failwith "tree_map.ml - Leaf found on path while stubbing path to tree."
+	| ([], Branch _) -> tree
+	| (x :: xt, Branch childMap) ->
+		Branch (StringMap.update x (fun l -> match l with
+			None -> Some (single_stub_tree xt)
+			| Some child -> Some (stub_tree child xt)
+		) childMap)
+
 	(* - FUTURE: update / removal *)
 
 	(* - conversion *)
@@ -77,3 +90,12 @@ let flatten_tree (tree: 'a tree_map): (string list * 'a) list =
 			ft_rec child (path @ [k])
 		) (StringMap.bindings childMap))
 	in ft_rec tree []
+
+let dump_tree (f: 'a -> string) (tree: 'a tree_map): unit =
+	let rec dt_rec path t = match t with
+		Leaf v -> print_string (path ^ ": " ^ (f v) ^ "\n")
+		| Branch childMap ->
+			StringMap.iter (fun k v ->
+				dt_rec (path ^ "/" ^ k) v
+			) childMap
+	in dt_rec "/" tree

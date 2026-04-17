@@ -1,18 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
+#include <string.h>
 #include <malloc.h>
 #include <pthread.h>
 
 #include "glad.h"
 #include "glfw3.h"
+
 #include "time_api.h"
 #include "exit_log.h"
-#include "sulfur_bindings.h"
-
 #include "gc.h"
+#include "dusk_string.h"
+
+#include "sulfur_bindings.h"
 #include "input.h"
-#include "jas_string.h"
+#include "xoshiro.h"
 #include "os.h"
 
 	/* runtime hooks */
@@ -31,8 +35,10 @@ int main(void) {
 	/*
 		FULL SULFUR RUNTIME INITIALIZATION
 	*/
-	int WIDTH = 640;
-	int HEIGHT = 480;
+	int WIDTH = 800;
+	int HEIGHT = 640;
+	//int WIDTH = 640;
+	//int HEIGHT = 480;
 	gc_init();
 
 	// initialize GLFW
@@ -89,7 +95,7 @@ int main(void) {
 	pthread_t main_thread;
 	pthread_create(&main_thread, NULL, wrap_main, NULL);
 	pthread_create(&main_thread, NULL, initRomLoad, sulfur_local);
-
+	
 	// basic render loop
 	while (!glfwWindowShouldClose(window)) {
 		updateRom(sulfur_local);

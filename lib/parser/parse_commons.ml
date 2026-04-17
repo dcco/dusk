@@ -7,6 +7,7 @@ type parse_err =
 	EOF_Err of string
 	| BadToken_Err of token * string
 	| BadLValue_Err of token
+	| NonIntExp_Err of l_pos
 
 type 'a parse_res = ('a, parse_err) try_res
 
@@ -16,6 +17,8 @@ let string_of_parse_err e = match e with
 		"Bad token `" ^ (string_of_raw_token tk) ^ "` while parsing " ^ x ^ " at " ^ (string_of_pos pos)  ^ "."
 	| BadLValue_Err(_, pos) ->
 		"Bad lvalue while parsing assignment at " ^ (string_of_pos pos) ^ "."
+	| NonIntExp_Err pos ->
+		"Expected integer constant for static array initializer dimensions while parsing at " ^ (string_of_pos pos) ^ "."
 
 let string_of_parse_res sf r = match r with
 	Valid v -> sf v
@@ -90,8 +93,8 @@ let matchTk (tk1: raw_token) (tk2: raw_token): bool = match (tk1, tk2) with
 	| (STRLIT _, STRLIT _) -> true
 	| _ -> tk1 = tk2
 
-let parseTk (tk: raw_token) (x: string): unit parser = fun tkList -> match tkList with
-	(tkX, pos) :: tkRem -> if matchTk tk tkX then Valid ((), tkRem) else Error (BadToken_Err((tkX, pos), x))
+let parseTk (tk: raw_token) (x: string): l_pos parser = fun tkList -> match tkList with
+	(tkX, pos) :: tkRem -> if matchTk tk tkX then Valid (pos, tkRem) else Error (BadToken_Err((tkX, pos), x))
 	| _ -> Error (EOF_Err x)
 
 let parseTkMulti (f: raw_token -> 'a option) (x: string): ('a * l_pos) parser = fun tkList -> match tkList with

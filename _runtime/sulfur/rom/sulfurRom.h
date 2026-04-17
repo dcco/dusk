@@ -28,7 +28,7 @@ void _updateRom(sf_rom_t* rom) {
 	if (nextRes != NULL) {
 		if (nextRes->type == R_IMAGE) {
 			tex_image_t* imageData = (tex_image_t*) malloc(sizeof(tex_image_t));
-			initTexImage(rom->texArr, imageData, nextRes->storeId, (char*) nextRes->xArgs);
+			initTexImage(rom->texArr, imageData, nextRes->storeId + 1, (char*) nextRes->xArgs);
 			//initTexImage(imageData, nextRes->a, nextRes->b, (char*) nextRes->xArgs);
 			*nextRes->storePtr = (void*) imageData;
 		} else if (nextRes->type == R_SPRITE) {

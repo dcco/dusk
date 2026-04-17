@@ -26,8 +26,7 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 		let* el' = resolve_exp_list env el in Valid (TupleExp(ctor', el', p))
 	| DataArrayExp(i, tau_o, dim_l, el, p) ->
 		let* tau_o' = opt_try_res (resolve_type env p) tau_o in
-		let* dim_l' = resolve_exp_list env dim_l in
-		let* el' = resolve_exp_list env el in Valid (DataArrayExp(i, tau_o', dim_l', el', p))
+		let* el' = resolve_exp_list env el in Valid (DataArrayExp(i, tau_o', dim_l, el', p))
 	| FormatArrayExp(i, dim_l, e, p) ->
 		let* dim_l' = resolve_exp_list env dim_l in
 		let* e' = resolve_exp env e in Valid (FormatArrayExp(i, dim_l', e', p))
@@ -118,38 +117,52 @@ let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = 
 
 	(* requirement resolution *)
 
-let resolve_req (env: res_env) (r: n_req): unit = match r with
-	ShortRefReq(path, _) ->
+let resolve_req (env: res_env) (r: n_req): unit rs_res = match r with
+	ShortRefReq(path, p) ->
 		let handle = List.nth path ((List.length path) - 1) in
-		add_import_env env path handle
-	| LongRefReq(path, ml, _) ->
-		List.iter (fun handle -> add_import_env env (path @ [handle]) handle) ml
+		if not (valid_path_import_env env path) then Error (BadReq_Err(path, p))
+		else (add_import_env env path handle; Valid ())
+	| LongRefReq(path, ml, p) ->
+		let rec rr_rec hl = (match hl with
+			[] -> Valid ()
+			| handle :: ht ->
+				let path' = path @ [handle] in
+				if not (valid_path_import_env env path') then Error (BadReq_Err(path', p))
+				else (add_import_env env path' handle; rr_rec ht)
+		) in rr_rec ml
 
-let rec resolve_req_list (env: res_env) (rl: n_req list): unit = match rl with
-	[] -> ()
-	| r :: rt -> resolve_req env r; resolve_req_list env rt
+let rec resolve_req_list (env: res_env) (rl: n_req list): unit rs_res = match rl with
+	[] -> Valid ()
+	| r :: rt -> let* _ = resolve_req env r in resolve_req_list env rt
 
 	(*
 		section resolution
 		- modifies the environment, but only the global section
 	*)
 
-let resolve_section (env: res_env) (s: n_section): r_section rs_res = match s with
-	Section(rl, dl) ->
-		resolve_req_list env rl;
-		let* dl' = resolve_dec_list env dl in Valid (SectionR dl')
+let resolve_section (env: res_env) (top: bool) (Section(rl, dl): n_section): r_section rs_res =
+	let* _ = if not top then (match rl with
+		[] -> Valid ()
+		| r :: _ -> Error (NonEmptyReqList_Err (ann_req r))
+	) else resolve_req_list env rl
+	in let* dl' = resolve_dec_list env dl in Valid (SectionR dl')
 
 	(*
-		pre-check, looks at list of requirements and compiles if needed
+		pre-check, returns list of libraries that need to be compiled
 	*)
 
-
-let precheck_section (env: res_env) (s: n_section): string list = match s with
-	Section(rl, _) -> List.concat (List.map (fun r -> match r with
-		ShortRefReq(path, _) ->
-			let p = List.hd path in
-			if has_branch_tree env.globalModules p then [p] else []
-		| LongRefReq(path, _, _) ->
-			let p = List.hd path in
-			if has_branch_tree env.globalModules p then [p] else []
+let pre_check_req_list (env: res_env) (rl: n_req list): string list =
+	let ackMissingLib p =
+		if has_branch_tree !(env.globalModules) p then []
+		else (env.globalModules := stub_tree !(env.globalModules) [p]; [p])
+	in List.concat (List.map (fun r -> match r with
+		ShortRefReq(path, _) -> ackMissingLib (List.hd path)
+		| LongRefReq(path, _, _) -> ackMissingLib (List.hd path)
 	) rl)
+
+(*
+let pre_check_section (env: res_env) (Section(rl, _): n_section): string list =
+	pre_check_req_list rl
+
+let pre_check_toc (env: res_env) (Toc(rl, _): n_toc): string list =
+	List.concat (List.map precheck_req rl) *)

@@ -41,8 +41,10 @@ cc_t* initCC(int zoom, int w, int h) {
 	draw_dat2d_t* data = malloc(sizeof(draw_dat2d_t));
 	data->aPos[0] = 0.0;
 	data->aPos[1] = (float) cc->focusHeight * cc->zoom;
+	data->aPos[2] = 0.0;
 	data->aSize[0] = (float) cc->width * cc->zoom;
 	data->aSize[1] = (float) -cc->height * cc->zoom;
+	data->aColor = 0xFFFFFFFF;
 	data->aTexId = 0.0;
 	data->aTexUVPos[0] = 0.0;
 	data->aTexUVPos[1] = 0.0;

@@ -15,11 +15,11 @@ open Gen_type
 let genStrLit (cont: llvm_cont) (env: dusk_env) (s: string): dusk_val =
 		(* create (pointer to) string constant data *)
 	let i = genRef cont in
-	let strVal = const_string context s in
-	let strRef = define_global ("_s" ^ (string_of_int i)) strVal (cont.llmod) in
+	let strVal = const_string context (s ^ "\x00") in
+	(*let strRef = define_global ("_s" ^ (string_of_int i)) strVal (cont.llmod) in*)
 		(* create (pointer to) struct containing string + meta data *)
 	let structVal = const_struct context
-		[| const_int i8Type 0; const_int iType (String.length s); const_null ptrType; const_null ptrType; strRef |] in
+		[| const_int iType (String.length s); strVal |] in
 	let structRef = define_global ("_sz" ^ (string_of_int i)) structVal cont.llmod in
 	let v = (structRef, ptrType) in 
 	Hashtbl.add env (DStrLit s) (DVal(v, None)); v
@@ -91,7 +91,9 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 	| UnaryExpC(xOp, e) ->
 		let (v, _) = genExp cont env e in (match xOp with
 			"bnot" -> (build_not v "_notT" bx, bType)
+			| "ftoi" -> (build_fptosi v iType "_castT" bx, iType)
 			| "i64toi" -> (build_trunc v iType "_castT" bx, iType)
+			| "itof" -> (build_sitofp v fType "_castT" bx, fType)
 			| "itoi64" -> (build_sext v i64Type "_castT" bx, i64Type)
 			| _ -> failwith ("BUG: gen_exp.ml - Unexpected operator \"" ^ xOp ^ "\" encountered in generation phase.")
 		)
@@ -106,20 +108,25 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "fadd" -> (build_fadd v1 v2 "_addT" bx, fType)
 			| "fsub" -> (build_fsub v1 v2 "_subT" bx, fType)
 			| "fmul" -> (build_fmul v1 v2 "_mulT" bx, fType)
+			| "fdiv" -> (build_fdiv v1 v2 "_divT" bx, fType)
 			| "ieq" -> (build_icmp Icmp.Eq v1 v2 "_cmpT" bx, bType)
 			| "ineq" -> (build_icmp Icmp.Ne v1 v2 "_cmpT" bx, bType)
 			| "ileq" -> (build_icmp Icmp.Sle v1 v2 "_cmpT" bx, bType)
 			| "ilt" -> (build_icmp Icmp.Slt v1 v2 "_cmpT" bx, bType)
 			| "igeq" -> (build_icmp Icmp.Sge v1 v2 "_cmpT" bx, bType)
 			| "igt" -> (build_icmp Icmp.Sgt v1 v2 "_cmpT" bx, bType)
+			| "feq" -> (build_fcmp Fcmp.Oeq v1 v2 "_cmpT" bx, bType)
+			| "fneq" -> (build_fcmp Fcmp.One v1 v2 "_cmpT" bx, bType)
+			| "fleq" -> (build_fcmp Fcmp.Ole v1 v2 "_cmpT" bx, bType)
+			| "flt" -> (build_fcmp Fcmp.Olt v1 v2 "_cmpT" bx, bType)
+			| "fgeq" -> (build_fcmp Fcmp.Oge v1 v2 "_cmpT" bx, bType)
+			| "fgt" -> (build_fcmp Fcmp.Ogt v1 v2 "_cmpT" bx, bType)
 			| "band" -> (build_and v1 v2 "_andT" bx, bType)
 			| "bor" -> (build_or v1 v2 "_orT" bx, bType)
 			| "i64add" -> (build_add v1 v2 "_addT" bx, i64Type)
 			| "i64sub" -> (build_sub v1 v2 "_subT" bx, i64Type)
 			| "i64mul" -> (build_mul v1 v2 "_mulT" bx, i64Type)
 			| "i64div" -> (build_sdiv v1 v2 "_divT" bx, i64Type)
-			| "i64toi" -> (build_sext v1 iType "_castT" bx, iType)
-			| "itoi64" -> (build_sext v1 i64Type "_castT" bx, i64Type)
 			| _ -> failwith ("BUG: gen_exp.ml - Unexpected operator \"" ^ xOp ^ "\" encountered in generation phase.")
 		)
 	| CallExpC(ef, el, tau_r) ->
@@ -162,11 +169,14 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			let sVal' = build_insertvalue sVal v (i + 1) "_stT" bx in (sVal', i + 1)
 		) (sVal0, 0) res_l in
 		genBoxStore cont env boxId sVal
-	| TupleIndexExpC(ep, i, tau_v) ->
+	| TupleIndexExpC(ep, i, tau) ->
 		let (vp, _) = genExp cont env ep in
-		(*let sVal = build_load vp bx "_structT" in*)
-		let elem = build_extractvalue vp i "_elemT" bx in
-		(elem, genType tau_v)
+		let t' = genInnerType env tau in
+		let tv' = (struct_element_types t').(i) in
+		let vPtr = build_gep t' vp (Array.of_list [const_int iType 0; const_int iType i]) "_elemPT" bx in
+		let elem = build_load tv' vPtr "_elemT" bx in (elem, tv')
+		(*let elem = build_extractvalue vp i "_elemT" bx in
+		(elem, genType tau_v)*)
 	| NewArrayExpC(dim_l, el, tau) ->
 			(* calculate size *)
 		let res_l = List.map (genExp cont env) dim_l in
@@ -176,7 +186,8 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		let e_size = const_int iType (size_of_type cont (genType tau)) in
 		let dim_size = const_int iType (if dim <= 1 then 0 else size_of_type cont (gcDimsType dim)) in
 		let (new_arr, new_arr_type) = !(cont.gc).new_array in
-		let arrPtr = build_call new_arr_type new_arr (Array.of_list [e_size; v_size; dim_size]) "_arrPT" bx in
+		let nest_flag = const_int iType (if isHeapType env tau then 1 else 0) in
+		let arrPtr = build_call new_arr_type new_arr (Array.of_list [e_size; v_size; dim_size; nest_flag]) "_arrPT" bx in
 			(* initialize dimensions *)
 		(if dim <= 1 then () else
 			let dimsPtr = build_gep gcArrType arrPtr
@@ -223,6 +234,10 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		let (va, _) = genExp cont env ea in
 		let sizePtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 1]) "_sizePT" bx in
 		let vSize = build_load iType sizePtr "_sizeT" bx in (vSize, iType)
+	| ArrayDimsExpC(i, ea) ->
+		let (va, _) = genExp cont env ea in
+		let dimsPtr = build_gep gcArrType va (Array.of_list [const_int iType 1]) "_dimsPT" bx in
+		(dimsPtr, gcDimsType i)
 	| NewStructExpC(tx, el) ->
 		let res_l = List.map (genExp cont env) el in
 		let tau_l = List.map snd res_l in
@@ -417,7 +432,7 @@ let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): 
 	*)
 
 let genGC (cont: llvm_cont): unit =
-	let new_arr_type = function_type ptrType (Array.of_list [iType; iType; iType]) in
+	let new_arr_type = function_type ptrType (Array.of_list [iType; iType; iType; iType]) in
 	let new_arr = declare_function "gc_alloc_array" new_arr_type cont.llmod in
 	let alloc_type = function_type ptrType (Array.of_list [iType; ptrType]) in
 	let gc_alloc = declare_function "gc_alloc" alloc_type cont.llmod in
@@ -546,7 +561,9 @@ let genTarget (targetArg: string option) (optimizeFlag: bool): (llvm_cont * Targ
 	set_data_layout (DataLayout.as_string layout) (cont.llmod); (cont, tm)
 
 let genFinalize (cont: llvm_cont) (tm: TargetMachine.t) (fname: string): unit =
-	print_string ("\n" ^ (string_of_llmodule cont.llmod)); assert_valid_module cont.llmod;
+	let oc = open_out "log.ll" in
+	output_string oc ("\n" ^ (string_of_llmodule cont.llmod));
+	close_out oc; assert_valid_module cont.llmod;
 	TargetMachine.emit_to_file cont.llmod (CodeGenFileType.ObjectFile) (fname ^ ".o") tm;
 	TargetMachine.emit_to_file cont.llmod (CodeGenFileType.AssemblyFile) (fname ^ ".xx") tm
 

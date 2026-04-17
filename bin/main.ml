@@ -1,6 +1,7 @@
 open Commons.Try_log
 open Commons.Tree_map
 open Parser
+open Parser.Dusk_ast
 open Parser.Parse_commons
 open Parser.Parse_exp
 open Resolve
@@ -29,27 +30,88 @@ let load_token_list (fname: string): (Lex_token.token list) try_log_res =
 		let tkList = lex_iter [] in
 		(close_in fc; validLog tkList);;
 
+	(*
+		pre-compilation:
+			does compilation up to codegen (incrementally).
+	*)
+
+type pre_comp_res = (string * gen_dec) list
+
+let print_lib_alert (l: string) (parent: string option): unit = match parent with
+	None -> print_string ("Loading library: " ^ l ^ "\n")
+	| Some p -> print_string ("Loading library: " ^ l ^ " (Requested by " ^ p ^ ")\n")
+
 let rec pre_compile_lib (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
-	(main_dir: string) (l: string option): ((string * gen_dec) list) try_log_res = match l with
-	None -> pre_compile_file resEnv typeEnv main_dir "main.dm"
-	| Some libName ->
-			(* - lex / parse the library TOC *)
-		let*! tkList = load_token_list (main_dir ^ "/" ^ libName ^ "toc.dt") in
-		let*! rawAst = tryWithErrLog string_of_parse_err (parseToc tkList) in
-			(* - process the table_of_contents *)
-		
-and pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
-	(main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
-		(* PHASE 1. lexing / parsing *)
-	let*! tkList = load_token_list (main_dir ^ "/" ^ f) in
-	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
-		(* PHASE 2. namespace resolution *)
-	let missingLibList = precheck_section resEnv rawAst in
-		(* - recursively load libraries when needed *)
+	(main_dir: string) (parent: string option) (libName: string): (pre_comp_res list) try_log_res =
+		(* - lex / parse the library TOC *)
+	print_lib_alert libName parent;
+	let*! tkList = load_token_list (main_dir ^ "/" ^ libName ^ "/" ^ "toc.dt") in
+	let*! Toc ml = tryWithErrLog string_of_parse_err (parseToc tkList) in
+		(* - load un-compiled libraries *)
+	let*! res_pre_ll = mapLogRes (fun (Module(_, rl, _, _)) ->
+		let missingLibList = pre_check_req_list resEnv rl in
+		let*! res_pre_ll = mapLogRes (pre_compile_lib resEnv typeEnv main_dir parent) missingLibList
+		in validLog (List.concat res_pre_ll)
+	) ml in
+		(* - process the TOC requirements *)
+	(*let*! (res_pre_l, resEnv') = pre_compile_req_list resEnv typeEnv main_dir rl (Some l) in
+	(if List.length res_pre_l > 0 then print_string ("Loaded requirements for " ^ l ^ "\n") else ());*)
+		(* - compile modules *)
+	print_string ("Compiling library: " ^ libName ^ "\n");
+	let*! res_l = mapLogRes (fun (Module(m, rl, xl, _)) ->
+		print_string ("- Module: " ^ m ^ "\n");
+			(* - resolve requirements (freeze imports) *)
+		let resEnv' = Res_cont.freeze_env resEnv [libName; m] in
+		let*! _ = tryWithErrLog string_of_rs_err (resolve_req_list resEnv' rl) in
+			(* - compile individual files *)	
+		let*! res_m = mapLogRes (fun x ->
+			print_string ("-- " ^ x ^ "\n");
+			let*! res_f = pre_compile_file resEnv' typeEnv main_dir (Some (libName ^ "/" ^ m ^ "/" ^ x ^ ".dm"))
+			in validLog (List.concat res_f)
+		) xl in
+		Res_cont.save_local_dec_env resEnv' [libName; m]; validLog res_m
+	) ml in validLog ((List.concat res_pre_ll) @ (List.concat res_l))
+(*and pre_compile_req_list (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
+	(main_dir: string) (rl: n_req list) (parent: string option): (pre_comp_res list * Res_cont.res_env) try_log_res =
+		(* - load un-compiled libraries *)
+	let missingLibList = pre_check_req_list resEnv rl in
+	let*! res_pre_ll = mapLogRes (pre_compile_lib resEnv typeEnv main_dir parent) missingLibList in
+		(* - resolve requirements (freeze imports) *)
 	let resEnv' = Res_cont.freeze_env resEnv [] in
-	let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' rawAst) in
+	let*! _ = tryWithErrLog string_of_rs_err (resolve_req_list resEnv' rl) in
+	validLog (List.concat res_pre_ll, resEnv') *)
+and pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
+	(main_dir: string) (f: string option): (pre_comp_res list) try_log_res =
+		(* PHASE 1. lexing / parsing *)
+	(match f with None -> print_string "Loading top-level\n" | Some _ -> ());
+	let*! tkList = load_token_list (main_dir ^ "/" ^ (match f with None -> "main.dm" | Some f -> f)) in
+	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
+		(* PHASE 2. namespace resolution
+			- for not top-level, we have to save all the bindings
+			- for top-level, we must pre-load all the requirements
+		*)
+	let*! (res_pre_l, canonAst) = (match f with
+		Some _ ->
+			let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv false rawAst) in
+			validLog ([], canonAst)
+		| None ->
+				(* - load un-compiled libraries *)
+			let Section(rl, _) = rawAst in
+			let missingLibList = pre_check_req_list resEnv rl in
+			let*! res_pre_ll = mapLogRes (pre_compile_lib resEnv typeEnv main_dir None) missingLibList in
+				(* - resolve requirements (freeze imports) *)
+			let resEnv' = Res_cont.freeze_env resEnv [] in
+			let*! _ = tryWithErrLog string_of_rs_err (resolve_req_list resEnv' rl) in
+				(* - file resolution *)
+			print_string "Compiling top-level\n";
+			let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' true rawAst) in
+			validLog (List.concat res_pre_ll, canonAst)
+	) in
 		(* PHASE 3. type-checking *)
-	tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst)
+	let*! res_f = tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst) in
+	validLog (res_pre_l @ [res_f])
+
+
 (*
 let pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 	(main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
@@ -97,7 +159,7 @@ let program _ =
 		(* main compilation *)
 	if !main_arg = "" then failLog "No file / directory name given."
 	else let main_dir = !main_arg in (
-		print_string ("Compiling: " ^ main_dir ^ "\n");
+		print_string ("Source directory: " ^ main_dir ^ "\n");
 			(* build virtual bindings from builtin + rom *)
 		let romBindings = read_rom_layout (main_dir ^ "/rom") in
 		let virtTree = add_tree (Builtin.builtinTreeMap ()) ["Sys"; "Rom"] romBindings in
@@ -110,7 +172,8 @@ let program _ =
 		let typeEnv = Tc_cont.builtin_tenv canonBindings in
 		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv canonBindings in
 			(* PHASES 1-3. incremental resolution *)
-		let*! typedAst = pre_compile_file resEnv typeEnv main_dir "main.dm" in
+		let*! typedAstList = pre_compile_file resEnv typeEnv main_dir None in
+		let typedAst = List.concat typedAstList in
 			(* PHASE 4. code generation *)
 		let targetArch =
 			if !target_arg <> "" then Some !target_arg

@@ -43,6 +43,7 @@ GLuint makeShaderSrc(const char *src, GLenum sType) {
 typedef struct shader_attr_def {
 	int vertAttrFlag;
 	int arity;
+	GLenum glType;
 	GLvoid* offset;
 } shader_attr_def_t;
 
@@ -111,7 +112,8 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 		// instance attribute
 		if (attr.vertAttrFlag == 0) {
 			glBindBuffer(GL_ARRAY_BUFFER, shader->instVBO);
-			glVertexAttribPointer(i, attr.arity, GL_FLOAT, GL_FALSE, sDef->instSize, attr.offset);
+			if (attr.glType == GL_UNSIGNED_INT) glVertexAttribIPointer(i, attr.arity, attr.glType, sDef->instSize, attr.offset);
+			else glVertexAttribPointer(i, attr.arity, attr.glType, GL_FALSE, sDef->instSize, attr.offset);
 			glVertexAttribDivisor(i, 1);
 		// vertex attribute
 		} else {
@@ -120,7 +122,8 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 			else if (attr.vertAttrFlag == 2) offset = (void*) offsetof(vertex_t, normal);
 			else offset = (void*) offsetof(vertex_t, uv);
 			glBindBuffer(GL_ARRAY_BUFFER, shader->vertexVBO);
-			glVertexAttribPointer(i, attr.arity, GL_FLOAT, GL_FALSE, sizeof(vertex_t), offset);
+			if (attr.glType == GL_UNSIGNED_INT) glVertexAttribIPointer(i, attr.arity, attr.glType, sizeof(vertex_t), offset);
+			else glVertexAttribPointer(i, attr.arity, attr.glType, GL_FALSE, sizeof(vertex_t), offset);
 		}
 	}
 

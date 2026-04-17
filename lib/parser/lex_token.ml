@@ -10,7 +10,7 @@ type raw_token = INT of int | FLOAT of float | TRUE | FALSE
 	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA
 	| LBRACE | RBRACE | BAR | LBRACK | RBRACK
 	| NEQ | LANGLE | RANGLE | LEQ | GEQ | AND | OR | EXCLAM
-	| PLUS | DASH | STAR | SLASH | PERC | EXPO | EOF
+	| PLUS | DASH | STAR | SLASH | FLDIV | PERC | EXPO | EOF
 
 let string_of_raw_token tk = match tk with
 	INT i -> string_of_int i
@@ -71,6 +71,7 @@ let string_of_raw_token tk = match tk with
 	| DASH -> "-"
 	| STAR -> "*"
 	| SLASH -> "/"
+	| FLDIV -> "/."
 	| PERC -> "%"
 	| EXPO -> "**"
 	| EOF -> "EOF"

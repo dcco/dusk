@@ -1,7 +1,6 @@
 #ifndef SULFUR_H
 #define SULFUR_H
 
-#include <string.h>
 #include <pthread.h>
 #include "glfw3.h"
 #include "exit_log.h"

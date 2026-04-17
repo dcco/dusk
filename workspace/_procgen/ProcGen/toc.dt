@@ -1,0 +1,12 @@
+
+module Layer
+	references Commons modules Sys
+	chapter DataLayer
+end
+
+module Noise
+	references Sys modules Os
+	references ProcGen modules Layer
+	chapter PermTable
+	chapter Simplex
+end

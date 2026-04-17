@@ -23,6 +23,7 @@ type x_op =
 	TupleIndexOp of int
 	| StructFieldOp of rw * string
 	| ArrayIndexOp of rw
+	| MeasureOp
 
 type ('m, 'ann) exp =
 	ConstExp of const * 'ann
@@ -31,7 +32,7 @@ type ('m, 'ann) exp =
 	| OpExp of x_op * 'ann
 		(* ctors *)
 	| TupleExp of ('m * string) option * ('m, 'ann) exp list * 'ann
-	| DataArrayExp of int * ('m raw_type) option * ('m, 'ann) exp list * ('m, 'ann) exp list * 'ann
+	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
 	| FormatArrayExp of int * ('m, 'ann) exp list * ('m, 'ann) exp * 'ann
 	| NewStructExp of 'm * string * (string * ('m, 'ann) exp) list * 'ann
 		(* function call *)
@@ -107,18 +108,22 @@ type 'ann req =
 type ('m, 'ann) section =
 	Section of 'ann req list * ('m, 'ann) dec list
 
+let ann_req r = match r with
+	ShortRefReq(_, a) -> a
+	| LongRefReq(_, _, a) -> a
+
 	(* table of contents *)
 	
-type 'ann toc_dec =
-	ModuleDec of string * string list * 'ann
+type 'ann _mod =
+	Module of string * 'ann req list * string list * 'ann
 
 type 'ann toc =
-	Toc of 'ann req list * 'ann toc_dec list
+	Toc of 'ann _mod list
 
 type n_met = (qual_tag, l_pos) met
 type n_dec = (qual_tag, l_pos) dec
 type n_req = l_pos req
 type n_section = (qual_tag, l_pos) section
 
-type n_toc_dec = l_pos toc_dec
+type n_mod = l_pos _mod
 type n_toc = l_pos toc
