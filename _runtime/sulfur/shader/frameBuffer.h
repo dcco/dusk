@@ -1,0 +1,5 @@
+
+void newFrameBuffer()
+{
+	initShader()
+}
