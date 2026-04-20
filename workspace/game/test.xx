@@ -6,13 +6,74 @@
 	.globl	@feat.00
 .set @feat.00, 0
 	.file	"dusk"
+	.def	_Blob_Sys_Sulfur_writeRenderList;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_Blob_Sys_Sulfur_writeRenderList
+	.p2align	4, 0x90
+_Blob_Sys_Sulfur_writeRenderList:
+.seh_proc _Blob_Sys_Sulfur_writeRenderList
+	pushq	%rax
+	.seh_stackalloc 8
+	.seh_endprologue
+	movq	%rcx, (%rsp)
+	popq	%rax
+	retq
+	.seh_endproc
+
+	.def	_none_Sys_Sulfur_initShader;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_none_Sys_Sulfur_initShader
+	.p2align	4, 0x90
+_none_Sys_Sulfur_initShader:
+.seh_proc _none_Sys_Sulfur_initShader
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movl	$4, %ecx
+	xorl	%r9d, %r9d
+	movl	%r9d, %edx
+	movl	%r9d, %r8d
+	callq	gc_alloc_array
+	movq	%rax, %r8
+	leaq	_sz0(%rip), %rcx
+	leaq	_sz1(%rip), %rdx
+	callq	_String_Sys_Sulfur_newShader
+	movq	%rax, _Sys_Sulfur_lightShader(%rip)
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	_RenderList_Sys_Sulfur_runShader;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_RenderList_Sys_Sulfur_runShader
+	.p2align	4, 0x90
+_RenderList_Sys_Sulfur_runShader:
+.seh_proc _RenderList_Sys_Sulfur_runShader
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movq	%rcx, 32(%rsp)
+	movq	32(%rsp), %rdx
+	leaq	_Sys_Sulfur_lightShader(%rip), %rcx
+	callq	_Shader_Sys_Sulfur_render
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
 	.def	_Float_Commons_Sys_asRatio;
 	.scl	2;
 	.type	32;
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI0_0:
+.LCPI3_0:
 	.long	0x3f800000
 	.text
 	.globl	_Float_Commons_Sys_asRatio
@@ -25,16 +86,16 @@ _Float_Commons_Sys_asRatio:
 	movss	%xmm0, 36(%rsp)
 	movss	%xmm1, 32(%rsp)
 	movss	36(%rsp), %xmm0
-	movss	.LCPI0_0(%rip), %xmm1
+	movss	.LCPI3_0(%rip), %xmm1
 	ucomiss	%xmm1, %xmm0
-	jbe	.LBB0_2
-	movss	.LCPI0_0(%rip), %xmm0
+	jbe	.LBB3_2
+	movss	.LCPI3_0(%rip), %xmm0
 	movss	%xmm0, 36(%rsp)
-	jmp	.LBB0_3
-.LBB0_2:
-	jmp	.LBB0_3
-.LBB0_3:
-	movss	.LCPI0_0(%rip), %xmm0
+	jmp	.LBB3_3
+.LBB3_2:
+	jmp	.LBB3_3
+.LBB3_3:
+	movss	.LCPI3_0(%rip), %xmm0
 	subss	36(%rsp), %xmm0
 	movss	32(%rsp), %xmm1
 	callq	_Float_builtin_expo
@@ -178,51 +239,103 @@ __Commons_Sys_FPSClock_Commons_Sys_tick:
 	.p2align	4, 0x90
 _none_main:
 .seh_proc _none_main
-	subq	$88, %rsp
-	.seh_stackalloc 88
+	subq	$136, %rsp
+	.seh_stackalloc 136
 	.seh_endprologue
 	movl	$60, %ecx
 	callq	_Int_Commons_Sys_newClock
 	movq	%rax, %rcx
-	movq	%rcx, 32(%rsp)
+	movq	%rcx, 40(%rsp)
 	callq	gc_new_root
-	movq	32(%rsp), %rax
-	movq	%rax, 80(%rsp)
-.LBB5_1:
+	movq	40(%rsp), %rax
+	movq	%rax, 128(%rsp)
+.LBB8_1:
 	movb	$1, %al
 	testb	$1, %al
-	jne	.LBB5_2
-	jmp	.LBB5_3
-.LBB5_2:
-	movq	80(%rsp), %rcx
+	jne	.LBB8_2
+	jmp	.LBB8_3
+.LBB8_2:
+	movq	128(%rsp), %rcx
 	callq	__Commons_Sys_FPSClock_Commons_Sys_tick
-	movl	%eax, 76(%rsp)
-	cmpl	$1, 76(%rsp)
-	jge	.LBB5_4
-	jmp	.LBB5_5
-.LBB5_3:
-	addq	$88, %rsp
+	movl	%eax, 124(%rsp)
+	cmpl	$1, 124(%rsp)
+	jge	.LBB8_4
+	jmp	.LBB8_5
+.LBB8_3:
+	addq	$136, %rsp
 	retq
-.LBB5_4:
+.LBB8_4:
 	movq	.refptr.C_TEXT(%rip), %rax
 	movb	(%rax), %al
 	movq	_Sys_Rom_sfont(%rip), %rcx
-	leaq	_sz0(%rip), %rdx
-	movq	%rdx, 72(%rsp)
-	movq	%rcx, 48(%rsp)
-	movb	%al, 40(%rsp)
-	movl	$4, 64(%rsp)
-	movl	$16, 60(%rsp)
-	movl	$16, 56(%rsp)
-	leaq	40(%rsp), %rcx
+	leaq	_sz2(%rip), %rdx
+	movq	%rdx, 112(%rsp)
+	movq	%rcx, 88(%rsp)
+	movb	%al, 80(%rsp)
+	movl	$4, 104(%rsp)
+	movl	$16, 100(%rsp)
+	movl	$16, 96(%rsp)
+	leaq	80(%rsp), %rcx
 	callq	_Glyph_Sys_Sulfur_draw
+	movl	$0, 120(%rsp)
+	jmp	.LBB8_7
+.LBB8_5:
+	jmp	.LBB8_6
+.LBB8_6:
+	jmp	.LBB8_1
+.LBB8_7:
+	cmpl	$6, 120(%rsp)
+	jge	.LBB8_9
+	movl	$0, 116(%rsp)
+	jmp	.LBB8_10
+.LBB8_9:
 	callq	_none_Sys_Sulfur_refresh
 	callq	gc_collect
-	jmp	.LBB5_6
-.LBB5_5:
-	jmp	.LBB5_6
-.LBB5_6:
-	jmp	.LBB5_1
+	jmp	.LBB8_6
+.LBB8_10:
+	cmpl	$10, 116(%rsp)
+	jge	.LBB8_12
+	movl	$0, 112(%rsp)
+	jmp	.LBB8_13
+.LBB8_12:
+	movl	120(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 120(%rsp)
+	jmp	.LBB8_7
+.LBB8_13:
+	cmpl	$10, 112(%rsp)
+	jge	.LBB8_15
+	movq	.refptr.C3_TEST(%rip), %rax
+	movb	(%rax), %al
+	movl	112(%rsp), %ecx
+	addl	%ecx, %ecx
+	cvtsi2ss	%ecx, %xmm1
+	movl	116(%rsp), %ecx
+	addl	%ecx, %ecx
+	cvtsi2ss	%ecx, %xmm2
+	movl	120(%rsp), %edx
+	movl	$-4, %ecx
+	subl	%edx, %ecx
+	addl	%ecx, %ecx
+	cvtsi2ss	%ecx, %xmm0
+	movq	_Sys_Rom_tset(%rip), %rcx
+	movq	%rcx, 64(%rsp)
+	movb	%al, 48(%rsp)
+	movss	%xmm2, 56(%rsp)
+	movss	%xmm1, 52(%rsp)
+	movss	%xmm0, 60(%rsp)
+	movl	$2, 72(%rsp)
+	leaq	48(%rsp), %rcx
+	callq	_Glyph3d_Sys_Sulfur_draw
+	movl	112(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 112(%rsp)
+	jmp	.LBB8_13
+.LBB8_15:
+	movl	116(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 116(%rsp)
+	jmp	.LBB8_10
 	.seh_endproc
 
 	.bss
@@ -317,14 +430,39 @@ comp_res_ptr_list:
 comp_res_total:
 	.long	2
 
+	.bss
+	.globl	_Sys_Sulfur_lightShader
+	.p2align	3, 0x0
+_Sys_Sulfur_lightShader:
+	.quad	0
+
 	.data
 	.globl	_sz0
 	.p2align	4, 0x0
 _sz0:
+	.long	497
+	.asciz	"#version 300 es\r\nprecision highp float;\r\n\r\nlayout (location = 0) in vec3 bPos;\r\nlayout (location = 1) in vec2 bTexCoord;\r\nlayout (location = 2) in vec3 aPos;\r\nlayout (location = 3) in float aTexId;\r\nlayout (location = 4) in vec2 aTexUV;\r\nlayout (location = 5) in vec2 aTexSize;\r\n\r\nuniform mat4 uPMat;\r\n\r\nout float vTexId;\r\nout vec2 vTexCoord;\r\n\r\nvoid main()\r\n{\r\n\tvec3 xPos = bPos + aPos;\r\n\tvTexId = aTexId;\r\n\tvTexCoord = (bTexCoord * aTexSize) + aTexUV;\r\n\tgl_Position = uPMat * vec4(xPos, 1.0);\r\n}"
+	.zero	2
+
+	.globl	_sz1
+	.p2align	4, 0x0
+_sz1:
+	.long	254
+	.asciz	"#version 300 es\r\nprecision mediump float;\r\nprecision mediump sampler2DArray;\r\n\r\nin float vTexId;\r\nin vec2 vTexCoord;\r\n\r\nuniform sampler2DArray uSampler;\r\n\r\nout vec4 FragColor;\r\n\r\nvoid main()\r\n{\r\n\tFragColor = texture(uSampler, vec3(vTexCoord, vTexId));\r\n}"
+	.zero	1
+
+	.globl	_sz2
+	.p2align	4, 0x0
+_sz2:
 	.long	12
 	.asciz	"HELLO WORLD!"
 	.zero	3
 
+	.section	.rdata$.refptr.C3_TEST,"dr",discard,.refptr.C3_TEST
+	.p2align	3, 0x0
+	.globl	.refptr.C3_TEST
+.refptr.C3_TEST:
+	.quad	C3_TEST
 	.section	.rdata$.refptr.C_TEXT,"dr",discard,.refptr.C_TEXT
 	.p2align	3, 0x0
 	.globl	.refptr.C_TEXT

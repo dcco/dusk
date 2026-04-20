@@ -5,6 +5,8 @@ open Parser.Dusk_type
 		virtual declarations: special declarations to "compile" builtin functions / types
 		* symbols: < builtin functions, and what they should compile to >
 		-- binary expression ASM
+		-- internal bindings
+			< miscellaneous special function that executes at compile-time >
 		-- external bindings
 			< integer list describing "virtual" arguments - which arguments must be wrapped in ptrs > 
 		-- user-defined: < not a builtin function >
@@ -19,6 +21,7 @@ open Parser.Dusk_type
 type sym =
 	UnaryASMSym of string
 	| BinaryASMSym of string
+	| InternalSym of string
 	| ExternalSym of int list
 	| UserDefSym
 
@@ -51,12 +54,14 @@ let completeTdefList (vl: m_virt_bind list): virt_bind list =
 	) vl vl
 *)
 let builtinList =  [
+	("neg", UnaryASMSym "ineg", [intTy], intTy);
 	("add", BinaryASMSym "iadd", [intTy; intTy], intTy);
 	("sub", BinaryASMSym "isub", [intTy; intTy], intTy);
 	("mul", BinaryASMSym "imul", [intTy; intTy], intTy);
 	("div", BinaryASMSym "idiv", [intTy; intTy], intTy);
 	("mod", BinaryASMSym "imod", [intTy; intTy], intTy);
 
+	("neg", UnaryASMSym "fneg", [floatTy], floatTy);
 	("add", BinaryASMSym "fadd", [floatTy; floatTy], floatTy);
 	("sub", BinaryASMSym "fsub", [floatTy; floatTy], floatTy);
 	("mul", BinaryASMSym "fmul", [floatTy; floatTy], floatTy);
@@ -99,7 +104,9 @@ let builtinList =  [
 	("sqrt", ExternalSym [], [floatTy], floatTy);
 	("abs", ExternalSym [], [floatTy], floatTy);
 
-	("measure", ExternalSym [], [stringTy], intTy)
+	("measure", ExternalSym [], [stringTy], intTy);
+
+	("cLoad", InternalSym "cLoad", [stringTy], stringTy)
 ]
 
 let prngTy = builtinTy "PRNG"
@@ -123,13 +130,21 @@ let inputList = [
 	("keyPress", ExternalSym [], [keyTy], boolTy)
 ]
 
-let sulfurList = [
-	("refresh", ExternalSym [], [], unitTy);
-	("draw", ExternalSym [], [namedTy "Glyph"], unitTy)
-]
-
+let shaderTy = builtinTy "Shader"
+let renderListTy = builtinTy "RenderList"
+let blobTy = builtinTy "Blob"
 let imageTy = builtinTy "Image"
 let spriteTy = builtinTy "Sprite"
+
+let sulfurList = [
+	("refresh", ExternalSym [], [], unitTy);
+	("draw", ExternalSym [], [namedTy "Glyph"], unitTy);
+	("draw", ExternalSym [], [namedTy "Glyph3d"], unitTy);
+
+	("nullShader", InternalSym "null", [], shaderTy);
+	("newShader", ExternalSym [], [stringTy; stringTy; ArrayTy(1, intTy)], shaderTy);
+	("render", ExternalSym [], [shaderTy; renderListTy], unitTy)
+]
 
 let sulfurTypes = [
 	(QT None, "Glyph", TDefVD (EnumTD [
@@ -137,6 +152,10 @@ let sulfurTypes = [
 		("GBox", [intTy; intTy; intTy; intTy; intTy], Some "C_BOX");
 		("GSprite", [intTy; intTy; spriteTy; intTy], Some "C_SPRITE");
 		("GText", [spriteTy; stringTy], Some "C_TEXT")
+	]));
+	(QT None, "Glyph3d", TDefVD (EnumTD [
+		("G3Nop", [], Some "C3_NOP");
+		("G3Test", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_TEST");
 	]))
 ]
 

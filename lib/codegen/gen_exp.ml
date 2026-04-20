@@ -87,10 +87,13 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		DVal (v, t) -> (v, t)
 		| _ -> failwith ("BUG: gen_exp.ml - String literal incorrectly resolved in generation phase.")
 	)*)
+	| NullExpC -> (const_null ptrType, ptrType)
 	| VarExpC x -> genVar cont env (DVar x) x 
 	| UnaryExpC(xOp, e) ->
 		let (v, _) = genExp cont env e in (match xOp with
-			"bnot" -> (build_not v "_notT" bx, bType)
+			"ineg" -> (build_neg v "_negT" bx, iType)
+			| "fneg" -> (build_fneg v "_negT" bx, fType)
+			| "bnot" -> (build_not v "_notT" bx, bType)
 			| "ftoi" -> (build_fptosi v iType "_castT" bx, iType)
 			| "i64toi" -> (build_trunc v iType "_castT" bx, iType)
 			| "itof" -> (build_sitofp v fType "_castT" bx, fType)
@@ -279,6 +282,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 
 let rec genConstExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = (*let bx = cont.builder in*) match e with
 	ConstExpC c -> genConst cont env c
+	| NullExpC -> (const_null ptrType, ptrType)
 	| ConstArrayExpC(dims, el, tau) ->
 		let size = List.fold_left (fun i v -> i * v) 1 dims in
 		let res_l = List.map (genConstExp cont env) el in
@@ -306,6 +310,7 @@ let genAssign (cont: llvm_cont) (env: dusk_env) (x: string) (e: gen_exp): unit =
 		DVal ((vx, _), alignOpt) ->
 			let vs = build_store ve vx cont.builder in
 			Option.iter (fun align -> set_alignment align vs) alignOpt
+		| DGlobal (vx, _) -> ignore (build_store ve vx cont.builder)
 		| _ -> failwith "BUG: gen_exp.ml - Unexpected assignment to function variable."
 	)
 
@@ -419,9 +424,10 @@ let genDec (cont: llvm_cont) (env: dusk_env) (f: string) (d: gen_dec): unit = ma
 		ignore (genBody cont env' (1, fVal) b)
 	| TDefDecC (StructTD fl) -> genStructTD cont env f fl
 	| TDefDecC _ -> failwith "UNIMPLEMENTED: gen_exp.ml - type definition"
-	| ConstDecC e ->
+	| GlobalDecC(c, e) ->
 		let (v, t) = genConstExp cont env e in
 		let cVal = define_global f v cont.llmod in
+		(if c then Llvm.set_global_constant true cVal else ());
 		Hashtbl.add env (DVar f) (DGlobal (cVal, t))
 
 let genDecList (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): unit =

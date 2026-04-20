@@ -26,6 +26,9 @@ type tc_err =
 		(* returns *)
 	| EarlyReturn_Err of string * l_pos
 	| NoReturn_Err of string * l_pos
+		(* constant evaluation *)
+	| BadCLoad_Err of string * l_pos
+	| FailCLoad_Err of l_pos
 
 type 'a tc_res = ('a, tc_err) try_res
 
@@ -59,3 +62,6 @@ let string_of_tc_err (e: tc_err) = match e with
 		"Early return from function \"" ^ f ^ "\" producing unreachable code at " ^ (string_of_pos p) ^ "."
 	| NoReturn_Err(f, p) ->
 		"Declaration of function \"" ^ f ^ "\" does not return on all paths at " ^ (string_of_pos p) ^ "."
+	| BadCLoad_Err(f, p) ->
+		"Failed cLoad, could not find file \"" ^ f ^ "\" at " ^ (string_of_pos p) ^ "."
+	| FailCLoad_Err p -> "Failed cLoad at " ^ (string_of_pos p) ^ "."

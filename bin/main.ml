@@ -31,6 +31,32 @@ let load_token_list (fname: string): (Lex_token.token list) try_log_res =
 		(close_in fc; validLog tkList);;
 
 	(*
+		file context: contextual information about what file is being compiled
+			- toplevel
+			- prelude: (module path, directory, file name)
+			- library: (directory, file name)
+	*)
+
+type file_context =
+	TopLevelFC
+	| PreludeFC of string list * string * string
+	| LibFC of string * string
+
+let full_name_fc (main_dir: string) (fc: file_context): string = match fc with
+	TopLevelFC -> main_dir ^ "/main.dm"
+	| PreludeFC(_, dir, f) -> main_dir ^ "/" ^ dir ^ "/" ^ f
+	| LibFC(dir, f) -> main_dir ^ "/" ^ dir ^ "/" ^ f
+
+let full_dir_fc (main_dir: string) (fc: file_context): string = match fc with
+	TopLevelFC -> main_dir
+	| PreludeFC(_, dir, _) -> main_dir ^ "/" ^ dir
+	| LibFC(dir, _) -> main_dir ^ "/" ^ dir
+
+let prelude_fc (fc: file_context): bool = match fc with
+	PreludeFC _ -> true
+	| _ -> false
+
+	(*
 		pre-compilation:
 			does compilation up to codegen (incrementally).
 	*)
@@ -53,9 +79,6 @@ let rec pre_compile_lib (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 		let*! res_pre_ll = mapLogRes (pre_compile_lib resEnv typeEnv main_dir parent) missingLibList
 		in validLog (List.concat res_pre_ll)
 	) ml in
-		(* - process the TOC requirements *)
-	(*let*! (res_pre_l, resEnv') = pre_compile_req_list resEnv typeEnv main_dir rl (Some l) in
-	(if List.length res_pre_l > 0 then print_string ("Loaded requirements for " ^ l ^ "\n") else ());*)
 		(* - compile modules *)
 	print_string ("Compiling library: " ^ libName ^ "\n");
 	let*! res_l = mapLogRes (fun (Module(m, rl, xl, _)) ->
@@ -66,35 +89,30 @@ let rec pre_compile_lib (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 			(* - compile individual files *)	
 		let*! res_m = mapLogRes (fun x ->
 			print_string ("-- " ^ x ^ "\n");
-			let*! res_f = pre_compile_file resEnv' typeEnv main_dir (Some (libName ^ "/" ^ m ^ "/" ^ x ^ ".dm"))
+			let lfc = LibFC (libName ^ "/" ^ m, x ^ ".dm") in
+			let typeEnv' = Tc_cont.with_dir_tenv typeEnv (libName ^ "/" ^ m) in
+			let*! res_f = pre_compile_file resEnv' typeEnv' main_dir lfc
 			in validLog (List.concat res_f)
 		) xl in
 		Res_cont.save_local_dec_env resEnv' [libName; m]; validLog res_m
 	) ml in validLog ((List.concat res_pre_ll) @ (List.concat res_l))
-(*and pre_compile_req_list (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
-	(main_dir: string) (rl: n_req list) (parent: string option): (pre_comp_res list * Res_cont.res_env) try_log_res =
-		(* - load un-compiled libraries *)
-	let missingLibList = pre_check_req_list resEnv rl in
-	let*! res_pre_ll = mapLogRes (pre_compile_lib resEnv typeEnv main_dir parent) missingLibList in
-		(* - resolve requirements (freeze imports) *)
-	let resEnv' = Res_cont.freeze_env resEnv [] in
-	let*! _ = tryWithErrLog string_of_rs_err (resolve_req_list resEnv' rl) in
-	validLog (List.concat res_pre_ll, resEnv') *)
+		(* codegen for an individual file *)
 and pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
-	(main_dir: string) (f: string option): (pre_comp_res list) try_log_res =
+	(main_dir: string) (fc: file_context): (pre_comp_res list) try_log_res =
 		(* PHASE 1. lexing / parsing *)
-	(match f with None -> print_string "Loading top-level\n" | Some _ -> ());
-	let*! tkList = load_token_list (main_dir ^ "/" ^ (match f with None -> "main.dm" | Some f -> f)) in
+	(match fc with
+		TopLevelFC -> print_string "Loading top-level\n"
+		| PreludeFC(_, dir, f) -> print_string ("Loading prelude file \"" ^ dir ^ "/" ^ f ^ "\"\n")
+		| _ -> ()
+	);
+	let*! tkList = load_token_list (full_name_fc main_dir fc) in
 	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
 		(* PHASE 2. namespace resolution
-			- for not top-level, we have to save all the bindings
 			- for top-level, we must pre-load all the requirements
+			- for not top-level, we have to save all the bindings
 		*)
-	let*! (res_pre_l, canonAst) = (match f with
-		Some _ ->
-			let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv false rawAst) in
-			validLog ([], canonAst)
-		| None ->
+	let*! (res_pre_l, canonAst) = (match fc with
+		TopLevelFC ->
 				(* - load un-compiled libraries *)
 			let Section(rl, _) = rawAst in
 			let missingLibList = pre_check_req_list resEnv rl in
@@ -106,11 +124,23 @@ and pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 			print_string "Compiling top-level\n";
 			let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' true rawAst) in
 			validLog (List.concat res_pre_ll, canonAst)
+		| _ ->
+			let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv (prelude_fc fc) rawAst) in
+			validLog ([], canonAst)
 	) in
 		(* PHASE 3. type-checking *)
-	let*! res_f = tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst) in
+	let typeEnv' = Tc_cont.with_dir_tenv typeEnv (full_dir_fc main_dir fc) in
+	let*! res_f = tryWithErrLog string_of_tc_err (tc_section typeEnv' canonAst) in
 	validLog (res_pre_l @ [res_f])
-
+		(*
+			codegen for an individual file + adds its bindings to an existing library
+				(used for pipeline/shader code)
+		*)
+and ext_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
+	(main_dir: string) (path: string list) (dir: string) (f: string): (pre_comp_res list) try_log_res =
+	let resEnv' = Res_cont.freeze_env resEnv path in
+	let*! res_f = pre_compile_file resEnv' typeEnv main_dir (PreludeFC(path, dir, f)) in
+	Res_cont.save_ext_dec_env resEnv' path; validLog res_f
 
 (*
 let pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
@@ -171,9 +201,11 @@ let program _ =
 		let canonBindings = resolve_virt_bindings resEnv virtBindings in
 		let typeEnv = Tc_cont.builtin_tenv canonBindings in
 		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv canonBindings in
+			(* compile shader/pipeline *)
+		let*! pipeAstList = ext_compile_file resEnv typeEnv main_dir ["Sys"; "Sulfur"] "shader" "pipeline.dm" in
 			(* PHASES 1-3. incremental resolution *)
-		let*! typedAstList = pre_compile_file resEnv typeEnv main_dir None in
-		let typedAst = List.concat typedAstList in
+		let*! typedAstList = pre_compile_file resEnv typeEnv main_dir TopLevelFC in
+		let typedAst = List.concat (pipeAstList @ typedAstList) in
 			(* PHASE 4. code generation *)
 		let targetArch =
 			if !target_arg <> "" then Some !target_arg

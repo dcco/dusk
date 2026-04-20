@@ -48,7 +48,9 @@ and resolve_exp_list (env: res_env) (el: n_exp list): (r_exp list) rs_res = matc
 
 let rec resolve_stmt (env: res_env) (s: n_stmt): (res_env * r_stmt) rs_res = match s with
 	EvalStmt(e, p) -> let* e' = resolve_exp env e in Valid (env, EvalStmt(e', p))
-	| AssignStmt(x, e, p) -> let* e' = resolve_exp env e in Valid (env, AssignStmt(x, e', p))
+	| AssignStmt(x, e, p) ->
+		let* x' = resolve_name env p (QT None) x in
+		let* e' = resolve_exp env e in Valid (env, AssignStmt(x', e', p))
 	| ReturnStmt(e, p) -> (match e with
 		None -> Valid (env, ReturnStmt(None, p))
 		| Some e ->
@@ -104,10 +106,10 @@ let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 	| TDefDec(x, td, p) ->
 		let tName = add_local_dec_env env x in
 		let* td' = resolve_type_def env p td in	Valid (TDefDec(tName, td', p))
-	| ConstDec(x, e, p) ->
+	| GlobalDec(cf, x, e, p) ->
 		let x' = add_local_dec_env env x in
 		let* e' = resolve_exp env e in
-		Valid (ConstDec(x', e', p))
+		Valid (GlobalDec(cf, x', e', p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
 	[] -> Valid []

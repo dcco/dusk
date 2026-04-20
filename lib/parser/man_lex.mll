@@ -26,6 +26,7 @@ rule token = parse
 	| "end" { lexWrap lexbuf END }
 	| "struct" { lexWrap lexbuf STRUCT }
 	| "const" { lexWrap lexbuf CONST }
+	| "global" { lexWrap lexbuf GLOBAL }
 	| "fn" { lexWrap lexbuf FN }
 	| "lin" { lexWrap lexbuf LIN }
 	| "var" { lexWrap lexbuf VAR }

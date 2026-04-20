@@ -95,7 +95,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "Long"] then Valid (primTy x, tkRem)
-		else if List.mem x ["PRNG"; "Image"; "Sprite"] then Valid (builtinTy x, tkRem)
+		else if List.mem x ["PRNG"; "Image"; "Sprite"; "Blob"; "RenderList"] then Valid (builtinTy x, tkRem)
 		else Valid (NamedTy(QT None, x), tkRem)
 	| (DIM i, _) :: tkRem ->
 		let* (tau, tkRem2) = parseBraceWrap parseType "Array Type" tkRem in
@@ -470,7 +470,12 @@ let parseDec: n_dec parser = fun tkList -> match tkList with
 		let* (x, tkRem2) = parseId tkRem in
 		let* (_, tkRem3) = parseTk EQ "Constant Declaration" tkRem2 in
 		let* (e, tkRem4) = parseExp tkRem3 in
-		Valid (ConstDec(x, e, p), tkRem4)
+		Valid (GlobalDec(CDec, x, e, p), tkRem4)
+	| (GLOBAL, p) :: tkRem ->
+		let* (x, tkRem2) = parseId tkRem in
+		let* (_, tkRem3) = parseTk EQ "Global Declaration" tkRem2 in
+		let* (e, tkRem4) = parseExp tkRem3 in
+		Valid (GlobalDec(GDec, x, e, p), tkRem4)
 	| tk :: _ -> Error (BadToken_Err(tk, "Dec"))
 	| _ -> Error (EOF_Err "Dec")
 

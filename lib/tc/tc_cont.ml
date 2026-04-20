@@ -50,6 +50,7 @@ type tc_tval =
 	| TcCtor of string
 
 type type_env = {
+	curDir: string option;
 	globalFIds: (string, poly_dec) Hashtbl.t;
 	globalTIds: (string, tc_tval) Hashtbl.t;
 	globalIds: (string, g_type) Hashtbl.t;
@@ -77,6 +78,9 @@ let dump_tenv (env: type_env): unit =
 			| TcCtor f -> print_string ("ctor: " ^ f)
 		); print_string "\n"
 	) env.globalTIds;
+	Hashtbl.iter (fun x tau ->
+		print_string (" " ^ x ^ ": " ^ (string_of_type tau) ^ "\n")
+	) env.globalIds;
 	print_string "}\n";;
 
 let add_fun_tenv (env: type_env) (f: string) (v: sym_fun_type): unit =
@@ -87,6 +91,7 @@ let add_fun_tenv (env: type_env) (f: string) (v: sym_fun_type): unit =
 
 let builtin_tenv (dl: g_virt_bind list): type_env =
 	let env = {
+		curDir = None;
 		globalFIds = Hashtbl.create 50;
 		globalTIds = Hashtbl.create 50;
 		globalIds = Hashtbl.create 50;
@@ -101,6 +106,8 @@ let builtin_tenv (dl: g_virt_bind list): type_env =
 			Hashtbl.add env.globalTIds f (TcTDef (EnumTD cl));
 			List.iter (fun (c, _, _) -> Hashtbl.add env.globalTIds c (TcCtor f)) cl
 	) dl; env
+
+let with_dir_tenv (env: type_env) (dir: string): type_env = { env with curDir = Some dir }
 
 let get_box_id_tenv (env: type_env): int =
 	let i = !(env.boxCount) in env.boxCount := i + 1; i

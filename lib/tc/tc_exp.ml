@@ -28,6 +28,7 @@ let is_heap_type (env: type_env) (tau: g_type): bool = match tau with
 type g_fun =
 	UnaryGF of string
 	| BinaryGF of string
+	| InternalGF of string
 	| TupleIndexGF of int
 	| ArrayIndexGF of rw
 	| ArrayLengthGF
@@ -133,6 +134,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 		let* _ = tc_type_list tau_al tau_pl p in (match d with
 			UnaryGF fsm -> Valid (UnaryExpC(fsm, List.nth el' 0), tau_rn)
 			| BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_rn)
+			| InternalGF fsm ->	let* c = calc_cfun env fsm el' p in Valid (c, tau_rn)
 			| TupleIndexGF i -> Valid (TupleIndexExpC(List.hd el', i, List.hd tau_pl), tau_rn)
 			| ArrayIndexGF rw ->
 				let (rw', tau_r', et') =
@@ -155,6 +157,7 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 		Some (f, (d, tau_f)) -> (match d with
 			UnaryASMSym fsm -> Valid (f, UnaryGF fsm, tau_f)
 			| BinaryASMSym fsm -> Valid (f, BinaryGF fsm, tau_f)
+			| InternalSym fsm -> Valid (f, InternalGF fsm, tau_f)
 			| ExternalSym vl -> Valid (f, CallGF vl, tau_f)
 			| _ -> Valid (f, CallGF [], tau_f)
 		)
@@ -231,7 +234,11 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_st
 		let* (e', _) = tc_exp env e in Valid (env, [EvalStmtC e'], false)
 	| AssignStmt(x, e, _) -> (match StringMap.find_opt x env.localIds with
 		Some _ -> let* (e', _) = tc_exp env e in Valid (env, [AssignStmtC(x, e')], false)
-		| _ -> failwith "BUG: tc_exp.ml - Failed variable lookup during type-checking phase."
+		| _ -> (match Hashtbl.find_opt env.globalIds x with
+			Some _ -> let* (e', _) = tc_exp env e in Valid (env, [AssignStmtC(x, e')], false)
+			| _ -> dump_tenv env; failwith ("BUG: tc_exp.ml - Failed assignment variable \"" ^
+				x ^ "\" lookup during type-checking phase.")
+		)
 	)
 	| ReturnStmt(eo, _) -> (match eo with
 		None -> Valid (env, [ReturnStmtC None], true)
@@ -303,11 +310,11 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 	| TDefDec(x, td, _) -> Hashtbl.add env.globalTIds x (TcTDef td); Valid [(x, TDefDecC td)]
-	| ConstDec(x, e, _) ->
+	| GlobalDec(cf, x, e, _) ->
 		let* (e', tau) = tc_exp env e in
 		let* ef = calc_exp env e' in
 		Hashtbl.add env.globalIds x tau;
-		Valid [(x, ConstDecC ef)]
+		Valid [(x, GlobalDecC(cf = CDec, ef))]
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =
 	let rec tcs_rec dl = match dl with

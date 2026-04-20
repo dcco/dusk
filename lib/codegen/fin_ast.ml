@@ -7,6 +7,7 @@ open Fin_type
 
 type gen_exp =
 	ConstExpC of const
+	| NullExpC
 	(*| LitExpC of int *)
 	| VarExpC of string
 	| UnaryExpC of string * gen_exp
@@ -52,7 +53,7 @@ let type_of_method (MethodC(arg_l, tau_r, _): gen_met): g_type list * g_type =
 type gen_dec =
 	FunDecC of gen_met
 	| TDefDecC of g_tdef
-	| ConstDecC of gen_exp
+	| GlobalDecC of bool * gen_exp
 
 	(*
 		auxiliary gathering functions

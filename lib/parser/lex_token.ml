@@ -3,7 +3,7 @@ type raw_token = INT of int | FLOAT of float | TRUE | FALSE
 	| STRLIT of string | KLIT of string | LONG of Int64.t
 	| ID of string | TID of string | DIM of int
 	| REFERENCES | MODULE | MODULES | CHAPTER | END
-	| STRUCT | CONST
+	| STRUCT | CONST | GLOBAL
 	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
 	| LOOP | WHILE | DO | FOR | IN | RETURN
 	| GC_COLLECT | UNDERSCORE
@@ -30,6 +30,7 @@ let string_of_raw_token tk = match tk with
 	| END -> "end"
 	| STRUCT -> "struct"
 	| CONST -> "const"
+	| GLOBAL -> "global"
 	| FN -> "fn"
 	| LIN -> "lin"
 	| VAR -> "var"

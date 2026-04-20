@@ -124,6 +124,16 @@ let save_local_dec_env (env: res_env) (path: string list): unit =
 	) env.importIds [] in
 	env.globalModules := add_tree !(env.globalModules) path bindings
 
+let save_ext_dec_env (env: res_env) (path: string list): unit =
+	let bindings = Hashtbl.fold (fun x ol bindings ->
+		if List.exists (fun (ox, _) -> match ox with
+			LocalOr -> true | _ -> false
+		) ol then (NPF, x) :: bindings else bindings
+	) env.importIds [] in
+	env.globalModules := update_tree !(env.globalModules) path
+		(* TODO: sanity check on extending the bindings here *)
+	(fun oldBindings -> oldBindings @ bindings)
+
 	(* - TEST fun: used to dump *)
 
 let dump_renv (env: res_env): unit =

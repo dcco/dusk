@@ -92,6 +92,7 @@ let ann_stmt s = match s with
 	*)
 
 type lin_flag = Fn | Lin
+type const_flag = CDec | GDec
 
 type ('m, 'ann) met =
 	Method of lin_flag * string * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
@@ -99,7 +100,7 @@ type ('m, 'ann) met =
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann
 	| TDefDec of string * 'm raw_tdef * 'ann
-	| ConstDec of string * ('m, 'ann) exp * 'ann
+	| GlobalDec of const_flag * string * ('m, 'ann) exp * 'ann
 
 type 'ann req =
 	ShortRefReq of string list * 'ann
