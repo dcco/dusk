@@ -130,9 +130,9 @@ let save_ext_dec_env (env: res_env) (path: string list): unit =
 			LocalOr -> true | _ -> false
 		) ol then (NPF, x) :: bindings else bindings
 	) env.importIds [] in
-	env.globalModules := update_tree !(env.globalModules) path
 		(* TODO: sanity check on extending the bindings here *)
-	(fun oldBindings -> oldBindings @ bindings)
+	env.globalModules := update_tree !(env.globalModules) path
+		(fun oldBindings -> oldBindings @ bindings) []
 
 	(* - TEST fun: used to dump *)
 

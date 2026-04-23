@@ -52,10 +52,10 @@ let chkBrackR (tk: raw_token): bool = match tk with
 	| RBRACK -> true
 	| _ -> false
 
-let chkTypeStart (tk: raw_token): bool = match tk with
-	TID _ -> true
-	| DIM _ -> true
-	| LPAREN -> true
+let rec chkTypeStart (tkList: token list): bool = match tkList with
+	(TID _, _) :: _ -> true
+	| (DIM _, _) :: _ -> true
+	| (LPAREN, _) :: tkRem -> chkTypeStart tkRem
 	| _ -> false
 
 let readUniOp (tk: raw_token): string option = match tk with
@@ -95,7 +95,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "Long"] then Valid (primTy x, tkRem)
-		else if List.mem x ["PRNG"; "Image"; "Sprite"; "Blob"; "RenderList"] then Valid (builtinTy x, tkRem)
+		else if List.mem x ["PRNG"; "Mat4"; "Image"; "Sprite"; "Blob"; "RenderData"] then Valid (builtinTy x, tkRem)
 		else Valid (NamedTy(QT None, x), tkRem)
 	| (DIM i, _) :: tkRem ->
 		let* (tau, tkRem2) = parseBraceWrap parseType "Array Type" tkRem in
@@ -115,8 +115,7 @@ and parseTypeListFull: m_type list parser = fun tkList -> match tkList with
 
 and parseRetTy: m_type parser = fun tkList -> match tkList with
 	(TID _, _) :: (DOT, _) :: _ -> Valid (unitTy, tkList)
-	| (tk, _) :: _ -> if chkTypeStart tk then parseType tkList else Valid (unitTy, tkList)
-	| _ -> Valid (unitTy, tkList)
+	| _ -> if chkTypeStart tkList then parseType tkList else Valid (unitTy, tkList)
 
 	(* auxiliary application parse objects *)
 
@@ -205,7 +204,7 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (TID prefix, p) :: tkRem -> (match tkRem with
 		(DOT, _) :: tkRem2 -> parseIdAtomExp (QT (Some prefix)) tkRem2
 		| (LPAREN, _) :: _ ->
-			let* (el, tkRem2) = parseParenWrap (parseSepList parseExp chkComma) "Enum / Union" tkRem in
+			let* (el, tkRem2) = parseParenWrap (parseSepList parseExp chkComma) "Enum" tkRem in
 			Valid (TupleExp(Some (QT None, prefix), el, p), tkRem2)
 		| _ -> parseIdAtomExp (QT None) tkList
 	)
@@ -251,13 +250,12 @@ and parseArgList: n_exp list parser = fun tkList -> match tkList with
 	| _ -> parseSepList parseExp chkComma tkList
 
 and parseArrayInner: (m_type option * n_exp list) parser = fun tkList -> match tkList with
-	(tk, _) :: _ ->
-		if chkTypeStart tk then
-			let* (tau, tkRem) = parseType tkList in
-			Valid ((Some tau, []), tkRem)
-		else let* (el, tkRem) = parseSepList parseExp chkComma tkList in
-			Valid ((None, el), tkRem)
-	| _ -> Error (EOF_Err "Array Initializer")
+	(TILDE, _) :: tkRem ->
+		let* (tau, tkRem2) = parseType tkRem in
+		Valid ((Some tau, []), tkRem2)
+	| _ ->
+		let* (el, tkRem) = parseSepList parseExp chkComma tkList in
+		Valid ((None, el), tkRem)
 
 (*
 and parseArrayInner: (n_exp list * n_exp list * bool) parser = fun tkList ->

@@ -10,61 +10,113 @@ sulfur_t* sulfur = NULL;
 
 extern void _Glyph_Sys_Sulfur_draw(int8_t raw[32])
 {
-	renderList_t* rl = sulfur->back_buffer;
+	renderList_t* rl = &sulfur->back_buffer->list2d;
 	addGlyphRList(rl, (glyph_t*) raw);
 }
 
 extern void _none_Sys_Sulfur_refresh()
 {
+	_RenderData_Sys_Sulfur_passRenderVars(sulfur->back_buffer);
 	swapBackBuffer(sulfur);
 }
 
 extern void _Glyph3d_Sys_Sulfur_draw(int8_t raw[32])
 {
-	renderList_t* rl = sulfur->back_buffer + 1;
-	addGlyph3dRList(rl, (glyph3d_t*) raw);
+	#ifdef PIPELINE_DEF
+		renderTable_t* rt = &sulfur->back_buffer->table3d;
+		addGlyph3dRTable(sulfur->r3d, rt, (glyph3d_t*) raw);
+	#endif
 }
 
 	/* special pipeline bindings */
 
 #ifdef PIPELINE_DEF
 
-extern void* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t* _fs, gc_array_t* args)
-{
-	const char* vs = (char*) (&_vs->start);
-	const char* fs = (char*) (&_fs->start);
+typedef struct raw_gltype {
+	int8_t type;
+} raw_gltype_t;
 
+typedef struct raw_uniform_def {
+	dusk_string_t* name;
+	raw_gltype_t* g;
+	int32_t arity;
+} raw_uniform_def_t;
+
+extern void* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t* _fs, gc_array_t* attrs, gc_array_t* uniforms)
+{
+	// convert uniform list into usable data structure
+	int32_t uniformTotal = 0;
+	shader_uniform_def_t* uniformList = NULL;
+	if (uniforms->size > 0) {
+		uniformTotal = uniforms->size;
+		uniformList = (shader_uniform_def_t*) malloc(sizeof(shader_uniform_def_t) * uniformTotal);
+		raw_uniform_def_t** rawUList = (raw_uniform_def_t**) uniforms->data;
+		for (int i = 0; i < uniformTotal; i++) {
+			raw_uniform_def_t* rawUniform = rawUList[i];
+			uniformList[i].name = &rawUniform->name->start;
+			uniformList[i].glType = readGLType(rawUniform->g->type);
+			uniformList[i].arity = rawUniform->arity;
+		}
+	}
+
+	// build shader definition
 	const struct shader_def BASE3_DEF = {
-		6, sizeof(draw_dat3d_t), BASE3_ATTR_LIST, "uSampler", NULL, "uPMat"
+		6, sizeof(draw_dat3d_t), BASE3_ATTR_LIST,
+		uniformTotal, uniformList, "uSampler", NULL, "uPMat"
 	};
 
+	// compile shader
+	const char* vs = (char*) (&_vs->start);
+	const char* fs = (char*) (&_fs->start);
 	shader_t* shader = initShader(vs, fs, &BASE3_DEF);
+
+	// cleanup
+	if (uniformList != NULL) free(uniformList);
 	return (void*) shader;
 }
 
 float P_MAT_X[16] = {
     1.3333333f, 0.0f,        0.0f,  0.0f,
-    0.0f,       2.0f,        0.0f,  0.0f,
+    0.0f,       -2.0f,        0.0f,  0.0f,
     0.0f,       0.0f,       -1.0020020f, -1.0f,
     0.0f,       0.0f,       -0.2002002f,  0.0f
 };
 
-extern void _Shader_Sys_Sulfur_render(void* _shader, void* rl)
+extern void _Shader_Sys_Sulfur_setUniform(void* _shader, int32_t i, gl_val_t* v)
 {
-	// enable shader
-	printf("shader ptr: %x\n", _shader);
-	shader_t* shader = *((shader_t**) _shader);
-	glUseProgram(shader->prog);
-	printf("%d\n", shader->prog);
-	
-	glUniformMatrix4fv(shader->uPers, 1, 0, P_MAT_X); 
-
-	// render draw data
-	renderList_t* r_buffer = sulfur->front_buffer + 1;
-	int32_t len = lenRList(r_buffer);
-	drawDataShader((shader_t*) shader, &sulfur->sf2d->defQuad, sulfur->rom->texArr, len, r_buffer->data);
+	shader_t* shader = (shader_t*) _shader;
+	if (shader->uniformBuffer == NULL || i < 0 || i >= shader->uniformTotal) return;
+	shader->uniformBuffer[i] = v;
 }
 
-#endif
+extern void _Shader_Sys_Sulfur_render(void* _shader, renderData_t* rd)
+{
+	// enable shader
+	shader_t* shader = (shader_t*) _shader;
+	glUseProgram(shader->prog);
+	glUniformMatrix4fv(shader->uPers, 1, 0, P_MAT_X);
+	// assign argument uniforms
+	setUniformsShader(shader);
 
-#endif
+	// render draw data
+	renderTable_t* rt = &rd->table3d;
+	renderNode_t* rNode = rt->activeHead;
+	while (rNode != NULL) {
+		renderList_t* rl = &rNode->list;
+		int32_t len = lenRList(rl);
+		if (rNode->mesh != NULL) drawDataShader((shader_t*) shader, rNode->mesh, sulfur->rom->texArr, len, rl->data);
+		rNode = rNode->next;
+	}
+}
+
+extern gl_val_t* _RenderData_Sys_Sulfur_get(renderData_t* rd, int32_t i) {
+	return &rd->varList[i];
+}
+
+extern void _RenderData_Sys_Sulfur_set(renderData_t* rd, int32_t i, gl_val_t* v) {
+	return addVarRData(rd, i, v);
+}
+
+#endif /* PIPELINE_DEF */
+
+#endif /* SULFUR_BINDINGS_H */

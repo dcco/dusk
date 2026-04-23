@@ -7,7 +7,7 @@ type raw_token = INT of int | FLOAT of float | TRUE | FALSE
 	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
 	| LOOP | WHILE | DO | FOR | IN | RETURN
 	| GC_COLLECT | UNDERSCORE
-	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA
+	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA | TILDE
 	| LBRACE | RBRACE | BAR | LBRACK | RBRACK
 	| NEQ | LANGLE | RANGLE | LEQ | GEQ | AND | OR | EXCLAM
 	| PLUS | DASH | STAR | SLASH | FLDIV | PERC | EXPO | EOF
@@ -55,6 +55,7 @@ let string_of_raw_token tk = match tk with
 	| LPAREN -> "("
 	| RPAREN -> ")"
 	| COMMA -> ","
+	| TILDE -> "~"
 	| LBRACE -> "["
 	| RBRACE -> "]"
 	| BAR -> "|"

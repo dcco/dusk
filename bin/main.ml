@@ -202,10 +202,11 @@ let program _ =
 		let typeEnv = Tc_cont.builtin_tenv canonBindings in
 		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv canonBindings in
 			(* compile shader/pipeline *)
-		let*! pipeAstList = ext_compile_file resEnv typeEnv main_dir ["Sys"; "Sulfur"] "shader" "pipeline.dm" in
+		let*! pipeAstFront = ext_compile_file resEnv typeEnv main_dir ["Sys"; "Sulfur"] "shader" "PipeFront.dm" in
+		let*! pipeAstBack = ext_compile_file resEnv typeEnv main_dir ["pipeline"] "shader" "PipeBack.dm" in
 			(* PHASES 1-3. incremental resolution *)
 		let*! typedAstList = pre_compile_file resEnv typeEnv main_dir TopLevelFC in
-		let typedAst = List.concat (pipeAstList @ typedAstList) in
+		let typedAst = List.concat (pipeAstBack @ pipeAstFront @ typedAstList) in
 			(* PHASE 4. code generation *)
 		let targetArch =
 			if !target_arg <> "" then Some !target_arg

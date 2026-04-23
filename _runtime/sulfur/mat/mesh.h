@@ -3,14 +3,19 @@
 
 	/*
 		mesh:
+		- rIndex: which render list to be used (-1 means un-assigned)
+		- vertexTotal: vertex total
+		- data: raw mesh data
 	*/
 
 typedef struct mesh {
+	int rIndex;
 	int vertexTotal;
 	void* data;
 } mesh_t;
 
 void initMesh(mesh_t* mesh, int vertexTotal, const float* data, const float* uv) {
+	mesh->rIndex = -1;
 	mesh->vertexTotal = vertexTotal;
 	vertex_t* vertData = (vertex_t*) malloc(vertexTotal * sizeof(vertex_t));
 	for (int i = 0; i < vertexTotal; i++) {

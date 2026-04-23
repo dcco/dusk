@@ -77,7 +77,7 @@ let genVar (cont: llvm_cont) (env: dusk_env) (k: dusk_key) (name: string): dusk_
 	| Some (DVal ((v, t), alignOpt)) ->
 		let vx = build_load t v name cont.builder in
 		Option.iter (fun align -> set_alignment align vx) alignOpt; (vx, t)
-	| Some (DGlobal v) -> v
+	| Some (DGlobal (p, t)) -> let v = build_load t p name cont.builder in (v, t)
 	| Some _ -> failwith ("BUG: gen_exp.ml - Variable \"" ^ name ^ "\" resolved to non-value.")
 	| None -> failwith ("BUG: gen_exp.ml - Unexpected variable \"" ^ name ^ "\" encountered in generation phase.")
 
@@ -287,13 +287,14 @@ let rec genConstExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = (
 		let size = List.fold_left (fun i v -> i * v) 1 dims in
 		let res_l = List.map (genConstExp cont env) el in
 		let aVal = const_array (genType tau) (Array.of_list (List.map fst res_l)) in
-		let rVal = define_global "_rawT" aVal cont.llmod in
+		let rVal = define_global "_rawC" aVal cont.llmod in
 		let sVal = const_struct context (Array.of_list ([
 			const_int iType size;
 			const_int iType size;
 			rVal] @ (List.map (const_int iType) dims)
 		)) in
-		(sVal, gcFullArrType (List.length dims))
+		let xVal = define_global "_arrC" sVal cont.llmod in
+		(xVal, ptrType) (* gcFullArrType (List.length dims)) *)
 		(*let size = List.fold_left (fun i v -> i * v) 1 dims in*)
 	| _ -> failwith "BUG: gen_exp.ml - Non-constant initializer for global declaration encountered in generation phase."
 
@@ -311,7 +312,7 @@ let genAssign (cont: llvm_cont) (env: dusk_env) (x: string) (e: gen_exp): unit =
 			let vs = build_store ve vx cont.builder in
 			Option.iter (fun align -> set_alignment align vs) alignOpt
 		| DGlobal (vx, _) -> ignore (build_store ve vx cont.builder)
-		| _ -> failwith "BUG: gen_exp.ml - Unexpected assignment to function variable."
+		| _ -> failwith "BUG: gen_exp.ml - Unexpected assignment to non variable."
 	)
 
 let rec genStmt (cont: llvm_cont) (env: dusk_env) (b: blockInfo) (s: gen_stmt): blockInfo = match s with

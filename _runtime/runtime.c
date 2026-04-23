@@ -6,6 +6,10 @@
 #include <malloc.h>
 #include <pthread.h>
 
+#ifndef M_PI
+#define M_PI 3.1415926536f
+#endif
+
 #include "glad.h"
 #include "glfw3.h"
 
@@ -35,7 +39,7 @@ int main(void) {
 	/*
 		FULL SULFUR RUNTIME INITIALIZATION
 	*/
-	int WIDTH = 800;
+	int WIDTH = 960;
 	int HEIGHT = 640;
 	//int WIDTH = 640;
 	//int HEIGHT = 480;

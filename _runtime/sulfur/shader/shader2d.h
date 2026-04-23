@@ -85,7 +85,7 @@ const struct shader_attr_def BASE2_ATTR_LIST[8] = {
 };
 
 const struct shader_def BASE2_DEF = {
-	8, sizeof(draw_dat2d_t), BASE2_ATTR_LIST, "uSampler", "uTotal", "uPMat"
+	8, sizeof(draw_dat2d_t), BASE2_ATTR_LIST, 0, NULL, "uSampler", "uTotal", "uPMat"
 };
 
 #endif 

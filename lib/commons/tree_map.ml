@@ -67,13 +67,13 @@ let rec stub_tree (tree: 'a tree_map) (path: string list): 'a tree_map = match (
 			| Some child -> Some (stub_tree child xt)
 		) childMap)
 
-let rec update_tree (tree: 'a tree_map) (path: string list) (f: 'a -> 'a): 'a tree_map = match (path, tree) with
+let rec update_tree (tree: 'a tree_map) (path: string list) (f: 'a -> 'a) (z: 'a): 'a tree_map = match (path, tree) with
 	(_, Leaf v) -> Leaf (f v)
 	| ([], Branch _) -> failwith "tree_map.ml - Branch found at end of path while updating tree."
 	| (x :: xt, Branch childMap) ->
 		Branch (StringMap.update x (fun l -> match l with
-			None -> failwith "tree_map.ml - Path not found while updating tree."
-			| Some child -> Some (update_tree child xt f)
+			None -> Some (single_tree xt (f z)) (*failwith "tree_map.ml - Path not found while updating tree."*)
+			| Some child -> Some (update_tree child xt f z)
 		) childMap)
 
 	(* - FUTURE: update / removal *)

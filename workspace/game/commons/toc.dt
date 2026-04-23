@@ -1,5 +1,5 @@
 
-module Sys
+module Core
 	references Sys.Os
 	chapter NewMath
 	chapter Clock

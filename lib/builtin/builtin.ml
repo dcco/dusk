@@ -104,6 +104,8 @@ let builtinList =  [
 	("sqrt", ExternalSym [], [floatTy], floatTy);
 	("abs", ExternalSym [], [floatTy], floatTy);
 
+	("toRadians", ExternalSym [], [intTy], floatTy);
+
 	("measure", ExternalSym [], [stringTy], intTy);
 
 	("cLoad", InternalSym "cLoad", [stringTy], stringTy)
@@ -130,9 +132,9 @@ let inputList = [
 	("keyPress", ExternalSym [], [keyTy], boolTy)
 ]
 
+let mat4Ty = builtinTy "Mat4"
 let shaderTy = builtinTy "Shader"
-let renderListTy = builtinTy "RenderList"
-let blobTy = builtinTy "Blob"
+let renderDataTy = builtinTy "RenderData"
 let imageTy = builtinTy "Image"
 let spriteTy = builtinTy "Sprite"
 
@@ -142,8 +144,21 @@ let sulfurList = [
 	("draw", ExternalSym [], [namedTy "Glyph3d"], unitTy);
 
 	("nullShader", InternalSym "null", [], shaderTy);
-	("newShader", ExternalSym [], [stringTy; stringTy; ArrayTy(1, intTy)], shaderTy);
-	("render", ExternalSym [], [shaderTy; renderListTy], unitTy)
+	("newShader", ExternalSym [], [stringTy; stringTy; ArrayTy(1, intTy);
+		ArrayTy(1, TupleTy [stringTy; namedTy "GLType"; intTy])
+	], shaderTy);
+	("setUniform", ExternalSym [], [shaderTy; intTy; namedTy "GLVal"], unitTy);
+	("render", ExternalSym [], [shaderTy; renderDataTy], unitTy);
+
+	("alloc", ExternalSym [], [renderDataTy; intTy], unitTy);
+	("get", ExternalSym [], [renderDataTy; intTy], namedTy "GLVal");
+	("set", ExternalSym [], [renderDataTy; intTy; namedTy "GLVal"], unitTy);
+
+	("nullMat4", InternalSym "null", [], mat4Ty);
+	("newMat4", ExternalSym [], [], mat4Ty);
+	("idMat4", ExternalSym [], [mat4Ty], unitTy);
+	("translate", ExternalSym [], [mat4Ty; floatTy; floatTy; floatTy], unitTy);
+	("rotateX", ExternalSym [], [mat4Ty; floatTy], unitTy);
 ]
 
 let sulfurTypes = [
@@ -155,8 +170,18 @@ let sulfurTypes = [
 	]));
 	(QT None, "Glyph3d", TDefVD (EnumTD [
 		("G3Nop", [], Some "C3_NOP");
-		("G3Test", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_TEST");
-	]))
+		("G3QuadX", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_QX");
+		("G3QuadY", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_QY");
+		("G3QuadZ", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_QZ");
+	]));
+	(QT None, "GLType", TDefVD (EnumTD [
+		("GLFloat", [], Some "C_GL_FLOAT");
+		("GLMat4", [], Some "C_GL_MAT4");
+	]));
+	(QT None, "GLVal", TDefVD (EnumTD [
+		("GLFloatV", [floatTy], Some "C_GL_FLOAT");
+		("GLMat4V", [mat4Ty], Some "C_GL_MAT4");
+	]));
 ]
 
 	(*

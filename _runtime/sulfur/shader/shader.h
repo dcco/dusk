@@ -47,10 +47,18 @@ typedef struct shader_attr_def {
 	GLvoid* offset;
 } shader_attr_def_t;
 
+typedef struct shader_uniform_def {
+	const char* name;
+	int arity;
+	GLenum glType;
+} shader_uniform_def_t;
+
 typedef struct shader_def {
 	int attrTotal;
 	GLsizei instSize;		// size of a unit in the render list
 	const shader_attr_def_t* attrList;
+	int uniformTotal;
+	const shader_uniform_def_t* uniformList;
 	const char* uSampler;
 	const char* uTotal;		// name of uniform for total (can be NULL)
 	const char* uPers;		// name of perspective matrix (can be NULL)
@@ -62,6 +70,11 @@ typedef struct shader_def {
 			- stride stores how big a unit for the render list / VBO should be
 	*/
 
+typedef struct shader_uniform {
+	GLint loc;
+	shader_uniform_def_t uDef;
+} shader_uniform_t;
+
 typedef struct shader {
 	GLuint prog;
 	GLint vao;
@@ -71,6 +84,9 @@ typedef struct shader {
 	GLint uSampler;
 	GLint uTotal;	// total, may be -1
 	GLint uPers;	// reference to perspective uniform, may be -1
+	int uniformTotal;
+	shader_uniform_t* uniformList;
+	gl_val_t** uniformBuffer;
 } shader_t;
 
 	/* shader constructors / destructors */
@@ -149,12 +165,53 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 		if (shader->uPers < 0) exit_log("shader.h - Could not load shader uniform %s", uPers);
 	}
 
+	// initialize extra uniforms
+	if (sDef->uniformList == NULL) {
+		shader->uniformTotal = 0;
+		shader->uniformList = NULL;
+		shader->uniformBuffer = NULL;
+		return shader;
+	}
+
+	shader->uniformTotal = sDef->uniformTotal;
+	shader->uniformList = (shader_uniform_t*) malloc(sizeof(shader_uniform_t) * sDef->uniformTotal);
+	shader->uniformBuffer = (gl_val_t**) malloc(sizeof(gl_val_t*) * sDef->uniformTotal);
+	for (int i = 0; i < sDef->uniformTotal; i++) {
+		shader->uniformList[i].uDef = sDef->uniformList[i];
+		shader->uniformList[i].loc = glGetUniformLocation(prog, sDef->uniformList[i].name);
+		shader->uniformBuffer[i] = NULL;
+	}
+
 	return shader;
 }
 
 void delShader(shader_t* s) {
 	free(s);
 }
+
+	/* shader uniform assignment */
+
+void setUniformsShader(shader_t* shader) {
+	if (shader->uniformList == NULL) return;
+	for (int i = 0; i < shader->uniformTotal; i++) {
+		shader_uniform_t* uniform = &shader->uniformList[i];
+		//gl_val_t* v = ((gl_val_t**) uData->data)[i];
+		gl_val_t* v = shader->uniformBuffer[i];
+		if (v == NULL) continue;
+		if (uniform->uDef.glType == GL_FLOAT_MAT4) {
+			glUniformMatrix4fv(uniform->loc, 1, GL_FALSE, ((gl_mat4_val_t*) v)->mat);
+		}
+	}
+}
+
+/*void setUniformShader(shader_t* shader, int32_t i, gc_val_t* uniform) {
+	if (shader->uniformList == NULL) return;
+	shader_uniform_t* uniform = &shader->uniformList[i];
+	gl_val_t* v = ((gl_val_t**) uData->data)[i];
+	if (uniform->uDef.glType == GL_FLOAT_MAT4) {
+		glUniformMatrix4fv(uniform->loc, 1, GL_FALSE, ((gl_mat4_val_t*) v)->mat);
+	}
+}*/
 
 	/* shader draw function */
 

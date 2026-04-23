@@ -13,12 +13,17 @@
 #include "sprite.h"
 
 	// shader code
+#include "mat4.h"
+#include "renderVar.h"
 #include "shader.h"
 #include "shader2d.h"
 #include "drawDat3d.h"
 
 	// glyph / render list code
 #include "renderList.h"
+#include "r3d.h"
+#include "renderTable.h"
+#include "renderData.h"
 #include "glyph.h"
 #include "glyph3d.h"
 
@@ -58,8 +63,11 @@ void orthoMat(GLfloat* m, float l, float r, float b, float t, float n, float f) 
 		external bindings required for pipeline rendering
 	*/
 
-extern void _none_Sys_Sulfur_initShader();
-extern void _RenderList_Sys_Sulfur_runShader(void* rl);
+extern void _none_Sys_Sulfur_initShaderFront();
+extern void _RenderData_Sys_Sulfur_passRenderVars(renderData_t* rd);
+
+extern void _none_pipeline_initShaderBack();
+extern void _RenderData_pipeline_runShader(renderData_t* rd);
 
 	/* main sulfur runtime */
 
@@ -72,9 +80,10 @@ typedef struct sulfur {
 		/* render thread buffer */
 	pthread_mutex_t bufferMutex;
 	int8_t dirty;
-	renderList_t* back_buffer;
-	renderList_t* swap_buffer;
-	renderList_t* front_buffer;
+	r3d_t* r3d;
+	renderData_t* back_buffer;
+	renderData_t* swap_buffer;
+	renderData_t* front_buffer;
 		/* media rom */
 	sf_rom_t* rom;
 } sulfur_t;
@@ -88,22 +97,23 @@ sulfur_t* initSulfur(int width, int height) {
 	self->height = height;
 	orthoMat(self->pMat, 0.0f, (float) width, (float) height, 0.0f, -1.0f, 1.0f);
 	pthread_mutex_init(&self->bufferMutex, NULL);
-	self->back_buffer = (renderList_t*) malloc(sizeof(renderList_t) * 2); 
-	self->swap_buffer = (renderList_t*) malloc(sizeof(renderList_t) * 2);
-	self->front_buffer = (renderList_t*) malloc(sizeof(renderList_t) * 2);
-	initRList(self->back_buffer, sizeof(draw_dat2d_t));
-	initRList(self->swap_buffer, sizeof(draw_dat2d_t));
-	initRList(self->front_buffer, sizeof(draw_dat2d_t));
-	self->rom = initSfRom();
 
-	// initialize pipeline rendering
+	// initialize 2d + 3d render buffers
 	#ifdef PIPELINE_DEF
-		_none_Sys_Sulfur_initShader();
-		size_t r3d_size = sizeof(draw_dat3d_t);
-		initRList(self->back_buffer + 1, r3d_size);
-		initRList(self->swap_buffer + 1, r3d_size);
-		initRList(self->front_buffer + 1, r3d_size);
+		size_t size3d = sizeof(draw_dat3d_t);
+	#else
+		size_t size3d = 0;
 	#endif
+	self->r3d = initR3d();
+	self->back_buffer = newRData(sizeof(draw_dat2d_t), size3d);
+	self->swap_buffer = newRData(sizeof(draw_dat2d_t), size3d);
+	self->front_buffer = newRData(sizeof(draw_dat2d_t), size3d);
+
+	#ifdef PIPELINE_DEF
+		_none_pipeline_initShaderBack();
+		_none_Sys_Sulfur_initShaderFront();
+	#endif
+	self->rom = initSfRom();
 
 	// misc init
 	glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
@@ -114,7 +124,10 @@ sulfur_t* initSulfur(int width, int height) {
 	return self;
 }
 
-	/* currently unused (sulfur exists during the whole runtime lifespan), but exists for posterity */
+	/*
+		currently unused (sulfur exists during the whole runtime lifespan), but exists for posterity
+		- currently incomplete bc lazy
+	*/
 void delSulfur(sulfur_t* self) {
 	delSf2d(self->sf2d);
 	free(self);
@@ -125,11 +138,10 @@ void delSulfur(sulfur_t* self) {
 void swapBackBuffer(sulfur_t* sulfur) {
 	pthread_mutex_lock(&sulfur->bufferMutex);
 	// swap render lists
-	renderList_t* temp = sulfur->back_buffer;
+	renderData_t* temp = sulfur->back_buffer;
 	sulfur->back_buffer = sulfur->swap_buffer;
 	sulfur->swap_buffer = temp;
-	clearRList(sulfur->back_buffer);
-	clearRList(sulfur->back_buffer + 1);
+	clearRData(sulfur->back_buffer);
 	// dirty bits
 	sulfur->dirty = 1;
 	pthread_mutex_unlock(&sulfur->bufferMutex);
@@ -149,7 +161,7 @@ int8_t render(sulfur_t* sulfur) {
 	pthread_mutex_lock(&sulfur->bufferMutex);
 	if (sulfur->dirty) {
 		// swap render lists
-		renderList_t* temp = sulfur->front_buffer;
+		renderData_t* temp = sulfur->front_buffer;
 		sulfur->front_buffer = sulfur->swap_buffer;
 		sulfur->swap_buffer = temp;
 		// dirty bits
@@ -164,8 +176,8 @@ int8_t render(sulfur_t* sulfur) {
 	_clear(sulfur);
 	shader_t* shader = sulfur->sf2d->shader;
 
-	int32_t len = lenRList(sulfur->front_buffer);
-	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->rom->texArr, len, sulfur->front_buffer->data);
+	int32_t len = lenRList(&sulfur->front_buffer->list2d);
+	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->rom->texArr, len, sulfur->front_buffer->list2d.data);
 	
 	// copy to capture card for future
 	copyCC(sulfur->cc);
@@ -173,11 +185,12 @@ int8_t render(sulfur_t* sulfur) {
 	
 	// pipeline render call
 	#ifdef PIPELINE_DEF
-		_RenderList_Sys_Sulfur_runShader(sulfur->front_buffer + 1);
+		_RenderData_pipeline_runShader(sulfur->front_buffer);
+		//glUseProgram(sulfur->sf2d->shader->prog);
 	#endif
 
 	// 2d re-render
-	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->cc->capArr, 1, (void*) sulfur->cc->data);
+	//drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->cc->capArr, 1, (void*) sulfur->cc->data);
 
 	return 1;
 }

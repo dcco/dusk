@@ -82,6 +82,7 @@ rule token = parse
 	| "{" { lexWrap lexbuf LBRACK }
 	| "}" { lexWrap lexbuf RBRACK }
 	| "," { lexWrap lexbuf COMMA }
+	| "~" { lexWrap lexbuf TILDE }
 	| eof { lexWrap lexbuf EOF }
 	| _ { token lexbuf }
 and strlit p x = parse

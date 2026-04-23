@@ -9,6 +9,7 @@ layout (location = 4) in vec2 aTexUV;
 layout (location = 5) in vec2 aTexSize;
 
 uniform mat4 uPMat;
+uniform mat4 uMVMat;
 
 out float vTexId;
 out vec2 vTexCoord;
@@ -18,5 +19,5 @@ void main()
 	vec3 xPos = bPos + aPos;
 	vTexId = aTexId;
 	vTexCoord = (bTexCoord * aTexSize) + aTexUV;
-	gl_Position = uPMat * vec4(xPos, 1.0);
+	gl_Position = uPMat * uMVMat * vec4(xPos, 1.0);
 }

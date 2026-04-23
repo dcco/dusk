@@ -21,6 +21,10 @@ extern float _Float_builtin_floor(float f) {
 	return floorf(f);
 }
 
+extern float _Int_builtin_toRadians(int32_t i) {
+	return ((float) i) * M_PI / 180.0f;
+}
+
 	/*
 		os - console / printing functions
 	*/
