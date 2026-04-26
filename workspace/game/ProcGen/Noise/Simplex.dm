@@ -1,5 +1,5 @@
 
-const _grad = new 1d[
+const _GRAD = new 1d[
 	1, 1, -1, 1, 1, -1,
 	-1, -1, 1, 0, -1, 0,
 	1, 0, -1, 0, 0, 1,
@@ -18,12 +18,12 @@ end
 
 fn gradX(Simplex s, Int i) Int
 	var v = s.permTable.data[i % 256]
-	return _grad[(v % 12) * 2]
+	return _GRAD[(v % 12) * 2]
 end
 
 fn gradY(Simplex s, Int i) Int
 	var v = s.permTable.data[i % 256]
-	return _grad[(v % 12) * 2 + 1]
+	return _GRAD[(v % 12) * 2 + 1]
 end
 
 fn noise(Simplex s, Float fx, Float fy) Float

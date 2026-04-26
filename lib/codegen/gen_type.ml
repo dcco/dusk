@@ -64,6 +64,7 @@ let genType (tau: g_type): lltype = match tau with
 	*)
 	| TupleTy _ -> ptrType
 	| ArrayTy(_, _) -> ptrType
+	| ValArrayTy _ -> ptrType
 	| _ -> failwith "BUG: gen_type.ml - Unimplemented type."
 
 let rec genInnerType (env: dusk_env) (tau: g_type): lltype = match tau with

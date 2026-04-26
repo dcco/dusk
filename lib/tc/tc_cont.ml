@@ -19,6 +19,7 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 		else if n = 3 then "triple"
 		else "t" ^ (string_of_int n) 
 	| Some (ArrayTy(i, _)) -> "a" ^ (string_of_int i)
+	| Some (ValArrayTy _) -> "a1v"
 
 	(*
 		overloaded (polymorphic) function types
@@ -26,10 +27,11 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 
 type 'a poly_type = (string * 'a) list
 
-let add_ptype (rho: 'a poly_type) (tag: string) (v: 'a): 'a poly_type =
+let add_ptype (rho: 'a poly_type) (tag: string) (v: 'a) (debug: string): 'a poly_type =
 	match List.find_opt (fun (tag', _) -> tag = tag') rho with
 		None -> (tag, v) :: rho
-		| Some _ -> failwith "BUG: tc_cont.ml - Attempted to add to polymorphic type with already existing tag."
+		| Some _ -> failwith ("BUG: tc_cont.ml - Attempted to add to polymorphic type with already existing tag " ^
+			tag ^ " " ^ debug ^ ".")
 
 let disambig_ptype (rho: 'a poly_type) (tag: string): 'a option =
 	let rec dp_rec rho = match rho with
@@ -87,7 +89,7 @@ let add_fun_tenv (env: type_env) (f: string) (v: sym_fun_type): unit =
 	let (_, (tau_pl, _)) = v in
 	let tag = tag_of_type (hd_opt tau_pl) in match Hashtbl.find_opt env.globalFIds f with
 		None -> Hashtbl.add env.globalFIds f [(tag, v)]
-		| Some rho -> Hashtbl.replace env.globalFIds f (add_ptype rho tag v) 
+		| Some rho -> Hashtbl.replace env.globalFIds f (add_ptype rho tag v ("for function " ^ f)) 
 
 let builtin_tenv (dl: g_virt_bind list): type_env =
 	let env = {

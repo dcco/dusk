@@ -24,6 +24,8 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 			let* x' = resolve_name env p prefix x in Valid (CT, x')
 		) ctor in
 		let* el' = resolve_exp_list env el in Valid (TupleExp(ctor', el', p))
+	| ValueArrayExp(el, p) ->
+		let* el' = resolve_exp_list env el in Valid (ValueArrayExp(el', p))
 	| DataArrayExp(i, tau_o, dim_l, el, p) ->
 		let* tau_o' = opt_try_res (resolve_type env p) tau_o in
 		let* el' = resolve_exp_list env el in Valid (DataArrayExp(i, tau_o', dim_l, el', p))
@@ -104,12 +106,20 @@ let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 			let* (_, b') = resolve_body env' b in Valid (FunDec(Method(lf, fName, param_l', tau_r', b'), p))
 		)
 	| TDefDec(x, td, p) ->
-		let tName = add_local_dec_env env x in
+		let tName = add_bind_dec_env env LocalOr x in
 		let* td' = resolve_type_def env p td in	Valid (TDefDec(tName, td', p))
-	| GlobalDec(cf, x, e, p) ->
-		let x' = add_local_dec_env env x in
+	| ConstDec(x, e, p) ->
+		let x' = add_bind_dec_env env LocalOr x in
 		let* e' = resolve_exp env e in
-		Valid (GlobalDec(cf, x', e', p))
+		Valid (ConstDec(x', e', p))
+	| GlobalsDec(x, c, fl, p) ->
+		let tName = add_bind_dec_env env LocalOr x in
+		let* fl' = map_try_res (fun (f, e) ->
+			let* e' = resolve_exp env e in
+			ignore (add_bind_dec_env env (GlobalOr(x, tName)) f); 
+			Valid (f, e')
+		) fl in
+		Valid (GlobalsDec(tName, c, fl', p))
 
 let rec resolve_dec_list (env: res_env) (dl: n_dec list): (r_dec list) rs_res = match dl with
 	[] -> Valid []

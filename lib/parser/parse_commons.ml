@@ -114,6 +114,11 @@ let parseTId: string parser = fun tkList -> match tkList with
 	| tk :: _ -> Error (BadToken_Err(tk, "Type Id"))
 	| _ -> Error (EOF_Err "Type Id")
 
+let parseCId: string parser = fun tkList -> match tkList with
+	(CID x, _) :: tkRem -> Valid (x, tkRem)
+	| tk :: _ -> Error (BadToken_Err(tk, "Constant Id"))
+	| _ -> Error (EOF_Err "Constant Id")
+
 	(*
 		bracket parse functions
 	*)

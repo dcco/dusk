@@ -16,7 +16,6 @@ extern void _Glyph_Sys_Sulfur_draw(int8_t raw[32])
 
 extern void _none_Sys_Sulfur_refresh()
 {
-	_RenderData_Sys_Sulfur_passRenderVars(sulfur->back_buffer);
 	swapBackBuffer(sulfur);
 }
 
@@ -107,6 +106,10 @@ extern void _Shader_Sys_Sulfur_render(void* _shader, renderData_t* rd)
 		if (rNode->mesh != NULL) drawDataShader((shader_t*) shader, rNode->mesh, sulfur->rom->texArr, len, rl->data);
 		rNode = rNode->next;
 	}
+}
+
+extern renderData_t* _none_Sys_Sulfur_renderData() {
+	return sulfur->back_buffer;
 }
 
 extern gl_val_t* _RenderData_Sys_Sulfur_get(renderData_t* rd, int32_t i) {

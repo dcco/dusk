@@ -201,6 +201,7 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (LONG l, p) :: tkRem -> Valid (ConstExp(LConst l, p), tkRem)
 	| (KLIT k, p) :: tkRem -> Valid (ConstExp(KConst k, p), tkRem)
 	| (ID x, p) :: tkRem -> Valid (VarExp(QT None, x, p), tkRem)
+	| (CID x, p) :: tkRem -> Valid (VarExp(QT None, x, p), tkRem)
 	| (TID prefix, p) :: tkRem -> (match tkRem with
 		(DOT, _) :: tkRem2 -> parseIdAtomExp (QT (Some prefix)) tkRem2
 		| (LPAREN, _) :: _ ->
@@ -234,6 +235,9 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 		| tk :: _ -> Error (BadToken_Err(tk, "Heap Memory Initializer"))
 		| _ -> Error (EOF_Err "Heap Memory Initializer")
 	)
+	| (VDIM, p) :: tkRem ->
+		let* (el, tkRem2) = parseOrEmpty (parseBraceWrap (parseSepList parseExp chkComma) "Array Initializer") chkBrackR tkRem in
+		Valid (ValueArrayExp(el, p), tkRem2)
 	| (LPAREN, p) :: _ ->
 		let* (el, tkRem) = parseParenWrap (parseSepList parseExp chkComma) "Tag Value" tkList in
 		if List.length el = 1 then Valid (List.hd el, tkRem)
@@ -453,6 +457,10 @@ let parseFieldDef: (string * m_type) parser = fun tkList ->
 	let* (x, tkRem2) = parseId tkRem in
 	Valid ((x, t), tkRem2)
 
+and parseGlobArg: string option parser = fun tkList -> match tkList with
+	(IN, _) :: tkRem -> let* (x, tkRem2) = parseTId tkRem in Valid (Some x, tkRem2)
+	| _ -> Valid (None, tkList)
+
 let parseDec: n_dec parser = fun tkList -> match tkList with
 	(FN, p) :: tkRem ->
 		let* (m, tkRem2) = parseMet Fn tkRem in
@@ -465,15 +473,15 @@ let parseDec: n_dec parser = fun tkList -> match tkList with
 		let* (fl, tkRem3) = parseBrackWrap (parseSepList parseFieldDef chkComma) "Struct Definition" tkRem2 in
 		Valid (TDefDec(x, StructTD fl, p), tkRem3)
 	| (CONST, p) :: tkRem ->
-		let* (x, tkRem2) = parseId tkRem in
+		let* (x, tkRem2) = parseCId tkRem in
 		let* (_, tkRem3) = parseTk EQ "Constant Declaration" tkRem2 in
 		let* (e, tkRem4) = parseExp tkRem3 in
-		Valid (GlobalDec(CDec, x, e, p), tkRem4)
-	| (GLOBAL, p) :: tkRem ->
-		let* (x, tkRem2) = parseId tkRem in
-		let* (_, tkRem3) = parseTk EQ "Global Declaration" tkRem2 in
-		let* (e, tkRem4) = parseExp tkRem3 in
-		Valid (GlobalDec(GDec, x, e, p), tkRem4)
+		Valid (ConstDec(x, e, p), tkRem4)
+	| (GLOBALS, p) :: tkRem ->
+		let* (x, tkRem2) = parseTId tkRem in
+		let* (cont, tkRem3) = parseGlobArg tkRem2 in
+		let* (fl, tkRem4) = parseBrackWrap (parseSepList parseStructInit chkComma) "Global Initializer" tkRem3 in
+		Valid (GlobalsDec(x, cont, fl, p), tkRem4)
 	| tk :: _ -> Error (BadToken_Err(tk, "Dec"))
 	| _ -> Error (EOF_Err "Dec")
 

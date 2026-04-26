@@ -63,10 +63,7 @@ void orthoMat(GLfloat* m, float l, float r, float b, float t, float n, float f) 
 		external bindings required for pipeline rendering
 	*/
 
-extern void _none_Sys_Sulfur_initShaderFront();
-extern void _RenderData_Sys_Sulfur_passRenderVars(renderData_t* rd);
-
-extern void _none_pipeline_initShaderBack();
+extern void init_pipeline_Pipeline();
 extern void _RenderData_pipeline_runShader(renderData_t* rd);
 
 	/* main sulfur runtime */
@@ -110,8 +107,7 @@ sulfur_t* initSulfur(int width, int height) {
 	self->front_buffer = newRData(sizeof(draw_dat2d_t), size3d);
 
 	#ifdef PIPELINE_DEF
-		_none_pipeline_initShaderBack();
-		_none_Sys_Sulfur_initShaderFront();
+		init_pipeline_Pipeline();
 	#endif
 	self->rom = initSfRom();
 

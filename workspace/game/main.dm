@@ -2,6 +2,12 @@ references Sys modules Os, Sulfur, Input, Rom
 references Commons modules Core
 references Main modules World
 
+fn updateCamMat(Int angle, Float x, Float y, Float z)
+	idMat4(RV.mvMat)
+	RV.mvMat.rotateX(toRadians(angle))
+	RV.mvMat.translate(x, y, z)
+end
+
 lin main()
 	-- timing
 	var clock = newClock(60)
@@ -35,6 +41,7 @@ lin main()
 			(*for i < 10, j < 10, k < 6 do
 				Sulfur.draw(G3Test(toFloat(i * 2), toFloat(j * 2), toFloat(-(k + 4) * 2), tset, 2))
 			end*)
+			Sulfur.passRenderVars()
 			Sulfur.refresh()
 			gc_collect
 		end

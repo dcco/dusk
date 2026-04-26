@@ -11,7 +11,7 @@
 	let stringOfASCII c = String.make 1 (Char.chr c)
 }
 
-let idChar = ['a'-'z' 'A'-'Z' '0'-'9']
+let idChar = ['a'-'z' 'A'-'Z' '0'-'9' '_']
 let numChar = ['0'-'9']
 let hexChar = ['a'-'f' 'A'-'F' '0'-'9']
 
@@ -26,7 +26,7 @@ rule token = parse
 	| "end" { lexWrap lexbuf END }
 	| "struct" { lexWrap lexbuf STRUCT }
 	| "const" { lexWrap lexbuf CONST }
-	| "global" { lexWrap lexbuf GLOBAL }
+	| "globals" { lexWrap lexbuf GLOBALS }
 	| "fn" { lexWrap lexbuf FN }
 	| "lin" { lexWrap lexbuf LIN }
 	| "var" { lexWrap lexbuf VAR }
@@ -48,7 +48,9 @@ rule token = parse
 	| "gc_collect" { lexWrap lexbuf GC_COLLECT }
 	| "\"" { strlit (lexeme_start_p lexbuf) "" lexbuf }
 	| ("_"? ['a'-'z'] idChar*) as x { lexWrap lexbuf (ID x) }
+	| ("_" ['A'-'Z''_']+) as x { lexWrap lexbuf (CID x) }
 	| ("_"? ['A'-'Z'] idChar*) as x { lexWrap lexbuf (TID x) }
+	| "1v" { lexWrap lexbuf VDIM }
 	| ((numChar+) as i) "d" { lexWrap lexbuf (DIM (int_of_string i)) }
 	| ("-"? "0x" hexChar+) as h { lexWrap lexbuf (INT (int_of_string h)) }
 	| ("-"? numChar+ "." numChar+) as f { lexWrap lexbuf (FLOAT (float_of_string f)) }

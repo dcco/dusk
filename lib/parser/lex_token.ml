@@ -1,9 +1,9 @@
 
 type raw_token = INT of int | FLOAT of float | TRUE | FALSE
 	| STRLIT of string | KLIT of string | LONG of Int64.t
-	| ID of string | TID of string | DIM of int
+	| ID of string | TID of string | CID of string | DIM of int | VDIM
 	| REFERENCES | MODULE | MODULES | CHAPTER | END
-	| STRUCT | CONST | GLOBAL
+	| STRUCT | CONST | GLOBALS
 	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
 	| LOOP | WHILE | DO | FOR | IN | RETURN
 	| GC_COLLECT | UNDERSCORE
@@ -19,10 +19,12 @@ let string_of_raw_token tk = match tk with
 	| KLIT s -> "^" ^ s
 	| LONG l -> (Int64.to_string l) ^ "l"
 	| DIM i -> (string_of_int i) ^ "d"
+	| VDIM -> "1v"
 	| TRUE -> "true"
 	| FALSE -> "false"
 	| ID x -> "id:" ^ x
 	| TID x -> "tid:" ^ x
+	| CID x -> "cid:" ^ x
 	| REFERENCES -> "references"
 	| MODULE -> "module"
 	| MODULES -> "modules"
@@ -30,7 +32,7 @@ let string_of_raw_token tk = match tk with
 	| END -> "end"
 	| STRUCT -> "struct"
 	| CONST -> "const"
-	| GLOBAL -> "global"
+	| GLOBALS -> "globals"
 	| FN -> "fn"
 	| LIN -> "lin"
 	| VAR -> "var"

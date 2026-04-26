@@ -202,8 +202,8 @@ let program _ =
 		let typeEnv = Tc_cont.builtin_tenv canonBindings in
 		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv canonBindings in
 			(* compile shader/pipeline *)
-		let*! pipeAstFront = ext_compile_file resEnv typeEnv main_dir ["Sys"; "Sulfur"] "shader" "PipeFront.dm" in
-		let*! pipeAstBack = ext_compile_file resEnv typeEnv main_dir ["pipeline"] "shader" "PipeBack.dm" in
+		let*! pipeAstFront = ext_compile_file resEnv typeEnv main_dir ["Sys"; "Sulfur"] "shader" "PipeAPI.dm" in
+		let*! pipeAstBack = ext_compile_file resEnv typeEnv main_dir ["pipeline"] "shader" "Pipeline.dm" in
 			(* PHASES 1-3. incremental resolution *)
 		let*! typedAstList = pre_compile_file resEnv typeEnv main_dir TopLevelFC in
 		let typedAst = List.concat (pipeAstBack @ pipeAstFront @ typedAstList) in

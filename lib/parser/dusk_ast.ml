@@ -32,6 +32,7 @@ type ('m, 'ann) exp =
 	| OpExp of x_op * 'ann
 		(* ctors *)
 	| TupleExp of ('m * string) option * ('m, 'ann) exp list * 'ann
+	| ValueArrayExp of ('m, 'ann) exp list * 'ann
 	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
 	| FormatArrayExp of int * ('m, 'ann) exp list * ('m, 'ann) exp * 'ann
 	| NewStructExp of 'm * string * (string * ('m, 'ann) exp) list * 'ann
@@ -70,6 +71,7 @@ let ann_exp e = match e with
 	| OpExp(_, a) -> a
 	| VarExp(_, _, a) -> a
 	| TupleExp(_, _, a) -> a
+	| ValueArrayExp(_, a) -> a
 	| DataArrayExp(_, _, _, _, a) -> a
 	| FormatArrayExp(_, _, _, a) -> a
 	| NewStructExp(_, _, _, a) -> a
@@ -92,7 +94,6 @@ let ann_stmt s = match s with
 	*)
 
 type lin_flag = Fn | Lin
-type const_flag = CDec | GDec
 
 type ('m, 'ann) met =
 	Method of lin_flag * string * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
@@ -100,7 +101,8 @@ type ('m, 'ann) met =
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann
 	| TDefDec of string * 'm raw_tdef * 'ann
-	| GlobalDec of const_flag * string * ('m, 'ann) exp * 'ann
+	| ConstDec of string * ('m, 'ann) exp * 'ann
+	| GlobalsDec of string * string option * (string * ('m, 'ann) exp) list * 'ann
 
 type 'ann req =
 	ShortRefReq of string list * 'ann

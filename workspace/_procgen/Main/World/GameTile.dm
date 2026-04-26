@@ -16,7 +16,7 @@ struct GameTile{
 	7 - high
 *)
 
-const colors = new 1d[
+const _COLORS = new 1d[
 	0x485bc4,
 	0x5e76ff,
 	0xc0b695,
@@ -39,9 +39,9 @@ const colors = new 1d[
 *)
 
 fn draw(GameTile tile, Int i, Int j)
-	Sulfur.draw(GBox(colors[tile.baseType], i, j, 1, 1))
+	Sulfur.draw(GBox(_COLORS[tile.baseType], i, j, 1, 1))
 end
 
 fn drawId(Int baseType, Int i, Int j)
-	Sulfur.draw(GBox(colors[baseType], i, j, 1, 1))
+	Sulfur.draw(GBox(_COLORS[baseType], i, j, 1, 1))
 end

@@ -56,6 +56,7 @@ let rec is_subtype (s: g_type) (t: g_type): bool = match (s, t) with
 		if List.length _sl <> List.length _tl then false
 		else List.for_all (fun (s, t) -> is_subtype s t) (List.combine _sl _tl)
 	| (ArrayTy(i, s'), ArrayTy(j, t')) -> i = j && is_subtype s' t'
+	| (ValArrayTy s', ValArrayTy t') -> is_subtype s' t'
 	| _ -> false
 
 let tc_type (s: g_type) (t: g_type) (p: l_pos): unit tc_res =
@@ -103,6 +104,12 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				| _ -> Error (NonCtor_Err(cx, p))
 			)
 		)
+	| ValueArrayExp(el, _) ->
+		let* et_l' = tc_exp_list env el in
+		let tau = snd (List.hd et_l') in
+		let i1 = get_box_id_tenv env in
+		let i2 = get_box_id_tenv env in
+		Valid (ValueArrayExpC(i1, i2, List.map fst et_l', tau), ValArrayTy tau)
 	| DataArrayExp(i, tau_o, dim_l, el, p) ->
 		let* et_l' = tc_exp_list env el in
 		let tau = (match tau_o with None -> snd (List.hd et_l') | Some tau -> tau) in
@@ -310,11 +317,23 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 	| TDefDec(x, td, _) -> Hashtbl.add env.globalTIds x (TcTDef td); Valid [(x, TDefDecC td)]
-	| GlobalDec(cf, x, e, _) ->
+	| ConstDec(x, e, _) ->
 		let* (e', tau) = tc_exp env e in
 		let* ef = calc_exp env e' in
 		Hashtbl.add env.globalIds x tau;
-		Valid [(x, GlobalDecC(cf = CDec, ef))]
+		Valid [(x, ConstDecC ef)]
+	| GlobalsDec(x, c, fl, _) ->
+		let* fl' = map_try_res (fun (f, e) ->
+			let* (e', tau) = tc_exp env e in
+			let gName = x ^ "_" ^ f in
+			Hashtbl.add env.globalIds gName tau;
+			Valid (gName, e', tau)
+		) fl in
+		let sl = (List.map (fun (x, e', _) -> AssignStmtC(x, e')) fl') @ [ReturnStmtC None] in
+		let iDec =
+			if c = None then [("", InitDecC sl)]
+			else [("init" ^ x, FunDecC (MethodC([], unitTy, sl)))]
+		in Valid ((List.map (fun (x, _, tau) -> (x, GlobalDecC tau)) fl') @ iDec)
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =
 	let rec tcs_rec dl = match dl with

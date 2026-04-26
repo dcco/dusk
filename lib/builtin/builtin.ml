@@ -144,12 +144,13 @@ let sulfurList = [
 	("draw", ExternalSym [], [namedTy "Glyph3d"], unitTy);
 
 	("nullShader", InternalSym "null", [], shaderTy);
-	("newShader", ExternalSym [], [stringTy; stringTy; ArrayTy(1, intTy);
-		ArrayTy(1, TupleTy [stringTy; namedTy "GLType"; intTy])
+	("newShader", ExternalSym [], [stringTy; stringTy; ValArrayTy intTy;
+		ValArrayTy (TupleTy [stringTy; namedTy "GLType"; intTy])
 	], shaderTy);
 	("setUniform", ExternalSym [], [shaderTy; intTy; namedTy "GLVal"], unitTy);
 	("render", ExternalSym [], [shaderTy; renderDataTy], unitTy);
 
+	("renderData", ExternalSym [], [], renderDataTy);
 	("alloc", ExternalSym [], [renderDataTy; intTy], unitTy);
 	("get", ExternalSym [], [renderDataTy; intTy], namedTy "GLVal");
 	("set", ExternalSym [], [renderDataTy; intTy; namedTy "GLVal"], unitTy);
