@@ -12,21 +12,17 @@ uniform mat4 uPMat;
 uniform mat4 uMVMat;
 uniform mat4 uLightMat;
 
-out vec4 tPos;
-out vec4 fragLightPos;
+//uniform float spFlag;
+
 out float vTexId;
 out vec2 vTex;
 
 void main()
 {
-	// calculate position + send to fragment shader
-	vec4 xPos = vec4(aPos + iPos, 1.0);
-	// -- assumes shadow uses same perspective matrix
-	tPos = uPMat * uMVMat * xPos;
-	fragLightPos = uPMat * uLightMat * uMVMat * xPos;
-	gl_Position = uPMat * uMVMat * xPos;
-
-	// calculate texture coordinate
-	vTexId = iTexId;
-	vTex = (aTex * iUVSize) + iUVPos;
+	// adjustment for sprites
+	vec4 vPos = vec4(aPos + iPos, 1.0);
+	//if (spFlag > 0.5) vPos.z = vPos.z - 0.1;
+	// calculate position
+	gl_Position = uPMat * uLightMat * uMVMat * vPos; 
+	vTex = aTex;
 }

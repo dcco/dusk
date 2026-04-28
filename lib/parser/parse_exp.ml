@@ -95,7 +95,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "Long"] then Valid (primTy x, tkRem)
-		else if List.mem x ["PRNG"; "Mat4"; "Image"; "Sprite"; "Blob"; "RenderData"] then Valid (builtinTy x, tkRem)
+		else if List.mem x ["PRNG"; "Mat4"; "Image"; "Sprite"; "RenderData"] then Valid (builtinTy x, tkRem)
 		else Valid (NamedTy(QT None, x), tkRem)
 	| (DIM i, _) :: tkRem ->
 		let* (tau, tkRem2) = parseBraceWrap parseType "Array Type" tkRem in
@@ -236,7 +236,7 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 		| _ -> Error (EOF_Err "Heap Memory Initializer")
 	)
 	| (VDIM, p) :: tkRem ->
-		let* (el, tkRem2) = parseOrEmpty (parseBraceWrap (parseSepList parseExp chkComma) "Array Initializer") chkBrackR tkRem in
+		let* (el, tkRem2) = parseBraceWrap (parseOrEmpty (parseSepList parseExp chkComma) chkBrackR) "Array Initializer" tkRem in
 		Valid (ValueArrayExp(el, p), tkRem2)
 	| (LPAREN, p) :: _ ->
 		let* (el, tkRem) = parseParenWrap (parseSepList parseExp chkComma) "Tag Value" tkList in

@@ -98,4 +98,19 @@ void* initRomLoad(void* arg) {
 	return NULL;
 }
 
+void waitRom(sf_rom_t* rom) {
+	int32_t mainTotal = res_total + comp_res_total;
+	int32_t loadTotal;
+	pthread_mutex_lock(&rom->loadMutex);
+	loadTotal = rom->compTotal;
+	pthread_mutex_unlock(&rom->loadMutex);
+	while (loadTotal != mainTotal) {
+		sleep_ms(30);
+		pthread_mutex_lock(&rom->loadMutex);
+		loadTotal = rom->compTotal;
+		pthread_mutex_unlock(&rom->loadMutex);
+	}
+}
+
+
 #endif

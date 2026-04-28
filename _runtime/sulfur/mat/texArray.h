@@ -11,7 +11,7 @@ tex_array_t* initTexArray(int total, int w, int h) {
 	// create texture array
 	GLuint arrayId;
 	glGenTextures(1, &arrayId);
-	if (arrayId < 0) exit_log("Could not generate texture array.", "");
+	if (arrayId == 0) exit_log("Could not generate texture array.", "");
 
 	// initialize texture array
 	glBindTexture(GL_TEXTURE_2D_ARRAY, arrayId);

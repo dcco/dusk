@@ -1,4 +1,4 @@
-#ifndef SULF_SHADER2D_H
+           #ifndef SULF_SHADER2D_H
 #define SULF_SHADER2D_H
 
 	/*
@@ -7,14 +7,14 @@
 
 const char *BASE2_VS = "#version 300 es \n\
 precision highp float; \n\
-layout (location = 0) in vec3 bPos; \n\
-layout (location = 1) in vec2 bTex; \n\
-layout (location = 2) in vec3 aPos; \n\
-layout (location = 3) in vec2 aSize; \n\
-layout (location = 4) in uint aColor; \n\
-layout (location = 5) in float aTexId; \n\
-layout (location = 6) in vec2 aTexUVPos; \n\
-layout (location = 7) in vec2 aTexUVSize; \n\
+layout (location = 0) in vec3 aPos; \n\
+layout (location = 1) in vec2 aTex; \n\
+layout (location = 2) in vec3 iPos; \n\
+layout (location = 3) in vec2 iSize; \n\
+layout (location = 4) in uint iColor; \n\
+layout (location = 5) in float iTexId; \n\
+layout (location = 6) in vec2 iUVPos; \n\
+layout (location = 7) in vec2 iUVSize; \n\
 uniform mat4 uPMat; \n\
 uniform int uTotal; \n\
 out vec2 vTex; \n\
@@ -28,12 +28,12 @@ vec3 unpackRGB(uint c) \n\
 	return vec3(r, g, b); \n\
 } \n\
 void main(void) { \n\
-	vec2 pos = (bPos.xy * aSize) + aPos.xy; \n\
+	vec2 pos = (aPos.xy * iSize) + iPos.xy; \n\
 	gl_Position = uPMat * vec4(pos, 0.0, 1.0); \n\
-	gl_Position.z = aPos.z / float(uTotal); \n\
-	vTex = (bTex * aTexUVSize) + aTexUVPos; \n\
-	vTexId = aTexId; \n\
-	vColor = unpackRGB(aColor); \n\
+	gl_Position.z = iPos.z / float(uTotal); \n\
+	vTex = (aTex * iUVSize) + iUVPos; \n\
+	vTexId = iTexId; \n\
+	vColor = unpackRGB(iColor); \n\
 }";
 
 const char *BASE2_FS = "#version 300 es \n\
@@ -85,7 +85,7 @@ const struct shader_attr_def BASE2_ATTR_LIST[8] = {
 };
 
 const struct shader_def BASE2_DEF = {
-	8, sizeof(draw_dat2d_t), BASE2_ATTR_LIST, 0, NULL, "uSampler", "uTotal", "uPMat"
+	8, sizeof(draw_dat2d_t), BASE2_ATTR_LIST, 0, NULL, "uSampler", "uTotal", "uPMat", 0, NULL
 };
 
 #endif 

@@ -14,6 +14,7 @@ lin main()
 	var world = generateRoom()
 	var px = 300.0
 	var pz = 520.0
+	Sulfur.waitRom()
 	loop
 		var framesPassed = clock.tick()
 		for i < framesPassed do
@@ -35,7 +36,7 @@ lin main()
 			var elevation = world.elevation(tx, tz)
 			--updateCamMat(-40, -px - 0.5, elevation + 2.8, -pz - 8.5)
 			updateCamMat(-45, -px - 0.5, elevation + 8.0, -pz - 10.5)
-			
+
 			Sulfur.draw(GText(sfont, 16, 16, 4, "HELLO WORLD!"))
 			world.draw(tx, tz)
 			(*for i < 10, j < 10, k < 6 do

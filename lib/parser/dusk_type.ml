@@ -24,6 +24,7 @@ type 'm raw_type =
 	| TupleTy of 'm raw_type list
 	| ArrayTy of int * 'm raw_type
 	| ValArrayTy of 'm raw_type
+	| BotTy
 
 type 'm fun_type = 'm raw_type list * 'm raw_type
 
@@ -36,6 +37,7 @@ let rec string_of_type (tau: 'm raw_type): string = match tau with
 	| TupleTy tau_l -> "(" ^ String.concat ", " (List.map string_of_type tau_l) ^ ")"
 	| ArrayTy(i, tau) -> (string_of_int i) ^ "d[" ^ (string_of_type tau) ^ "]"
 	| ValArrayTy tau -> "1v[" ^ (string_of_type tau) ^ "]"
+	| BotTy -> "BOT"
 
 let string_of_fun_type ((tau_pl, tau_r): 'm fun_type): string =
 	"fn(" ^ (String.concat ", " (List.map string_of_type tau_pl)) ^ ") " ^ (string_of_type tau_r)

@@ -9,7 +9,7 @@
 	*/
 
 typedef int8_t C_GL_TYPE;
-enum { G_GL_UINT = 0, G_GL_FLOAT = 1, G_GL_MAT4 = 2 };
+enum { G_GL_NULL = 0, G_GL_UINT = 1, G_GL_FLOAT = 2, G_GL_MAT4 = 3 };
 
 extern const int8_t C_GL_UINT;
 extern const int8_t C_GL_FLOAT;

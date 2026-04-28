@@ -96,19 +96,21 @@ int main(void) {
 		SULFUR RUNTIME MULTI-THREAD SPLIT
 	*/
 
+	pthread_t rom_thread;
 	pthread_t main_thread;
+	pthread_create(&rom_thread, NULL, initRomLoad, sulfur_local);
 	pthread_create(&main_thread, NULL, wrap_main, NULL);
-	pthread_create(&main_thread, NULL, initRomLoad, sulfur_local);
-	
+
+	pthread_detach(rom_thread);
+	pthread_detach(main_thread);
+
 	// basic render loop
 	while (!glfwWindowShouldClose(window)) {
 		updateRom(sulfur_local);
-
 		if (render(sulfur_local)) glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	pthread_detach(main_thread);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 

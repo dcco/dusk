@@ -13,7 +13,11 @@ open Calc_exp
 	(* type-checking basics *)
 
 let is_heap_type (env: type_env) (tau: g_type): bool = match tau with
-	NamedTy(_, cx) -> (match Hashtbl.find_opt env.globalTIds cx with
+		(* 
+			TODO: replace doing this for builtins with a more structured method
+		*)
+	BuiltinTy x -> List.mem x ["PRNG"; "Mat4"]
+	| NamedTy(_, cx) -> (match Hashtbl.find_opt env.globalTIds cx with
 		Some (TcTDef td) -> (match td with
 			StructTD _ -> true
 			| _ -> false
@@ -49,7 +53,8 @@ let lookup_field_list (fl: (string * g_type) list) (x: string): (g_type * int) o
 	(* basic type checks *)
 
 let rec is_subtype (s: g_type) (t: g_type): bool = match (s, t) with
-	(PrimTy s', PrimTy t') -> s' = t'
+	(BotTy, _) -> true
+	| (PrimTy s', PrimTy t') -> s' = t'
 	| (BuiltinTy s', BuiltinTy t') -> s' = t'
 	| (NamedTy(_, s'), NamedTy(_, t')) -> s' = t'
 	| (TupleTy _sl, TupleTy _tl) ->
@@ -106,7 +111,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 		)
 	| ValueArrayExp(el, _) ->
 		let* et_l' = tc_exp_list env el in
-		let tau = snd (List.hd et_l') in
+		let tau = if List.length el = 0 then BotTy else snd (List.hd et_l') in
 		let i1 = get_box_id_tenv env in
 		let i2 = get_box_id_tenv env in
 		Valid (ValueArrayExpC(i1, i2, List.map fst et_l', tau), ValArrayTy tau)
@@ -329,7 +334,10 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			Hashtbl.add env.globalIds gName tau;
 			Valid (gName, e', tau)
 		) fl in
-		let sl = (List.map (fun (x, e', _) -> AssignStmtC(x, e')) fl') @ [ReturnStmtC None] in
+		let sl = (List.map (fun (x, e', tau) ->
+			let e_gc = if is_heap_type env tau then GCNewRootExpC e' else e' in
+			AssignStmtC(x, e_gc)
+		) fl') @ [ReturnStmtC None] in
 		let iDec =
 			if c = None then [("", InitDecC sl)]
 			else [("init" ^ x, FunDecC (MethodC([], unitTy, sl)))]

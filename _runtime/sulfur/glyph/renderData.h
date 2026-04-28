@@ -23,6 +23,9 @@ renderData_t* newRData(size_t unitSize2d, size_t unitSize3d) {
 	}
 	rd->varTotal = 10;
 	rd->varList = malloc(sizeof(gl_val_t) * 10);
+	for (int i = 0; i < 10; i++) {
+		rd->varList[i].type = G_GL_NULL;
+	}
 	return rd;
 }
 
@@ -33,8 +36,11 @@ void clearRData(renderData_t* rd) {
 
 void addVarRData(renderData_t* rd, int32_t i, gl_val_t* v) {
 	if (i >= rd->varTotal) {
-		rd->varTotal = i + 1;
 		rd->varList = realloc(rd->varList, sizeof(gl_val_t) * (i + 1));
+		for (int k = rd->varTotal; k <= i; k++) {
+			rd->varList[k].type = G_GL_NULL;
+		}
+		rd->varTotal = i + 1;
 	}
 	copyRenderVar(&rd->varList[i], v);
 }

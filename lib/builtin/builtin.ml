@@ -132,34 +132,49 @@ let inputList = [
 	("keyPress", ExternalSym [], [keyTy], boolTy)
 ]
 
+let vec3Ty = TupleTy [floatTy; floatTy; floatTy]
 let mat4Ty = builtinTy "Mat4"
 let shaderTy = builtinTy "Shader"
+let fboTy = builtinTy "FrameBuffer"
 let renderDataTy = builtinTy "RenderData"
 let imageTy = builtinTy "Image"
 let spriteTy = builtinTy "Sprite"
 
 let sulfurList = [
+		(* main hooks *)
+	("waitRom", ExternalSym [], [], unitTy);
 	("refresh", ExternalSym [], [], unitTy);
 	("draw", ExternalSym [], [namedTy "Glyph"], unitTy);
 	("draw", ExternalSym [], [namedTy "Glyph3d"], unitTy);
 
-	("nullShader", InternalSym "null", [], shaderTy);
+		(* shader / fbo setup *)
 	("newShader", ExternalSym [], [stringTy; stringTy; ValArrayTy intTy;
-		ValArrayTy (TupleTy [stringTy; namedTy "GLType"; intTy])
+		ValArrayTy (TupleTy [stringTy; namedTy "GLType"; intTy]);
+		ValArrayTy stringTy
 	], shaderTy);
+	("newFrameBuffer", ExternalSym [], [stringTy; stringTy; intTy; intTy;
+		ValArrayTy (namedTy "BufferType");
+		ValArrayTy (TupleTy [stringTy; namedTy "GLType"; intTy])
+	], fboTy);
 	("setUniform", ExternalSym [], [shaderTy; intTy; namedTy "GLVal"], unitTy);
+	("setUniform", ExternalSym [], [fboTy; intTy; namedTy "GLVal"], unitTy);
+	("loadTexture", ExternalSym [], [shaderTy; intTy; fboTy; intTy], unitTy);
 	("render", ExternalSym [], [shaderTy; renderDataTy], unitTy);
+	("render", ExternalSym [], [fboTy; renderDataTy], unitTy);
 
+		(* render data *)
 	("renderData", ExternalSym [], [], renderDataTy);
 	("alloc", ExternalSym [], [renderDataTy; intTy], unitTy);
 	("get", ExternalSym [], [renderDataTy; intTy], namedTy "GLVal");
 	("set", ExternalSym [], [renderDataTy; intTy; namedTy "GLVal"], unitTy);
 
-	("nullMat4", InternalSym "null", [], mat4Ty);
+		(* vec3 *)
+		(* mat4 *)
 	("newMat4", ExternalSym [], [], mat4Ty);
 	("idMat4", ExternalSym [], [mat4Ty], unitTy);
 	("translate", ExternalSym [], [mat4Ty; floatTy; floatTy; floatTy], unitTy);
 	("rotateX", ExternalSym [], [mat4Ty; floatTy], unitTy);
+	("lookAt", ExternalSym [], [mat4Ty; vec3Ty; vec3Ty; vec3Ty], unitTy);
 ]
 
 let sulfurTypes = [
@@ -183,6 +198,11 @@ let sulfurTypes = [
 		("GLFloatV", [floatTy], Some "C_GL_FLOAT");
 		("GLMat4V", [mat4Ty], Some "C_GL_MAT4");
 	]));
+	(QT None, "BufferType", TDefVD (EnumTD [
+		("FBOColor", [], Some "C_FBO_COLOR");
+		("FBODepth", [], Some "C_FBO_DEPTH");
+		("FBORender", [], Some "C_FBO_RENDER")
+	]))
 ]
 
 	(*

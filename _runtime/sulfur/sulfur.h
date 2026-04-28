@@ -18,6 +18,7 @@
 #include "shader.h"
 #include "shader2d.h"
 #include "drawDat3d.h"
+#include "frameBuffer.h"
 
 	// glyph / render list code
 #include "renderList.h"
@@ -110,13 +111,12 @@ sulfur_t* initSulfur(int width, int height) {
 		init_pipeline_Pipeline();
 	#endif
 	self->rom = initSfRom();
-
 	// misc init
 	glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);     
+	glDepthFunc(GL_LESS);
 	return self;
 }
 
@@ -165,8 +165,10 @@ int8_t render(sulfur_t* sulfur) {
 		if (sulfur->rom->texArr != NULL) dirty = 1;
 	}
 	pthread_mutex_unlock(&sulfur->bufferMutex);
-	if (!dirty) return 0;
-
+	if (!dirty) {
+		sleep_ms(1);
+		return 0;
+	}
 	// clear and do initial 2d render
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	_clear(sulfur);

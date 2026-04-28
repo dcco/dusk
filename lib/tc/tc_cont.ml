@@ -20,6 +20,7 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 		else "t" ^ (string_of_int n) 
 	| Some (ArrayTy(i, _)) -> "a" ^ (string_of_int i)
 	| Some (ValArrayTy _) -> "a1v"
+	| Some BotTy -> "bot"
 
 	(*
 		overloaded (polymorphic) function types

@@ -62,6 +62,8 @@ typedef struct shader_def {
 	const char* uSampler;
 	const char* uTotal;		// name of uniform for total (can be NULL)
 	const char* uPers;		// name of perspective matrix (can be NULL)
+	int uTexTotal;
+	char** uTexList;
 } shader_def_t;
 
 	/*
@@ -108,6 +110,8 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 	glGetProgramiv(prog, GL_LINK_STATUS, &status);
 	if (!status) exit_log("shader.h - Could not link shaders.", "");
 	glUseProgram(prog);
+	glDeleteShader(vert);
+	glDeleteShader(frag);
 
 	// create shader object
 	shader_t* shader = (shader_t*) malloc(sizeof(shader_t));
@@ -170,17 +174,33 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 		shader->uniformTotal = 0;
 		shader->uniformList = NULL;
 		shader->uniformBuffer = NULL;
-		return shader;
+	} else {
+		shader->uniformTotal = sDef->uniformTotal;
+		shader->uniformList = (shader_uniform_t*) malloc(sizeof(shader_uniform_t) * sDef->uniformTotal);
+		shader->uniformBuffer = (gl_val_t**) malloc(sizeof(gl_val_t*) * sDef->uniformTotal);
+		for (int i = 0; i < sDef->uniformTotal; i++) {
+			shader->uniformList[i].uDef = sDef->uniformList[i];
+			shader->uniformList[i].loc = glGetUniformLocation(prog, sDef->uniformList[i].name);
+			shader->uniformBuffer[i] = NULL;
+		}
 	}
 
-	shader->uniformTotal = sDef->uniformTotal;
-	shader->uniformList = (shader_uniform_t*) malloc(sizeof(shader_uniform_t) * sDef->uniformTotal);
-	shader->uniformBuffer = (gl_val_t**) malloc(sizeof(gl_val_t*) * sDef->uniformTotal);
-	for (int i = 0; i < sDef->uniformTotal; i++) {
-		shader->uniformList[i].uDef = sDef->uniformList[i];
-		shader->uniformList[i].loc = glGetUniformLocation(prog, sDef->uniformList[i].name);
-		shader->uniformBuffer[i] = NULL;
+	// initialize extra uniform textures
+	if (sDef->uTexList != NULL) {
+		for (int i = 0; i < sDef->uTexTotal; i++) {
+			GLint uLoc = glGetUniformLocation(prog, sDef->uTexList[i]);
+			glUniform1i(uLoc, i);
+		}
 	}
+	/*if (sDef->uTexList == NULL) { 
+		shader->uTexList = NULL;
+	} else {
+		shader->uTexList = (GLint*) malloc(sizeof(GLint) * sDef->uTexTotal);
+		for (int i = 0; i < sDef->uTexTotal; i++) {
+			shader->uTexList[i] = glGetUniformLocation(prog, sDef->uTexList[i]);
+			glUniform1i(shader->uTexList[i], i);
+		}
+	}*/
 
 	return shader;
 }

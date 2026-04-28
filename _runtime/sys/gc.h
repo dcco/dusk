@@ -128,7 +128,7 @@ inline static void* _gc_alloc(int32_t size, gc_type_t* type, int8_t arrFlag) {
 }
 
 extern void* gc_alloc(int32_t size, gc_type_t* type) {
-	_gc_alloc(size, type, 0);
+	_gc_alloc(size, type, ARR_NO);
 }
 
 extern void* gc_alloc_array(int32_t elemSize, int32_t arrSize, int32_t exSize, int32_t nestFlag) {
