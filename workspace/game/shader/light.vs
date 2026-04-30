@@ -1,32 +1,15 @@
-#version 300 es
+#version 330
 precision highp float;
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTex;
-layout (location = 2) in vec3 iPos;
-layout (location = 3) in float iTexId;
-layout (location = 4) in vec2 iUVPos;
-layout (location = 5) in vec2 iUVSize;
 
-uniform mat4 uPMat;
-uniform mat4 uMVMat;
-uniform mat4 uLightMat;
-
-out vec4 tPos;
-out vec4 fragLightPos;
-out float vTexId;
-out vec2 vTex;
+out vec2 xTex;
+out vec3 xPos;
 
 void main()
 {
-	// calculate position + send to fragment shader
-	vec4 xPos = vec4(aPos + iPos, 1.0);
-	// -- assumes shadow uses same perspective matrix
-	tPos = uPMat * uMVMat * xPos;
-	fragLightPos = uPMat * uLightMat * uMVMat * xPos;
-	gl_Position = uPMat * uMVMat * xPos;
-
-	// calculate texture coordinate
-	vTexId = iTexId;
-	vTex = (aTex * iUVSize) + iUVPos;
+	xPos = aPos;
+	xTex = aTex;
+	gl_Position = vec4(aPos, 1.0);
 }

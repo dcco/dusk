@@ -1,7 +1,17 @@
 
+enum BaseType = DeepSea | Sea | Beach | Mud | Low | Mid | Forest | High
+
 struct GameTile{
-	Int baseType,
-	Float elevation
+	BaseType baseType,
+	Float elevation,
+	Int frontDiff,
+	Int leftDiff,
+	Int rightDiff
+	(*Int elevType,
+	Float e1,
+	Float e2,
+	Float e3,
+	Float e4*)
 }
 
 (*
@@ -29,7 +39,16 @@ const _COLORS = new 1d[
 ]
 
 fn draw(GameTile tile, Float i, Float j, Float k)
-	Sulfur.draw(G3QuadY(i, j - tile.elevation, k, tset, tile.baseType))
+	Sulfur.draw(G3QuadY(i, j - tile.elevation, k, tset, tile.baseType.i + 1))
+	if tile.frontDiff > 0 then
+		Sulfur.draw(G3QuadZ(i, j - tile.elevation, k + 1.0, tset, 0))
+	end
+	if tile.leftDiff > 0 then
+		Sulfur.draw(G3QuadX(i, j - tile.elevation, k, tset, 0))
+	end
+	if tile.rightDiff > 0 then
+		Sulfur.draw(G3QuadX(i + 1.0, j - tile.elevation, k, tset, 0))
+	end
 end
 (*
 fn drawId(Int baseType, Int i, Int j)

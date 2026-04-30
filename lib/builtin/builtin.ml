@@ -99,6 +99,7 @@ let builtinList =  [
 	("toFloat", UnaryASMSym "itof", [intTy], floatTy);
 	("toLong", UnaryASMSym "itoi64", [intTy], longTy);
 	("floor", ExternalSym [], [floatTy], floatTy);
+	("ceil", ExternalSym [], [floatTy], floatTy);
 
 	("expo", ExternalSym [], [floatTy; floatTy], floatTy);
 	("sqrt", ExternalSym [], [floatTy], floatTy);
@@ -149,18 +150,22 @@ let sulfurList = [
 
 		(* shader / fbo setup *)
 	("newShader", ExternalSym [], [stringTy; stringTy; ValArrayTy intTy;
-		ValArrayTy (TupleTy [stringTy; namedTy "GLType"; intTy]);
+		stringTy; ValArrayTy (TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
 		ValArrayTy stringTy
 	], shaderTy);
 	("newFrameBuffer", ExternalSym [], [stringTy; stringTy; intTy; intTy;
 		ValArrayTy (namedTy "BufferType");
-		ValArrayTy (TupleTy [stringTy; namedTy "GLType"; intTy])
+		stringTy; ValArrayTy (TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
+		ValArrayTy stringTy
 	], fboTy);
 	("setUniform", ExternalSym [], [shaderTy; intTy; namedTy "GLVal"], unitTy);
 	("setUniform", ExternalSym [], [fboTy; intTy; namedTy "GLVal"], unitTy);
 	("loadTexture", ExternalSym [], [shaderTy; intTy; fboTy; intTy], unitTy);
+	("loadTexture", ExternalSym [], [fboTy; intTy; fboTy; intTy], unitTy);
 	("render", ExternalSym [], [shaderTy; renderDataTy], unitTy);
 	("render", ExternalSym [], [fboTy; renderDataTy], unitTy);
+	("renderQuad", ExternalSym [], [shaderTy], unitTy);
+	("renderQuad", ExternalSym [], [fboTy], unitTy);
 
 		(* render data *)
 	("renderData", ExternalSym [], [], renderDataTy);
@@ -178,30 +183,34 @@ let sulfurList = [
 ]
 
 let sulfurTypes = [
-	(QT None, "Glyph", TDefVD (EnumTD [
-		("GNop", [], Some "C_NOP");
-		("GBox", [intTy; intTy; intTy; intTy; intTy], Some "C_BOX");
-		("GSprite", [intTy; intTy; spriteTy; intTy], Some "C_SPRITE");
-		("GText", [spriteTy; stringTy], Some "C_TEXT")
+	(QT None, "Glyph", TDefVD (UnionTD [
+		("GNop", [], GlobalEB "C_NOP");
+		("GBox", [intTy; intTy; intTy; intTy; intTy], GlobalEB "C_BOX");
+		("GSprite", [intTy; intTy; spriteTy; intTy], GlobalEB "C_SPRITE");
+		("GText", [spriteTy; stringTy], GlobalEB "C_TEXT")
 	]));
-	(QT None, "Glyph3d", TDefVD (EnumTD [
-		("G3Nop", [], Some "C3_NOP");
-		("G3QuadX", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_QX");
-		("G3QuadY", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_QY");
-		("G3QuadZ", [floatTy; floatTy; floatTy; spriteTy; intTy], Some "C3_QZ");
+	(QT None, "Glyph3d", TDefVD (UnionTD [
+		("G3Nop", [], GlobalEB "C3_NOP");
+		("G3QuadX", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QX");
+		("G3QuadY", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QY");
+		("G3QuadZ", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QZ");
 	]));
-	(QT None, "GLType", TDefVD (EnumTD [
+	(QT None, "GLVal", TDefVD (UnionTD [
+		("GLFloat", [floatTy], GlobalEB "C_GL_FLOAT");
+		("GLMat4", [mat4Ty], GlobalEB "C_GL_MAT4");
+	]));
+	(*(QT None, "GLType", TDefVD (UnionTD [
 		("GLFloat", [], Some "C_GL_FLOAT");
 		("GLMat4", [], Some "C_GL_MAT4");
 	]));
-	(QT None, "GLVal", TDefVD (EnumTD [
+	(QT None, "GLVal", TDefVD (UnionTD [
 		("GLFloatV", [floatTy], Some "C_GL_FLOAT");
 		("GLMat4V", [mat4Ty], Some "C_GL_MAT4");
-	]));
+	]));*)
 	(QT None, "BufferType", TDefVD (EnumTD [
-		("FBOColor", [], Some "C_FBO_COLOR");
-		("FBODepth", [], Some "C_FBO_DEPTH");
-		("FBORender", [], Some "C_FBO_RENDER")
+		("FBOColor", GlobalEB "C_FBO_COLOR");
+		("FBODepth", GlobalEB "C_FBO_DEPTH");
+		("FBORender", GlobalEB "C_FBO_RENDER")
 	]))
 ]
 
@@ -226,6 +235,7 @@ type prim_flag = PF | NPF
 
 let extractSymbols (symList: 'm virt_bind list): (prim_flag * string) list =
 	List.concat (List.map (fun (_, f, vd) -> match vd with
-		TDefVD (EnumTD cl) -> (PF, f) :: (List.map (fun (c, _, _) -> (PF, c)) cl)
+		TDefVD (EnumTD cl) -> (PF, f) :: (List.map (fun (c, _) -> (PF, c)) cl)
+		| TDefVD (UnionTD cl) -> (PF, f) :: (List.map (fun (c, _, _) -> (PF, c)) cl)
 		| _ -> [(NPF, f)]
 	) symList)

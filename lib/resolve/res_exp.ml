@@ -19,6 +19,8 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 	ConstExp(c, p) -> Valid (ConstExp(c, p))
 	| OpExp(xop, p) -> Valid (OpExp(xop, p))
 	| VarExp(prefix, x, p) -> let* x' = resolve_name env p prefix x in Valid (VarExp(CT, x', p))
+	| AtCtorExp(ctor, p) ->
+		let* ctor' = resolve_name env p (QT None) ctor in Valid (AtCtorExp(ctor', p))
 	| TupleExp(ctor, el, p) ->
 		let* ctor' = opt_try_res (fun (prefix, x) ->
 			let* x' = resolve_name env p prefix x in Valid (CT, x')

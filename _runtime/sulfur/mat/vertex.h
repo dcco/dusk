@@ -8,8 +8,8 @@
 
 typedef struct vertex {
 	float pos[3];
-	float normal[3];
 	float uv[2];
+	float normal[3];
 } vertex_t;
 
 const float SQUARE_TEX_COORDS[] = {

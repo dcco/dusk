@@ -84,6 +84,8 @@ typedef struct sulfur {
 	renderData_t* front_buffer;
 		/* media rom */
 	sf_rom_t* rom;
+	mesh_t* screenQuad;
+	draw_dat3d_t* screenDrawDat;
 } sulfur_t;
 
 sulfur_t* initSulfur(int width, int height) {
@@ -110,7 +112,27 @@ sulfur_t* initSulfur(int width, int height) {
 	#ifdef PIPELINE_DEF
 		init_pipeline_Pipeline();
 	#endif
+
+	// initialize rom + misc rendering media
 	self->rom = initSfRom();
+
+	#ifdef PIPELINE_DEF
+		self->screenQuad = (mesh_t*) malloc(sizeof(mesh_t));
+		float _sv[18];
+		squareZVertices(_sv, -1, -1, 2, 2, 0);
+		initMesh(self->screenQuad, 6, _sv, SQUARE_TEX_COORDS);
+
+		self->screenDrawDat = (draw_dat3d_t*) malloc(sizeof(draw_dat3d_t));
+		self->screenDrawDat->aPos[0] = 0.0;
+		self->screenDrawDat->aPos[1] = 0.0;
+		self->screenDrawDat->aPos[2] = 0.0;
+		self->screenDrawDat->aTexId = 0.0;
+		self->screenDrawDat->aTexUVPos[0] = 0.0;
+		self->screenDrawDat->aTexUVPos[1] = 0.0;
+		self->screenDrawDat->aTexUVSize[0] = 1.0;
+		self->screenDrawDat->aTexUVSize[1] = 1.0;
+	#endif
+
 	// misc init
 	glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
 	glEnable(GL_BLEND);

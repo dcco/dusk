@@ -25,6 +25,8 @@ rule token = parse
 	| "chapter" { lexWrap lexbuf CHAPTER }
 	| "end" { lexWrap lexbuf END }
 	| "struct" { lexWrap lexbuf STRUCT }
+	| "enum" { lexWrap lexbuf ENUM }
+	| "union" { lexWrap lexbuf UNION }
 	| "const" { lexWrap lexbuf CONST }
 	| "globals" { lexWrap lexbuf GLOBALS }
 	| "fn" { lexWrap lexbuf FN }
@@ -85,6 +87,7 @@ rule token = parse
 	| "}" { lexWrap lexbuf RBRACK }
 	| "," { lexWrap lexbuf COMMA }
 	| "~" { lexWrap lexbuf TILDE }
+	| "@" { lexWrap lexbuf AT }
 	| eof { lexWrap lexbuf EOF }
 	| _ { token lexbuf }
 and strlit p x = parse

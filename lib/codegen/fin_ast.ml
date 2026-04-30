@@ -16,8 +16,9 @@ type gen_exp =
 		(* boxes a value inside a pointer 
 	| BoxExpC of int * gen_exp * g_type*)
 		(* tuple operations (tuple creation also requires a box) *)
+	| EnumExpC of string
 	| TupleExpC of int * g_type * gen_exp list
-	| TagTupleExpC of int * g_type * string * gen_exp list
+	(*| TagTupleExpC of int * g_type * string * gen_exp list*)
 	| TupleIndexExpC of gen_exp * int * g_type
 		(* array operations *)
 	| ConstArrayExpC of int list * gen_exp list * g_type
@@ -66,7 +67,6 @@ let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e
 	| BinExpC(_, e1, e2) -> (collect_thru_exp f e1) @ (collect_thru_exp f e2)
 	| CallExpC(ef, el, _) -> (collect_thru_exp f ef) @ (List.concat (List.map (collect_thru_exp f) el))
 	| TupleExpC(_, _, el) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
-	| TagTupleExpC(_, _, _, el) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
 	| TupleIndexExpC(e, _, _) -> collect_thru_exp f e
 	| ValueArrayExpC(_, _, el, _) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
 	| NewArrayExpC(dim_l, el, _) ->
@@ -99,7 +99,6 @@ type box_type =
 
 let collect_box_body: gen_stmt list -> (int * box_type) list = collect_thru_body (fun e -> match e with
 	TupleExpC(i, tau, _) -> [(i, VBoxTy tau)]
-	| TagTupleExpC(i, tau, _, _) -> [(i, VBoxTy tau)]
 	| ValueArrayExpC(i1, i2, el, tau) -> [(i1, OuterArrayBoxTy); (i2, InnerArrayBoxTy(List.length el, tau))]
 	| _ -> []
 )

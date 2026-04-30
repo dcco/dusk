@@ -17,7 +17,7 @@ void initRList(renderList_t* rl, size_t unitSize) {
 	rl->capacity = 100;
 	rl->length = 0;
 	rl->unitSize = unitSize;
-	rl->data = (renderList_t*) malloc(100 * unitSize);
+	rl->data = malloc(100 * unitSize);
 }
 
 renderList_t* newRList(size_t unitSize) {

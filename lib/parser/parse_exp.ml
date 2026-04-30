@@ -122,7 +122,9 @@ and parseRetTy: m_type parser = fun tkList -> match tkList with
 type appObj =
 	TupleIndexApp of int * l_pos
 	| ArrayIndexApp of n_exp list * l_pos
-	| StructFieldApp of string * l_pos 
+	| StructFieldApp of string * l_pos
+	| TupleTagApp of l_pos
+	| EnumRawApp of l_pos
 	| DirectApp of n_exp list * l_pos
 	| IndirectApp of qual_tag * string * n_exp list * l_pos
 
@@ -131,6 +133,8 @@ let rec foldAppList (e: n_exp) (appList: appObj list): n_exp = match appList wit
 	| (TupleIndexApp(i, p)) :: appTail -> foldAppList (AppExp(OpExp(TupleIndexOp i, p), [e], p)) appTail
 	| (ArrayIndexApp(ei_l, p)) :: appTail -> foldAppList (AppExp(OpExp(ArrayIndexOp RR, p), e :: ei_l, p)) appTail
 	| (StructFieldApp(x, p)) :: appTail -> foldAppList (AppExp(OpExp(StructFieldOp(RR, x), p), [e], p)) appTail
+	| (TupleTagApp p) :: appTail -> foldAppList (AppExp(OpExp(TupleTagOp, p), [e], p)) appTail
+	| (EnumRawApp p) :: appTail -> foldAppList (AppExp(OpExp(EnumRawOp, p), [e], p)) appTail
 	| (DirectApp(el, p)) :: appTail -> foldAppList (AppExp(e, el, p)) appTail
 	| (IndirectApp(mo, f, el, p)) :: appTail -> foldAppList (AppExp(VarExp(mo, f, p), e :: el, p)) appTail
 
@@ -209,6 +213,8 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 			Valid (TupleExp(Some (QT None, prefix), el, p), tkRem2)
 		| _ -> parseIdAtomExp (QT None) tkList
 	)
+	| (AT, p) :: tkRem ->
+		let* (x, tkRem2) = parseTId tkRem in Valid (AtCtorExp(x, p), tkRem2)
 	| (NEW, p) :: tkRem -> (match tkRem with
 		(DIM i, _) :: tkRem2 -> (match tkRem2 with
 			(LPAREN, _) :: _ ->
@@ -293,7 +299,9 @@ and parseAppObj: appObj parser = fun tkList -> match tkList with
 		let* (el, tkRem) = parseBraceWrap (parseSepList parseExp chkComma) "Array Index" tkList in
 		Valid (ArrayIndexApp(el, p), tkRem)
 	| (DOT, p) :: tkRem -> (match tkRem with
-		(ID f, _) :: tkRem2 -> (match tkRem2 with
+		(ID "t", _) :: tkRem2 -> Valid (TupleTagApp p, tkRem2)
+		| (ID "i", _) :: tkRem2 -> Valid (EnumRawApp p, tkRem2)
+		| (ID f, _) :: tkRem2 -> (match tkRem2 with
 			(LPAREN, _) :: _ ->
 				let* (el, tkRem3) = parseParenWrap parseArgList "Function Call" tkRem2 in
 				Valid (IndirectApp(QT None, f, el, p), tkRem3)
@@ -461,6 +469,13 @@ and parseGlobArg: string option parser = fun tkList -> match tkList with
 	(IN, _) :: tkRem -> let* (x, tkRem2) = parseTId tkRem in Valid (Some x, tkRem2)
 	| _ -> Valid (None, tkList)
 
+let parseCaseDef: (string * m_type list) parser = fun tkList ->
+	let* (x, tkRem) = parseTId tkList in match tkRem with
+		(LPAREN, _) :: _ ->
+			let* (tl, tkRem2) = parseParenWrap (parseSepList parseType chkComma)
+				"Enum Case Definition" tkRem in Valid ((x, tl), tkRem2)
+		| _ -> Valid ((x, []), tkRem)
+
 let parseDec: n_dec parser = fun tkList -> match tkList with
 	(FN, p) :: tkRem ->
 		let* (m, tkRem2) = parseMet Fn tkRem in
@@ -472,6 +487,16 @@ let parseDec: n_dec parser = fun tkList -> match tkList with
 		let* (x, tkRem2) = parseTId tkRem in
 		let* (fl, tkRem3) = parseBrackWrap (parseSepList parseFieldDef chkComma) "Struct Definition" tkRem2 in
 		Valid (TDefDec(x, StructTD fl, p), tkRem3)
+	| (ENUM, p) :: tkRem ->
+		let* (x, tkRem2) = parseTId tkRem in
+		let* (_, tkRem3) = parseTk EQ "Enum Definition" tkRem2 in
+		let* (cl, tkRem4) = parseSepList parseTId chkBar tkRem3 in
+		Valid (TDefDec(x, EnumTD (List.map (fun x -> (x, NoEB)) cl), p), tkRem4)
+	| (UNION, p) :: tkRem ->
+		let* (x, tkRem2) = parseTId tkRem in
+		let* (_, tkRem3) = parseTk EQ "Enum Definition" tkRem2 in
+		let* (cl, tkRem4) = parseSepList parseCaseDef chkBar tkRem3 in
+		Valid (TDefDec(x, UnionTD (List.map (fun (x, tl) -> (x, tl, NoEB)) cl), p), tkRem4)
 	| (CONST, p) :: tkRem ->
 		let* (x, tkRem2) = parseCId tkRem in
 		let* (_, tkRem3) = parseTk EQ "Constant Declaration" tkRem2 in

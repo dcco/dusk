@@ -55,25 +55,31 @@ shader_uniform_def_t* convert_uniforms(gc_array_t* uniforms)
 }*/
 
 extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t* _fs,
-	gc_array_t* attrs, gc_array_t* uniforms, gc_array_t* uniformTexs)
+	gc_array_t* attrs, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)
 {
 	// convert uniform list into usable data structure
 	int32_t uniformTotal = uniforms->size;
 	shader_uniform_def_t* uniformList = map_gc_array(uniforms,
 		sizeof(raw_uniform_def_t*), sizeof(shader_uniform_def_t), &read_uniform);
 
-	int32_t uTexTotal = 0;
-	char** uniformTexList = NULL;
-	if (uniformTexs != NULL) {
-		uTexTotal = uniformTexs->size;
-		uniformTexList = map_gc_array(uniformTexs, sizeof(dusk_string_t*), sizeof(char*), &read_string);
-	}
+	int32_t uTexTotal = uniformTexs->size;
+	char** uniformTexList = map_gc_array(uniformTexs, sizeof(dusk_string_t*), sizeof(char*), &read_string);
 	//convert_uniforms(uniforms);
+
+	// read pmat / sampler names
+	const char* uPMat = NULL;
+	read_string(&uPMat, &_uPMat); 
+	if (strcmp(uPMat, "null") == 0) uPMat = NULL;
+
+	const char* uSampler = NULL;
+	if (uniformList != NULL) {
+		if (strcmp(uniformList[0].name, "null") != 0) uSampler = uniformList[0].name;
+	}
 
 	// build shader definition
 	const struct shader_def BASE3_DEF = {
-		6, sizeof(draw_dat3d_t), BASE3_ATTR_LIST,
-		uniformTotal, uniformList, "uSampler", NULL, "uPMat",
+		BASE3_ATTR_TOTAL, sizeof(draw_dat3d_t), BASE3_ATTR_LIST,
+		uniformTotal, uniformList, uSampler, NULL, uPMat,
 		uTexTotal, uniformTexList
 	};
 
@@ -104,11 +110,11 @@ fbo_layer_def_t* convert_layers(gc_array_t* layers)
 }*/
 
 extern frameBuffer_t* _String_Sys_Sulfur_newFrameBuffer(dusk_string_t* _vs, dusk_string_t* _fs, int32_t w, int32_t h,
-	gc_array_t* layers, gc_array_t* uniforms)
+	gc_array_t* layers, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)
 {
 	// initialize shader + fbo
-	shader_t* shader = _String_Sys_Sulfur_newShader(_vs, _fs, NULL, uniforms, NULL);
-	fbo_layer_def_t* layerList = map_gc_array(layers, sizeof(raw_enum_t), sizeof(fbo_layer_def_t), &read_layer);
+	shader_t* shader = _String_Sys_Sulfur_newShader(_vs, _fs, NULL, _uPMat, uniforms, uniformTexs);
+	fbo_layer_def_t* layerList = map_gc_array(layers, sizeof(raw_enum_t*), sizeof(fbo_layer_def_t), &read_layer);
 	frameBuffer_t* buffer = newFrameBuffer(shader, w, h, layers->size, layerList);
 
 	// cleanup
@@ -130,6 +136,11 @@ extern void _Shader_Sys_Sulfur_setUniform(void* _shader, int32_t i, gl_val_t* v)
 	shader->uniformBuffer[i] = v;
 }
 
+extern void _FrameBuffer_Sys_Sulfur_setUniform(void* _fbo, int32_t i, gl_val_t* v)
+{
+	_Shader_Sys_Sulfur_setUniform(((frameBuffer_t*) _fbo)->shader, i, v);
+}
+
 extern void _Shader_Sys_Sulfur_loadTexture(void* _shader, int32_t i, void* _fbo, int32_t j)
 {
 	shader_t* shader = (shader_t*) _shader;
@@ -138,10 +149,15 @@ extern void _Shader_Sys_Sulfur_loadTexture(void* _shader, int32_t i, void* _fbo,
 	glBindTexture(GL_TEXTURE_2D, fbo->texList[j]);
 }
 
+extern void _FrameBuffer_Sys_Sulfur_loadTexture(void* _dst, int32_t i, void* _src, int32_t j)
+{
+	_Shader_Sys_Sulfur_loadTexture(((frameBuffer_t*) _dst)->shader, i, _src, j);
+}
+
 void shader_render(shader_t* shader, renderData_t* rd)
 {
 	// assign argument uniforms
-	glUniformMatrix4fv(shader->uPers, 1, 0, P_MAT_X);
+	if (shader->uPers != -1) glUniformMatrix4fv(shader->uPers, 1, 0, P_MAT_X);
 	setUniformsShader(shader);
 
 	// render draw data
@@ -169,11 +185,6 @@ extern void _Shader_Sys_Sulfur_render(void* _shader, renderData_t* rd)
 	shader_render(_shader, rd);
 }
 
-extern void _FrameBuffer_Sys_Sulfur_setUniform(void* _fbo, int32_t i, gl_val_t* v)
-{
-	_Shader_Sys_Sulfur_setUniform(((frameBuffer_t*) _fbo)->shader, i, v);
-}
-
 extern void _FrameBuffer_Sys_Sulfur_render(void* _fbo, renderData_t* rd)
 {
 	// enable frame buffer
@@ -187,6 +198,44 @@ extern void _FrameBuffer_Sys_Sulfur_render(void* _fbo, renderData_t* rd)
 	// render
 	shader_render(fbo->shader, rd);
 	//_Shader_Sys_Sulfur_render(((frameBuffer_t*) _fbo)->shader, rd);
+}
+
+void shader_renderQuad(shader_t* shader)
+{
+	// assign argument uniforms
+	glUniformMatrix4fv(shader->uPers, 1, 0, P_MAT_X);
+	setUniformsShader(shader);
+
+	// render draw data
+	drawDataShader((shader_t*) shader, sulfur->screenQuad, sulfur->rom->texArr, 1, sulfur->screenDrawDat);
+}
+
+extern void _Shader_Sys_Sulfur_renderQuad(void* _shader)
+{
+	// enable shader
+	shader_t* shader = (shader_t*) _shader;
+	glUseProgram(shader->prog);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// clear shader
+	glViewport(0, 0, sulfur->width, sulfur->height);
+	glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// render
+	shader_renderQuad(_shader);
+}
+
+extern void _FrameBuffer_Sys_Sulfur_renderQuad(void* _fbo)
+{
+	// enable frame buffer
+	frameBuffer_t* fbo = (frameBuffer_t*) _fbo;
+	glUseProgram(fbo->shader->prog);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo->fbo);
+	// clear frame buffer
+	glViewport(0, 0, fbo->width, fbo->height);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// render
+	shader_renderQuad(fbo->shader);
 }
 
 extern renderData_t* _none_Sys_Sulfur_renderData() {

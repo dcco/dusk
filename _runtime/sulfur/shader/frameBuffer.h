@@ -2,7 +2,7 @@
 #define FRAME_BUFFER_H
 
 typedef int8_t FBO_LAYER_TYPE;
-enum { FBO_COLOR, FBO_DEPTH, FBO_RENDER };
+enum { FBO_COLOR = 0, FBO_DEPTH = 1, FBO_RENDER = 2 };
 
 extern const int8_t C_FBO_COLOR;
 extern const int8_t C_FBO_DEPTH;
@@ -84,7 +84,6 @@ frameBuffer_t* newFrameBuffer(shader_t* shader, int32_t w, int32_t h, int32_t la
 	buffer->shader = shader;
 	buffer->width = w;
 	buffer->height = h;
-
 	// create fbo object
 	glUseProgram(shader->prog);
 	glGenFramebuffers(1, &buffer->fbo);

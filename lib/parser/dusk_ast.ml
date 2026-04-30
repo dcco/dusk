@@ -24,6 +24,8 @@ type x_op =
 	| StructFieldOp of rw * string
 	| ArrayIndexOp of rw
 	| MeasureOp
+	| TupleTagOp
+	| EnumRawOp
 
 type ('m, 'ann) exp =
 	ConstExp of const * 'ann
@@ -31,6 +33,7 @@ type ('m, 'ann) exp =
 	| VarExp of 'm * string * 'ann
 	| OpExp of x_op * 'ann
 		(* ctors *)
+	| AtCtorExp of string * 'ann
 	| TupleExp of ('m * string) option * ('m, 'ann) exp list * 'ann
 	| ValueArrayExp of ('m, 'ann) exp list * 'ann
 	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
@@ -70,6 +73,7 @@ let ann_exp e = match e with
 	ConstExp(_, a) -> a
 	| OpExp(_, a) -> a
 	| VarExp(_, _, a) -> a
+	| AtCtorExp(_, a) -> a
 	| TupleExp(_, _, a) -> a
 	| ValueArrayExp(_, a) -> a
 	| DataArrayExp(_, _, _, _, a) -> a

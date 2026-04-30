@@ -1,12 +1,12 @@
-#version 300 es
+#version 330
 precision highp float;
 
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTex;
-layout (location = 2) in vec3 iPos;
-layout (location = 3) in float iTexId;
-layout (location = 4) in vec2 iUVPos;
-layout (location = 5) in vec2 iUVSize;
+layout (location = 3) in vec3 iPos;
+layout (location = 4) in float iTexId;
+layout (location = 5) in vec2 iUVPos;
+layout (location = 6) in vec2 iUVSize;
 
 uniform mat4 uPMat;
 uniform mat4 uMVMat;

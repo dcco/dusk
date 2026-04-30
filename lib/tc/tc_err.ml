@@ -13,8 +13,11 @@ type tc_err =
 		(* tuples *)
 	| NonTuple_Err of g_type * l_pos
 	| TupleIndexOOB_Err of g_type * int * l_pos
-		(* tag tuples *)
+		(* enum / tag tuples *)
 	| NonCtor_Err of string * l_pos
+	| NonCtorU_Err of string * l_pos
+	| NonTagType_Err of g_type * l_pos
+	| NonEnum_Err of g_type * l_pos
 		(* arrays *)
 	| MismatchedArrayDim_Err of int list * int * int * l_pos
 	| NestedFormat_Err of l_pos
@@ -47,6 +50,9 @@ let string_of_tc_err (e: tc_err) = match e with
 	| TupleIndexOOB_Err(t, i, p) -> "Attempted to access index " ^ (string_of_int i ) ^ " of tuple type \"" ^
 		(string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| NonCtor_Err(t, p) -> "Type name \"" ^ t ^ "\" did not resolve to a constructor at " ^ (string_of_pos p) ^ "."
+	| NonCtorU_Err(t, p) -> "Type name \"" ^ t ^ "\" did not resolve to a union constructor at " ^ (string_of_pos p) ^ "."
+	| NonTagType_Err(t, p) -> "Tag requested for untagged type \"" ^ (string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
+	| NonEnum_Err(t, p) -> "Enum operation called on non-enum type \"" ^ (string_of_type t) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| MismatchedArrayDim_Err(dim_l, dim_prod, n, p) ->
 		"Array initializer has " ^ (string_of_int n) ^ " elements, but specified dimensions [" ^
 		(String.concat ", " (List.map string_of_int dim_l)) ^ "] require " ^

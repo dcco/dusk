@@ -39,6 +39,7 @@ type g_fun =
 	| ArrayDimsGF of int
 	| StructFieldGF of rw * int * string
 	| CallGF of int list
+	| NonGF
 
 let rec index_type_list (tau_l: g_type list) (i: int): g_type option = match tau_l with
 	[] -> None
@@ -62,6 +63,7 @@ let rec is_subtype (s: g_type) (t: g_type): bool = match (s, t) with
 		else List.for_all (fun (s, t) -> is_subtype s t) (List.combine _sl _tl)
 	| (ArrayTy(i, s'), ArrayTy(j, t')) -> i = j && is_subtype s' t'
 	| (ValArrayTy s', ValArrayTy t') -> is_subtype s' t'
+	| (TagOfTy s', TagOfTy t') -> is_subtype s' t'
 	| _ -> false
 
 let tc_type (s: g_type) (t: g_type) (p: l_pos): unit tc_res =
@@ -97,15 +99,20 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 		)
 	)
 	| OpExp(_, _) -> failwith "BUG: tc_exp.ml - Operator expression in non-application position."
+	| AtCtorExp(ctor, p) -> (match Hashtbl.find_opt env.globalTIds ctor with
+			Some (TcCtorU c) -> Valid (EnumExpC ctor, TagOfTy (NamedTy(CT, c)))
+			| _ -> Error (NonCtorU_Err(ctor, p))
+		)
 	| TupleExp(ctor, el, p) ->
 		let* et_l' = tc_exp_list env el in (match ctor with
 			None ->
 				let tau_s = TupleTy(List.map snd et_l') in
 				Valid (TupleExpC(get_box_id_tenv env, tau_s, List.map fst et_l'), tau_s)
 			| Some (_, cx) -> (match Hashtbl.find_opt env.globalTIds cx with
-				Some (TcCtor c) ->
+				Some (TcCtorE c) -> Valid (EnumExpC cx, NamedTy(CT, c))
+				| Some (TcCtorU c) ->
 					let tau_s = NamedTy(CT, c) in
-					Valid (TagTupleExpC(get_box_id_tenv env, tau_s, cx, List.map fst et_l'), tau_s)
+					Valid (TupleExpC(get_box_id_tenv env, tau_s, (EnumExpC cx) :: List.map fst et_l'), tau_s)
 				| _ -> Error (NonCtor_Err(cx, p))
 			)
 		)
@@ -163,6 +170,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				*)
 				let elx = List.map (fun (e', _) -> e') et_l' in
 				Valid (CallExpC(VarExpC f, elx, tau_rn), tau_rn)
+			| NonGF -> Valid (List.hd el', tau_rn)
 		)
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
 	VarExp(_, f, p) -> (match lookup_fun_tenv env f tau_a with
@@ -218,6 +226,26 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 			if i = 1 then Valid ("", ArrayLengthGF, ([ArrayTy(i, tau_v)], intTy))
 			else Valid ("", ArrayDimsGF i, ([ArrayTy(i, tau_v)], TupleTy (List.init i (fun _ -> intTy))))
 		| Some _ -> tc_fun_exp env (VarExp(CT, "_builtin_measure", p)) tau_a
+	)
+	| OpExp(TupleTagOp, p) -> (match tau_a with
+		None -> failwith "BUG: tc_exp.ml - No argument for tuple tag operation."
+		| Some (NamedTy(_, cx)) ->
+			let tau = NamedTy(CT, cx) in
+			(match Hashtbl.find_opt env.globalTIds cx with
+				Some (TcTDef (UnionTD _)) -> Valid ("", TupleIndexGF 0, ([tau], TagOfTy tau))
+				| _ -> Error (NonTagType_Err(tau, p))
+			)
+		| Some tau -> Error (NonTagType_Err(tau, p))
+	)
+	| OpExp(EnumRawOp, p) -> (match tau_a with
+		None -> failwith "BUG: tc_exp.ml - No argument for raw enum operation."
+		| Some (NamedTy(_, cx)) ->
+			let tau = NamedTy(CT, cx) in
+			(match Hashtbl.find_opt env.globalTIds cx with
+				Some (TcTDef (EnumTD _)) -> Valid ("", NonGF, ([tau], intTy))
+				| _ -> Error (NonEnum_Err(tau, p))
+			)
+		| Some tau -> Error (NonEnum_Err(tau, p))
 	)
 	| _ -> failwith "UNIMPLEMENTED: tc_exp.ml - function non-var case."
 and tc_exp_list (env: type_env) (el: r_exp list): ((gen_exp * g_type) list) tc_res = match el with
@@ -321,7 +349,7 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			if tau_r <> unitTy then Error (NoReturn_Err(fName, p))
 			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
-	| TDefDec(x, td, _) -> Hashtbl.add env.globalTIds x (TcTDef td); Valid [(x, TDefDecC td)]
+	| TDefDec(x, td, _) -> add_tdef_tenv env x td; Valid [(x, TDefDecC td)]
 	| ConstDec(x, e, _) ->
 		let* (e', tau) = tc_exp env e in
 		let* ef = calc_exp env e' in

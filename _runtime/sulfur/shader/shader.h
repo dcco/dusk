@@ -59,7 +59,7 @@ typedef struct shader_def {
 	const shader_attr_def_t* attrList;
 	int uniformTotal;
 	const shader_uniform_def_t* uniformList;
-	const char* uSampler;
+	const char* uSampler;	// name of uniform for texture (can be NULL)
 	const char* uTotal;		// name of uniform for total (can be NULL)
 	const char* uPers;		// name of perspective matrix (can be NULL)
 	int uTexTotal;
@@ -83,7 +83,7 @@ typedef struct shader {
 	GLint vertexVBO;
 	GLint instVBO;
 	GLsizei instSize;
-	GLint uSampler;
+	GLint uSampler;	// texture sampler, may be -1
 	GLint uTotal;	// total, may be -1
 	GLint uPers;	// reference to perspective uniform, may be -1
 	int uniformTotal;
@@ -108,7 +108,13 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 	// check validity
 	GLint status;
 	glGetProgramiv(prog, GL_LINK_STATUS, &status);
-	if (!status) exit_log("shader.h - Could not link shaders.", "");
+	if (!status) {
+		int errLen;
+		glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &errLen);
+		char errBuf[errLen];
+		glGetProgramInfoLog(prog, errLen, &errLen, errBuf);
+		exit_log("shader.h - Could not link shaders.\n%s", errBuf);
+	}
 	glUseProgram(prog);
 	glDeleteShader(vert);
 	glDeleteShader(frag);
@@ -139,8 +145,8 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 		} else {
 			GLvoid* offset;
 			if (attr.vertAttrFlag == 1) offset = (void*) offsetof(vertex_t, pos);
-			else if (attr.vertAttrFlag == 2) offset = (void*) offsetof(vertex_t, normal);
-			else offset = (void*) offsetof(vertex_t, uv);
+			else if (attr.vertAttrFlag == 2) offset = (void*) offsetof(vertex_t, uv);
+			else offset = (void*) offsetof(vertex_t, normal);
 			glBindBuffer(GL_ARRAY_BUFFER, shader->vertexVBO);
 			if (attr.glType == GL_UNSIGNED_INT) glVertexAttribIPointer(i, attr.arity, attr.glType, sizeof(vertex_t), offset);
 			else glVertexAttribPointer(i, attr.arity, attr.glType, GL_FALSE, sizeof(vertex_t), offset);
@@ -148,8 +154,12 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 	}
 
 	// initialize texture sampler
-	shader->uSampler = glGetUniformLocation(prog, sDef->uSampler);
-	if (shader->uSampler < 0) exit_log("shader.h - Could not load shader uniform %s", sDef->uSampler);
+	if (sDef->uSampler == NULL) {
+		shader->uSampler = -1;
+	} else {
+		shader->uSampler = glGetUniformLocation(prog, sDef->uSampler);
+		if (shader->uSampler < 0) exit_log("shader.h - Could not load shader uniform %s", sDef->uSampler);
+	}
 
 	// initialize total uniform when relevant
 	const char* uTotal = sDef->uTotal;
@@ -185,9 +195,9 @@ shader_t* initShader(const char* vs, const char* fs, const shader_def_t* sDef) {
 		}
 	}
 
-	// initialize extra uniform textures
+	// initialize extra uniform textures (first texture slot is dedicated to sampler)
 	if (sDef->uTexList != NULL) {
-		for (int i = 0; i < sDef->uTexTotal; i++) {
+		for (int i = 1; i < sDef->uTexTotal; i++) {
 			GLint uLoc = glGetUniformLocation(prog, sDef->uTexList[i]);
 			glUniform1i(uLoc, i);
 		}
@@ -244,9 +254,11 @@ void drawDataShader(shader_t* shader, mesh_t* mesh, tex_array_t* texArr, int tot
 	glBindBuffer(GL_ARRAY_BUFFER, shader->instVBO);
 	glBufferData(GL_ARRAY_BUFFER, total * shader->instSize, data, GL_DYNAMIC_DRAW);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, texArr->id);
-	glUniform1i(shader->uSampler, 0);
+	if (shader->uSampler != -1) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, texArr->id);
+		glUniform1i(shader->uSampler, 0);
+	}
 	if (shader->uTotal != -1) glUniform1i(shader->uTotal, total);
 
 	glDrawArraysInstanced(GL_TRIANGLES, 0, mesh->vertexTotal, total);

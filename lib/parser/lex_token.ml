@@ -3,11 +3,11 @@ type raw_token = INT of int | FLOAT of float | TRUE | FALSE
 	| STRLIT of string | KLIT of string | LONG of Int64.t
 	| ID of string | TID of string | CID of string | DIM of int | VDIM
 	| REFERENCES | MODULE | MODULES | CHAPTER | END
-	| STRUCT | CONST | GLOBALS
+	| STRUCT | ENUM | UNION | CONST | GLOBALS
 	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
 	| LOOP | WHILE | DO | FOR | IN | RETURN
 	| GC_COLLECT | UNDERSCORE
-	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA | TILDE
+	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA | TILDE | AT
 	| LBRACE | RBRACE | BAR | LBRACK | RBRACK
 	| NEQ | LANGLE | RANGLE | LEQ | GEQ | AND | OR | EXCLAM
 	| PLUS | DASH | STAR | SLASH | FLDIV | PERC | EXPO | EOF
@@ -31,6 +31,8 @@ let string_of_raw_token tk = match tk with
 	| CHAPTER -> "chapter"
 	| END -> "end"
 	| STRUCT -> "struct"
+	| ENUM -> "enum"
+	| UNION -> "union"
 	| CONST -> "const"
 	| GLOBALS -> "globals"
 	| FN -> "fn"
@@ -58,6 +60,7 @@ let string_of_raw_token tk = match tk with
 	| RPAREN -> ")"
 	| COMMA -> ","
 	| TILDE -> "~"
+	| AT -> "@"
 	| LBRACE -> "["
 	| RBRACE -> "]"
 	| BAR -> "|"

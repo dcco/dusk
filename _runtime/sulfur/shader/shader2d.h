@@ -1,11 +1,11 @@
-           #ifndef SULF_SHADER2D_H
+#ifndef SULF_SHADER2D_H
 #define SULF_SHADER2D_H
 
 	/*
 		builtin 2d shader
 	*/
 
-const char *BASE2_VS = "#version 300 es \n\
+const char *BASE2_VS = "#version 330 \n\
 precision highp float; \n\
 layout (location = 0) in vec3 aPos; \n\
 layout (location = 1) in vec2 aTex; \n\
@@ -36,7 +36,7 @@ void main(void) { \n\
 	vColor = unpackRGB(iColor); \n\
 }";
 
-const char *BASE2_FS = "#version 300 es \n\
+const char *BASE2_FS = "#version 330 \n\
 precision mediump float; \n\
 precision mediump sampler2DArray; \n\
 in vec2 vTex; \n\
@@ -75,7 +75,7 @@ typedef struct draw_dat2d {
 
 const struct shader_attr_def BASE2_ATTR_LIST[8] = {
 	{ 1, 3, GL_FLOAT, (void*) offsetof(vertex_t, pos) },
-	{ 3, 2, GL_FLOAT, (void*) offsetof(vertex_t, uv) },
+	{ 2, 2, GL_FLOAT, (void*) offsetof(vertex_t, uv) },
 	{ 0, 3, GL_FLOAT, (void*) offsetof(draw_dat2d_t, aPos) },
 	{ 0, 2, GL_FLOAT, (void*) offsetof(draw_dat2d_t, aSize) },
 	{ 0, 1, GL_UNSIGNED_INT, (void*) offsetof(draw_dat2d_t, aColor) },

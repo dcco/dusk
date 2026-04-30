@@ -16,10 +16,15 @@ references Sys modules Sulfur, Os
 	*)
 
 globals Pipeline in RenderThread{
-	shadow = newFrameBuffer(cLoad("shadow.vs"), cLoad("shadow.fs"), 2048, 2048, 1v[FBODepth],
-		1v[("uMVMat", GLMat4, 0), ("uLightMat", GLMat4, 0)]),
+	shadow = newFrameBuffer(cLoad("shadow.vs"), cLoad("shadow.fs"), 4096, 4096, 1v[FBODepth],
+		"uPMat", 1v[("uMVMat", @GLMat4, 0), ("uLightMat", @GLMat4, 0)], 1v["uSampler"]),
+
+	geometry = newFrameBuffer(cLoad("geometry.vs"), cLoad("geometry.fs"), 960, 640,
+		1v[FBOColor, FBOColor, FBOColor, FBOColor, FBORender],
+		"uPMat", 1v[("uMVMat", @GLMat4, 0), ("uLightMat", @GLMat4, 0)], 1v["uSampler", "uShadowMap"]),
+
 	light = newShader(cLoad("light.vs"), cLoad("light.fs"), 1v[0],
-		1v[("uMVMat", GLMat4, 0), ("uLightMat", GLMat4, 0)], 1v["uShadowMap"])
+		"null", 1v[], 1v["null", "gPos", "gNorm", "gColor", "gSpec"])
 }
 
 fn runShader(RenderData rd)
@@ -27,9 +32,29 @@ fn runShader(RenderData rd)
 	Pipeline.shadow.setUniform(0, rd.get(0))
 	Pipeline.shadow.setUniform(1, rd.get(1))
 	Pipeline.shadow.render(rd)
+	-- geometry render
+	Pipeline.geometry.setUniform(0, rd.get(0))
+	Pipeline.geometry.setUniform(1, rd.get(1))
+	Pipeline.geometry.loadTexture(1, Pipeline.shadow, 0)
+	Pipeline.geometry.render(rd)
 	-- ending render
-	Pipeline.light.setUniform(0, rd.get(0))
-	Pipeline.light.setUniform(1, rd.get(1))
-	Pipeline.light.loadTexture(0, Pipeline.shadow, 0)
-	Pipeline.light.render(rd)
+	Pipeline.light.loadTexture(1, Pipeline.geometry, 0)
+	Pipeline.light.loadTexture(2, Pipeline.geometry, 1)
+	Pipeline.light.loadTexture(3, Pipeline.geometry, 2)
+	Pipeline.light.loadTexture(4, Pipeline.geometry, 3)
+	Pipeline.light.renderQuad()
 end
+
+
+(*
+globals Pipeline in RenderThread{
+	shadow = newShader(cLoad("shadow.vs"), cLoad("shadow.fs"), 1v[],
+		1v[("uMVMat", GLMat4, 0), ("uLightMat", GLMat4, 0)], 1v[])
+}
+
+fn runShader(RenderData rd)
+	-- shadow render
+	Pipeline.shadow.setUniform(0, rd.get(0))
+	Pipeline.shadow.setUniform(1, rd.get(1))
+	Pipeline.shadow.render(rd)
+end*)

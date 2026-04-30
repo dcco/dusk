@@ -20,6 +20,7 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 		else "t" ^ (string_of_int n) 
 	| Some (ArrayTy(i, _)) -> "a" ^ (string_of_int i)
 	| Some (ValArrayTy _) -> "a1v"
+	| Some (TagOfTy _) -> "tag"
 	| Some BotTy -> "bot"
 
 	(*
@@ -50,7 +51,8 @@ type poly_dec = sym_fun_type poly_type
 
 type tc_tval =
 	TcTDef of g_tdef
-	| TcCtor of string
+	| TcCtorE of string
+	| TcCtorU of string
 
 type type_env = {
 	curDir: string option;
@@ -78,7 +80,9 @@ let dump_tenv (env: type_env): unit =
 		print_string (" " ^ x ^ ": "); (match td with
 			TcTDef (StructTD _) -> print_string "struct"
 			| TcTDef (EnumTD _) -> print_string "enum"
-			| TcCtor f -> print_string ("ctor: " ^ f)
+			| TcTDef (UnionTD _) -> print_string "union"
+			| TcCtorE f -> print_string ("ctor (e): " ^ f)
+			| TcCtorU f -> print_string ("ctor (u): " ^ f)
 		); print_string "\n"
 	) env.globalTIds;
 	Hashtbl.iter (fun x tau ->
@@ -92,6 +96,16 @@ let add_fun_tenv (env: type_env) (f: string) (v: sym_fun_type): unit =
 		None -> Hashtbl.add env.globalFIds f [(tag, v)]
 		| Some rho -> Hashtbl.replace env.globalFIds f (add_ptype rho tag v ("for function " ^ f)) 
 
+let add_tdef_tenv (env: type_env) (f: string) (td: g_tdef): unit = match td with
+	| StructTD fl ->
+		Hashtbl.add env.globalTIds f (TcTDef (StructTD fl))
+	| EnumTD cl ->
+		Hashtbl.add env.globalTIds f (TcTDef (EnumTD cl));
+		List.iter (fun (c, _) -> Hashtbl.add env.globalTIds c (TcCtorE f)) cl
+	| UnionTD cl ->
+		Hashtbl.add env.globalTIds f (TcTDef (UnionTD cl));
+		List.iter (fun (c, _, _) -> Hashtbl.add env.globalTIds c (TcCtorU f)) cl
+
 let builtin_tenv (dl: g_virt_bind list): type_env =
 	let env = {
 		curDir = None;
@@ -103,11 +117,7 @@ let builtin_tenv (dl: g_virt_bind list): type_env =
 	} in List.iter (fun (_, f, vd) -> match vd with
 		SymVD(s, tau_f) -> add_fun_tenv env f (s, tau_f)
 		| ResVD(_, tau) -> Hashtbl.add env.globalIds f tau
-		| TDefVD (StructTD fl) ->
-			Hashtbl.add env.globalTIds f (TcTDef (StructTD fl))
-		| TDefVD (EnumTD cl) ->
-			Hashtbl.add env.globalTIds f (TcTDef (EnumTD cl));
-			List.iter (fun (c, _, _) -> Hashtbl.add env.globalTIds c (TcCtor f)) cl
+		| TDefVD td -> add_tdef_tenv env f td
 	) dl; env
 
 let with_dir_tenv (env: type_env) (dir: string): type_env = { env with curDir = Some dir }

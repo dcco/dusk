@@ -41,6 +41,7 @@ let rec resolve_type (env: res_env) (p: l_pos) (tau: m_type): g_type rs_res = ma
 	| TupleTy tau_l -> let* tau_l' = map_try_res (resolve_type env p) tau_l in Valid (TupleTy tau_l')
 	| ArrayTy(i, tau) -> let* tau' = resolve_type env p tau in Valid (ArrayTy(i, tau'))
 	| ValArrayTy tau -> let* tau' = resolve_type env p tau in Valid (ValArrayTy tau')
+	| TagOfTy tau -> let* tau' = resolve_type env p tau in Valid (TagOfTy tau')
 	| BotTy -> Valid BotTy
 
 let resolve_type_def (env: res_env) (p: l_pos) (td: m_tdef): g_tdef rs_res = match td with
@@ -49,14 +50,23 @@ let resolve_type_def (env: res_env) (p: l_pos) (td: m_tdef): g_tdef rs_res = mat
 			let* tau' = resolve_type env p tau in Valid (x, tau')
 		) fl in Valid (StructTD fl')
 	| EnumTD cl ->
-		let prefix = QT None in
+		let* cl' = map_try_res (fun (x, ext) -> match ext with
+			GlobalEB _ -> Valid (x, ext)
+			| _ -> let x' = add_bind_dec_env env LocalOr x in Valid (x', ext)
+		) cl in Valid (EnumTD cl')
+	| UnionTD cl ->
+		(*let prefix = QT None in*)
 		let* cl' = map_try_res (fun (x, tau_l, ext) ->
-			let* tau_l' = map_try_res (resolve_type env p) tau_l in (match lookup_env env prefix x with
+			let* tau_l' = map_try_res (resolve_type env p) tau_l in (match ext with
+				GlobalEB _ -> Valid (x, tau_l', ext)
+				| _ -> let x' = add_bind_dec_env env LocalOr x in Valid (x', tau_l', ext)
+			)
+			(*match lookup_env env prefix x with
 				[(ox, x')] -> Valid (canonize_binding env ox x', tau_l', ext)
 				| [] -> Error (BadLookup_Err(prefix, x, p))
 				| _ -> Error (AmbiguousLookup_Err(prefix, x, p))
-			)
-		) cl in Valid (EnumTD cl')
+			*)
+		) cl in Valid (UnionTD cl')
 
 	(* 
 		builtin resolution

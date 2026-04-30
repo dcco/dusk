@@ -24,6 +24,6 @@ globals RV{
 
 fn passRenderVars()
 	var rd = Sulfur.renderData()
-	rd.set(0, GLMat4V(RV.mvMat))
-	rd.set(1, GLMat4V(RV.lightMat))
+	rd.set(0, GLMat4(RV.mvMat))
+	rd.set(1, GLMat4(RV.lightMat))
 end

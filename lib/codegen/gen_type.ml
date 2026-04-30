@@ -10,6 +10,7 @@ open Gen_cont
 
 let voidType = void_type context
 let i8Type = i8_type context
+let tagType = i16_type context
 let iType = i32_type context
 let i64Type = i64_type context
 let fType = float_type context
@@ -107,7 +108,7 @@ let genFunType (pl: (string * g_type) list) (tau_r: g_type): lltype =
 
 let virtTagTupleType (tau_l: g_type list): lltype =
 	let tau_l' = List.map genType tau_l in
-	struct_type context (Array.of_list (i8Type :: tau_l'))
+	struct_type context (Array.of_list (tagType :: tau_l'))
 
 	(*
 		size/alignment of a type

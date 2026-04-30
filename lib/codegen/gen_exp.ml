@@ -149,6 +149,13 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase."
 		)
 	| BoxExpC(_, _, _) -> failwith "BUG: gen_exp.ml - Box expression encountered (currently unused feature.)"*)
+	| EnumExpC tag ->
+		let tagLit = (match Hashtbl.find_opt env (DCtor tag) with
+			Some (DEnum i) -> const_int tagType i
+			| Some (DGlobal (p, _)) -> build_load tagType p "_G" bx
+			| Some _ -> failwith ("BUG: gen_out.ml - Enum constructor \"" ^ tag ^ "\" resolved to non-enum constructor.")
+			| None -> failwith ("BUG: gen_out.ml - Unexpected enum \"" ^ tag ^ "\" encountered in generation phase.")
+		) in (tagLit, tagType)
 	| TupleExpC(boxId, _, el) ->
 		 	(* compile the sub-expressions *)
 		let res_l = List.map (fun e -> genExp cont env e) el in
@@ -159,11 +166,11 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			let sVal' = build_insertvalue sVal v i "_stT" bx in (sVal', i + 1)
 		) (undef tau_enum, 0) res_l in
 		genBoxStore cont env boxId sVal
-	| TagTupleExpC(boxId, _, tag, el) ->
+	(*| TagTupleExpC(boxId, _, tag, el) ->
 			(* find the tag literal *)
 		let tagLit = (match Hashtbl.find_opt env (DCtor tag) with
-			Some (DEnum i) -> const_int i8Type i
-			| Some (DGlobal (p, _)) -> build_load i8Type p "_G" bx
+			Some (DEnum i) -> const_int tagType i
+			| Some (DGlobal (p, _)) -> build_load tagType p "_G" bx
 			| Some _ -> failwith ("BUG: gen_out.ml - Enum constructor \"" ^ tag ^ "\" resolved to non-enum constructor.")
 			| None -> failwith ("BUG: gen_out.ml - Unexpected enum \"" ^ tag ^ "\" encountered in generation phase.")
 		) in
@@ -171,12 +178,12 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		let res_l = List.map (fun e -> genExp cont env e) el in
 		let tau_l = List.map snd res_l in
 			(* initialize struct + fields *)
-		let tau_enum = structType (i8Type :: tau_l) in
+		let tau_enum = structType (tagType :: tau_l) in
 		let sVal0 = build_insertvalue (undef tau_enum) tagLit 0 "_stT" bx in
 		let (sVal, _) = List.fold_left (fun (sVal, i) (v, _) ->
 			let sVal' = build_insertvalue sVal v (i + 1) "_stT" bx in (sVal', i + 1)
 		) (sVal0, 0) res_l in
-		genBoxStore cont env boxId sVal
+		genBoxStore cont env boxId sVal*)
 	| TupleIndexExpC(ep, i, tau) ->
 		let (vp, _) = genExp cont env ep in
 		let t' = genInnerType env tau in
@@ -438,6 +445,28 @@ let genStructTD (cont: llvm_cont) (env: dusk_env) (f: string) (fl: (string * g_t
 		Hashtbl.add env (DTName f) (DTDef (StructTD_C(tau_l, tc_global)))
 	)
 
+let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enum_case) list): unit = match cl with
+	[] -> ()
+	| (name, ext_o) :: ct -> let (v, i') = (match ext_o with
+			NoEB -> (DEnum i, i + 1)
+			| IntEB j -> (DEnum j, j + 1)
+			| GlobalEB ext -> (DGlobal (declare_global tagType ext cont.llmod, tagType), i + 1)
+		) in
+		Hashtbl.add env (DCtor name) v;
+		genEnumTD cont env i' ct
+
+let genUnionTD (cont: llvm_cont) (env: dusk_env) (f: string) (cl: (canon_tag union_case) list): unit =
+	let zero_size = size_of_type cont tagType in
+	let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
+		size_of_type cont (virtTagTupleType tau_l)
+	) cl) in
+	let max_align = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
+		align_of_type cont (virtTagTupleType tau_l)
+	) cl) in
+	(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
+	Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
+	genEnumTD cont env 0 (List.map (fun (x, _, ext_o) -> (x, ext_o)) cl)
+
 let genDec (cont: llvm_cont) (env: dusk_env) (initFun: llvalue) (f: string) (d: gen_dec): unit = match d with
 	FunDecC (MethodC(pl, tau_r, b)) ->
 		let fType = genFunType pl tau_r in
@@ -453,7 +482,8 @@ let genDec (cont: llvm_cont) (env: dusk_env) (initFun: llvalue) (f: string) (d: 
 		genPreAlloc cont env' b;
 		ignore (genBody cont env' (1, fVal) b)
 	| TDefDecC (StructTD fl) -> genStructTD cont env f fl
-	| TDefDecC _ -> failwith "UNIMPLEMENTED: gen_exp.ml - type definition"
+	| TDefDecC (EnumTD cl) -> genEnumTD cont env 0 cl
+	| TDefDecC (UnionTD cl) -> genUnionTD cont env f cl
 	| ConstDecC e ->
 		let (v, t) = genConstExp cont env e in
 		let cVal = define_global f v cont.llmod in
@@ -500,15 +530,6 @@ let genGC (cont: llvm_cont): unit =
 		gc_collect = (gc_collect, collect_type);
 	}
 
-let rec genEnum (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enum_case) list): unit = match cl with
-	[] -> ()
-	| (name, _, ext_o) :: ct -> let v = (match ext_o with
-			None ->	DEnum i 
-			| Some ext -> DGlobal (declare_global i8Type ext cont.llmod, i8Type)
-		) in
-		Hashtbl.add env (DCtor name) v;
-		genEnum cont env (i + 1) ct
-
 let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): unit =
 	let simpResList = ref [] in
 	let simpPtrMap = Hashtbl.create 50 in
@@ -524,8 +545,7 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			let v = declare_function f fType cont.llmod in
 			Hashtbl.add env (DVar f) (DFunVal(v, fType))
 		| SymVD _ -> ()
-		| TDefVD (EnumTD cl) ->
-			let zero_size = size_of_type cont i8Type in
+			(*let zero_size = size_of_type cont i8Type in
 			let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
 				size_of_type cont (virtTagTupleType tau_l)
 			) cl) in
@@ -534,8 +554,10 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			) cl) in
 			(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
 			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
-			genEnum cont env 0 cl
+			genEnum cont env 0 cl*)
 		| TDefVD (StructTD fl) -> genStructTD cont env f fl
+		| TDefVD (EnumTD cl) -> genEnumTD cont env 0 cl
+		| TDefVD (UnionTD cl) -> genUnionTD cont env f cl
 		| ResVD(r, _) ->
 			let ptr = define_global f (const_null ptrType) cont.llmod in
 			Hashtbl.add env (DVar f) (DVal((ptr, ptrType), None)); (match r with
