@@ -24,6 +24,8 @@ const int8_t ARR_NO = 0;
 const int8_t ARR_FLAT = 1;
 const int8_t ARR_NEST = 2;
 
+#define MAX_ALIGN_UP(size) (size + sizeof(max_align_t) - 1) & ~(sizeof(max_align_t) - 1)
+
 	/*
 		gc_type:
 			defines the layout of the memory for the mark phase's pointer lookup.
@@ -52,9 +54,12 @@ typedef struct gc_obj {
 	unsigned int arrFlag : 2;
 } gc_obj_t;
 
+const size_t GC_OBJ_SIZE = MAX_ALIGN_UP(sizeof(gc_obj_t));
+
 	/*
 		gc_array:
 			defines a dynamically sized array
+		- elemSize: the size of an individual element in the array
 		- capacity: the current allocation for the array
 		- size: the RAW number of elements in the array
 		- data: a pointer to the raw data
@@ -62,6 +67,7 @@ typedef struct gc_obj {
 	*/
 
 typedef struct gc_array {
+	int32_t elemSize;
 	int32_t capacity;
 	int32_t size;
 	void* data;
@@ -116,7 +122,7 @@ extern void gc_init() {
 
 inline static void* _gc_alloc(int32_t size, gc_type_t* type, int8_t arrFlag) {
 	// initialize object
-	gc_obj_t* obj = (gc_obj_t*) malloc(sizeof(gc_obj_t) + size);
+	gc_obj_t* obj = (gc_obj_t*) malloc(GC_OBJ_SIZE + size);
 	obj->type = type;
 	obj->color = GC_WHITE;
 	obj->next = gc_head;
@@ -131,14 +137,15 @@ extern void* gc_alloc(int32_t size, gc_type_t* type) {
 	_gc_alloc(size, type, ARR_NO);
 }
 
-extern void* gc_alloc_array(int32_t elemSize, int32_t arrSize, int32_t exSize, int32_t nestFlag) {
+extern void* gc_alloc_array(int32_t elemSize, int32_t arrSize, int32_t exSize, int8_t nestFlag, gc_type_t* type) {
 	// initialize gc object
-	gc_array_t* array = (gc_array_t*) _gc_alloc(sizeof(gc_array_t) + exSize, NULL, nestFlag ? ARR_NEST : ARR_FLAT);
+	gc_array_t* array = (gc_array_t*) _gc_alloc(sizeof(gc_array_t) + exSize, type, nestFlag ? ARR_NEST : ARR_FLAT);
 	// allocate raw data
 	int32_t arrCap = 16;
 	if (arrSize > arrCap) arrCap = arrSize;
 	array->data = malloc(elemSize * arrCap);
 	// initialize size information
+	array->elemSize = elemSize;
 	array->capacity = arrCap;
 	array->size = arrSize;
 	return (void*) array;
@@ -163,7 +170,20 @@ extern void gc_new_root(void* ptr) {
 	gc_root_total = gc_root_total + 1;
 }
 
-void _gc_mark_array(gc_array_t* array) {
+void _gc_mark_elem(int8_t* data, gc_type_t* type) {
+	for (int i = 0; i < type->total; i++) {
+		// read sub-pointer, if not already gray, add to gray set
+		int8_t* subPtr = data + type->offsets[i];
+		gc_obj_t* subObj = *((gc_obj_t**) subPtr) - 1;
+		if (subObj != NULL && subObj->color == GC_WHITE) {
+			subObj->color = GC_GRAY;
+			_gray_push(subObj);
+		}
+	}
+}
+
+	// assumes every pointer is directly to a gc obj
+void _gc_mark_array_direct(gc_array_t* array) {
 	gc_obj_t** data = (gc_obj_t**) array->data;
 	for (int i = 0; i < array->size; i++) {
 		gc_obj_t* subObj = data[i] - 1;
@@ -174,27 +194,30 @@ void _gc_mark_array(gc_array_t* array) {
 	}
 }
 
+	// goes through the list of offsets provided by the type
+void _gc_mark_array_layout(gc_array_t* array, gc_type_t* type) {
+	int8_t* data = (int8_t*) array->data;
+	for (int i = 0; i < array->size; i++) {
+		data = data + array->elemSize;
+		_gc_mark_elem(data, type);
+	}
+}
+
 void _gc_mark_obj(gc_obj_t* obj) {
 	// mark as safe
 	obj->color = GC_BLACK;
 	// array (with nested pointers) case
 	if (obj->arrFlag == ARR_NEST) {
-		_gc_mark_array((gc_array_t*) (obj + 1));
+		if (obj->type == NULL) _gc_mark_array_direct((gc_array_t*) (obj + 1));
+		else _gc_mark_array_layout((gc_array_t*) (obj + 1), obj->type);
 		return;
 	} else if (obj->arrFlag == ARR_FLAT) return;
 	// find raw ptr, use gc_type info to find each sub-pointer
-	gc_type_t* type = obj->type;
+	if (obj->type == NULL) return;
+	_gc_mark_elem((int8_t*) (obj + 1), obj->type);
+	/*gc_type_t* type = obj->type;
 	if (type == NULL) return;
-	int8_t* data = (int8_t*) (obj + 1);
-	for (int i = 0; i < type->total; i++) {
-		// read sub-pointer, if not already gray, add to gray set
-		int8_t* subPtr = data + type->offsets[i];
-		gc_obj_t* subObj = *((gc_obj_t**) subPtr) - 1;
-		if (subObj->color == GC_WHITE) {
-			subObj->color = GC_GRAY;
-			_gray_push(subObj);
-		}
-	}
+	int8_t* data = (int8_t*) (obj + 1);*/
 }
 
 void _gc_mark() {

@@ -204,7 +204,10 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (STRLIT s, p) :: tkRem -> Valid (ConstExp(SConst s, p), tkRem)
 	| (LONG l, p) :: tkRem -> Valid (ConstExp(LConst l, p), tkRem)
 	| (KLIT k, p) :: tkRem -> Valid (ConstExp(KConst k, p), tkRem)
-	| (ID x, p) :: tkRem -> Valid (VarExp(QT None, x, p), tkRem)
+	| (ID x, p) :: tkRem -> (match tkRem with
+		(IS, _) :: tkRem2 -> let* (y, tkRem3) = parseTId tkRem2 in Valid (IsExp(x, y, p), tkRem3)
+		| _ -> Valid (VarExp(QT None, x, p), tkRem)
+	)
 	| (CID x, p) :: tkRem -> Valid (VarExp(QT None, x, p), tkRem)
 	| (TID prefix, p) :: tkRem -> (match tkRem with
 		(DOT, _) :: tkRem2 -> parseIdAtomExp (QT (Some prefix)) tkRem2

@@ -9,3 +9,5 @@ type g_type = canon_tag raw_type
 type g_tdef = canon_tag raw_tdef
 
 type g_virt_bind = canon_tag virt_bind
+
+type deref_type = TypeDeref of g_type | CtorDeref of string

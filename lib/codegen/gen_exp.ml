@@ -77,6 +77,18 @@ let genBoxStore (cont: llvm_cont) (env: dusk_env) (boxId: int) (vx: llvalue): du
 			Option.iter (fun align -> set_alignment align vs) alignOpt; (vb, tb)
 		| _ -> failwith "BUG: gen_exp.ml - Ungenerated box encountered in generation phase. (1)"
 
+let genGCType (cont: llvm_cont) (f: string) (offsetList: gc_child list): llvalue =
+		(* obtain offsets of each pointer value *)
+	let ol = List.map (fun o -> match o with
+		DirectChild -> const_int iType 0
+		| OffsetChild i -> const_int iType i
+	) offsetList in
+	let offsets_const = const_array iType (Array.of_list ol) in
+	let offsets_global = define_global ("tc_offs_" ^ f) offsets_const cont.llmod in
+		(* create type information global *)
+	let tc_inner = [const_int iType (List.length ol); offsets_global] in
+	define_global ("tc_" ^ f) (const_struct context (Array.of_list tc_inner)) cont.llmod
+
 let genVar (cont: llvm_cont) (env: dusk_env) (k: dusk_key) (name: string): dusk_val = match Hashtbl.find_opt env k with
 	Some (DFunVal (v, t)) -> (v, t)
 	| Some (DVal ((v, t), alignOpt)) ->
@@ -135,12 +147,13 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "i64sub" -> (build_sub v1 v2 "_subT" bx, i64Type)
 			| "i64mul" -> (build_mul v1 v2 "_mulT" bx, i64Type)
 			| "i64div" -> (build_sdiv v1 v2 "_divT" bx, i64Type)
+			| "tag_eq" -> (build_icmp Icmp.Eq v1 v2 "_isT" bx, tagType)
 			| _ -> failwith ("BUG: gen_exp.ml - Unexpected operator \"" ^ xOp ^ "\" encountered in generation phase.")
 		)
 	| CallExpC(ef, el, tau_r) ->
 		let (vf, tf) = genExp cont env ef in
 		let vl = List.map (fun e -> fst (genExp cont env e)) el in
-		(build_call tf vf (Array.of_list vl) "" cont.builder, genType tau_r)
+		(build_call tf vf (Array.of_list vl) "" cont.builder, genType env tau_r)
 	(*| BoxExpC(i, e, _) ->
 		let (ve, _) = genExp cont env e in (match Hashtbl.find_opt env (DBox i) with
 			Some (DVal ((vb, tb), alignOpt)) ->
@@ -151,11 +164,14 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 	| BoxExpC(_, _, _) -> failwith "BUG: gen_exp.ml - Box expression encountered (currently unused feature.)"*)
 	| EnumExpC tag ->
 		let tagLit = (match Hashtbl.find_opt env (DCtor tag) with
-			Some (DEnum i) -> const_int tagType i
-			| Some (DGlobal (p, _)) -> build_load tagType p "_G" bx
-			| Some _ -> failwith ("BUG: gen_out.ml - Enum constructor \"" ^ tag ^ "\" resolved to non-enum constructor.")
-			| None -> failwith ("BUG: gen_out.ml - Unexpected enum \"" ^ tag ^ "\" encountered in generation phase.")
+			Some (DEnum(IntEV i, _)) -> const_int tagType i
+			| Some (DEnum(GlobalEV(vp, _), _)) -> build_load tagType vp "_G" bx
+			| Some _ -> failwith ("BUG: gen_exp.ml - Enum constructor \"" ^ tag ^ "\" resolved to non-enum constructor.")
+			| None -> failwith ("BUG: gen_exp.ml - Unexpected enum \"" ^ tag ^ "\" encountered in generation phase.")
 		) in (tagLit, tagType)
+	| EnumRawExpC e -> 
+		let (v, _) = genExp cont env e in
+		(build_sext v iType "_liftT" bx, iType)
 	| TupleExpC(boxId, _, el) ->
 		 	(* compile the sub-expressions *)
 		let res_l = List.map (fun e -> genExp cont env e) el in
@@ -184,14 +200,29 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			let sVal' = build_insertvalue sVal v (i + 1) "_stT" bx in (sVal', i + 1)
 		) (sVal0, 0) res_l in
 		genBoxStore cont env boxId sVal*)
-	| TupleIndexExpC(ep, i, tau) ->
+
+		(* RW flag, main expression, struct index, underlying type *)
+	| MemoryFieldExpC(rw, e, i, dt) ->
+			(* generate sub-expresion *)
+		let (vp, _) = genExp cont env e in
+		let t' = genDerefType env dt in
+			(* get return type *) 
+		let tArr = struct_element_types t' in
+		(if i >= Array.length tArr then failwith "BUG: gen_exp.ml - OOB indexed memory access." else ());
+		let tv' = tArr.(i) in
+			(* build gep / RW *)
+		let vPtr = build_gep t' vp (Array.of_list [const_int iType 0; const_int iType i]) "_elemPT" bx in
+		(match rw with
+			RC -> (build_load tv' vPtr "_elemT" bx, tv')
+			| WC ev -> let (vv, _) = genExp cont env ev in (build_store vv vPtr bx, voidType)
+		)
+		(*let elem = build_load tv' vPtr "_elemT" bx in (elem, tv')*)
+	(*| TupleIndexExpC(ep, i, tau) ->
 		let (vp, _) = genExp cont env ep in
 		let t' = genInnerType env tau in
 		let tv' = (struct_element_types t').(i) in
 		let vPtr = build_gep t' vp (Array.of_list [const_int iType 0; const_int iType i]) "_elemPT" bx in
-		let elem = build_load tv' vPtr "_elemT" bx in (elem, tv')
-		(*let elem = build_extractvalue vp i "_elemT" bx in
-		(elem, genType tau_v)*)
+		let elem = build_load tv' vPtr "_elemT" bx in (elem, tv')*)
 	| ValueArrayExpC(boxP, boxA, el, _) ->
 		let res_l = List.map (genExp cont env) el in
 			(* initialize actual array *)
@@ -201,20 +232,39 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			ignore (build_store vd vPtr bx)
 		) res_l;
 			(* initialize struct in gc_array format *)
-		let sv1 = build_insertvalue (undef gcArrType) (const_int iType (List.length el)) 1 "_stT" bx in
-		let sv2 = build_insertvalue sv1 va 2 "_stT" bx in
+		let sv1 = build_insertvalue (undef gcArrType) (const_int iType (List.length el)) 2 "_stT" bx in
+		let sv2 = build_insertvalue sv1 va 3 "_stT" bx in
 		genBoxStore cont env boxP sv2
 	| NewArrayExpC(dim_l, el, tau) ->
 			(* calculate size *)
 		let res_l = List.map (genExp cont env) dim_l in
 		let dim = List.length res_l in
 		let v_size = genProduct cont (List.map fst res_l) in
-			(* initialize array *)
-		let e_size = const_int iType (size_of_type cont (genType tau)) in
+			(*
+				initialize array
+				- ignore alignment, as the "data" portion of the array should already have max alignment
+			*)
+		let (tau_store, _) = genStoreType env tau in
+			(* - elem size + space for dimensions *)
+		let e_size = const_int iType (size_of_type cont tau_store) in
 		let dim_size = const_int iType (if dim <= 1 then 0 else size_of_type cont (gcDimsType dim)) in
+			(* - gc layout type *)
+		let gcType = gcElemType cont env tau in
+		let (nest_flag, tc_elem) = (match gcType with
+			[] -> (0, const_null ptrType)
+			| [DirectChild] -> (1, const_null ptrType)
+			| _ -> (match Hashtbl.find_opt env (DTAnon tau) with
+				None ->
+					let tc_elem = genGCType cont "tup" gcType in
+					Hashtbl.add env (DTAnon tau) (DLayout tc_elem); (1, tc_elem)
+				| Some (DLayout tc_elem) -> (1, tc_elem)
+				| Some _ -> failwith "BUG gen_exp.ml - Unexpected value when looking up type layout global."
+			)
+		) in
+			(* - gc array alloc call *)
 		let (new_arr, new_arr_type) = !(cont.gc).new_array in
-		let nest_flag = const_int iType (if isHeapType env tau then 1 else 0) in
-		let arrPtr = build_call new_arr_type new_arr (Array.of_list [e_size; v_size; dim_size; nest_flag]) "_arrPT" bx in
+		let arrPtr = build_call new_arr_type new_arr
+			(Array.of_list [e_size; v_size; dim_size; const_int i8Type nest_flag; tc_elem]) "_arrPT" bx in
 			(* initialize dimensions *)
 		(if dim <= 1 then () else
 			let dimsPtr = build_gep gcArrType arrPtr
@@ -227,8 +277,8 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			) (List.map fst res_l)
 		);
 			(* calculate array index pointer *)
-		let t' = genType tau in
-		let dataSlot = build_gep gcArrType arrPtr (Array.of_list [const_int iType 0; const_int iType 2]) "_dataS" bx in
+		let t' = genType env tau in
+		let dataSlot = build_gep gcArrType arrPtr (Array.of_list [const_int iType 0; const_int iType 3]) "_dataS" bx in
 		let dataPtr = build_load ptrType dataSlot "_dataPT" bx in
 			(* store each value *)
 		List.iteri (fun i e ->
@@ -248,8 +298,8 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 				if dim = 1 then List.hd vl else genIndexProd cont va vl dim
 		) in
 			(* calculate array index pointer *)
-		let t' = genType tau in
-		let dataPtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 2]) "_dataS" bx in
+		let t' = genType env tau in
+		let dataPtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 3]) "_dataS" bx in
 		let v_data = build_load ptrType dataPtr "_dataPT" bx in
 		let vPtr = build_gep t' v_data (Array.of_list [vi]) "_elemPT" bx in
 			(* read / write to index *)
@@ -259,7 +309,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		)
 	| ArrayLengthExpC ea ->
 		let (va, _) = genExp cont env ea in
-		let sizePtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 1]) "_sizePT" bx in
+		let sizePtr = build_gep gcArrType va (Array.of_list [const_int iType 0; const_int iType 2]) "_sizePT" bx in
 		let vSize = build_load iType sizePtr "_sizeT" bx in (vSize, iType)
 	| ArrayDimsExpC(i, ea) ->
 		let (va, _) = genExp cont env ea in
@@ -283,7 +333,8 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			let vf = build_gep tau_s sPtr (Array.of_list [const_int iType 0; const_int iType i]) "_fiT" bx in
 			ignore (build_store ve vf cont.builder)
 		) res_l; (sPtr, ptrType)
-	| StructFieldExpC(rw, e, i, cx) ->
+
+	(*| StructFieldExpC(rw, e, i, cx) ->
 		let (v, _) = genExp cont env e in
 		let tau_l = (match Hashtbl.find_opt env (DTName cx) with
 			Some (DTDef (StructTD_C(tau_l, _))) -> tau_l
@@ -294,7 +345,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		(match rw with
 			RC -> (build_load (List.nth tau_l i) vf "_fieldT" bx, List.nth tau_l i)
 			| WC ev -> let (vv, _) = genExp cont env ev in (build_store vv vf bx, voidType)
-		)
+		)*)
 	| GCNewRootExpC e ->
 		let (v, t) = genExp cont env e in
 		let (new_root_fun, new_root_type) = !(cont.gc).gc_new_root in
@@ -310,16 +361,17 @@ let rec genConstExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = (
 	| ConstArrayExpC(dims, el, tau) ->
 		let size = List.fold_left (fun i v -> i * v) 1 dims in
 		let res_l = List.map (genConstExp cont env) el in
-		let aVal = const_array (genType tau) (Array.of_list (List.map fst res_l)) in
+		let t' = genType env tau in
+		let aVal = const_array t' (Array.of_list (List.map fst res_l)) in
 		let rVal = define_global "_rawC" aVal cont.llmod in
 		let sVal = const_struct context (Array.of_list ([
+			const_int iType (size_of_type cont t');
 			const_int iType size;
 			const_int iType size;
 			rVal] @ (List.map (const_int iType) dims)
 		)) in
 		let xVal = define_global "_arrC" sVal cont.llmod in
-		(xVal, ptrType) (* gcFullArrType (List.length dims)) *)
-		(*let size = List.fold_left (fun i v -> i * v) 1 dims in*)
+		(xVal, ptrType)
 	| _ -> failwith "BUG: gen_exp.ml - Non-constant initializer for global declaration encountered in generation phase."
 
 	(* statement generation *)
@@ -396,9 +448,10 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 	let rec gpl_rec pl i = match pl with
 		[] -> ()
 		| (x, tau) :: pt ->
-			let (vp, t, alignOpt) = (Array.get va i, genType tau, genAlign env tau) in
-			let vx = build_alloca t ("_" ^ x) cont.builder in
+			let (vp, (tx, alignOpt)) = (Array.get va i, genStoreType env tau) in
+			let vx = build_alloca tx ("_" ^ x) cont.builder in
 			let vs = build_store vp vx cont.builder in
+			let t = genType env tau in
 			Option.iter (fun align -> set_alignment align vx; set_alignment align vs) alignOpt;
 			Hashtbl.add env' (DVar x) (DVal ((vx, t), alignOpt)); gpl_rec pt (i + 1)
 	in gpl_rec pl 0; env'
@@ -406,29 +459,40 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 let genPreAlloc (cont: llvm_cont) (env: dusk_env) (b: gen_stmt list): unit =
 	let varList = collect_var_body b in
 	List.iter (fun (x, tau) ->
-		let t = genType tau in
-		let alignOpt = genAlign env tau in
-		let vx = build_alloca t ("_" ^ x) (cont.builder) in
+		let (tx, alignOpt) = genStoreType env tau in
+		let vx = build_alloca tx ("_" ^ x) (cont.builder) in
 		Option.iter (fun align -> set_alignment align vx) alignOpt;
+		let t = genType env tau in
 		Hashtbl.add env (DVar x) (DVal ((vx, t), alignOpt))
 	) varList;
 	let boxList = collect_box_body b in
 	List.iter (fun (i, t_b) -> (match t_b with
 		VBoxTy tau ->
-			let alignOpt = genAlign env tau in
-			let v = build_alloca (genAllocaType env tau) "_boxT" cont.builder in
+			let (t', alignOpt) = genStoreType env tau in
+			let v = build_alloca t' "_boxT" cont.builder in
 			Option.iter (fun align -> set_alignment align v) alignOpt;
 			Hashtbl.add env (DBox i) (DVal ((v, ptrType), alignOpt))
 		| OuterArrayBoxTy ->
 			let v = build_alloca gcArrType "_boxT" cont.builder in
 			Hashtbl.add env (DBox i) (DVal ((v, gcArrType), None))
 		| InnerArrayBoxTy(n, tau) ->
-			let v = build_alloca (array_type (genType tau) n) "_boxT" cont.builder in
+			let (t', _) = genStoreType env tau in
+			let v = build_alloca (array_type t' n) "_boxT" cont.builder in
 			Hashtbl.add env (DBox i) (DVal ((v, ptrType), None))
 	)) boxList
 
 let genStructTD (cont: llvm_cont) (env: dusk_env) (f: string) (fl: (string * g_type) list): unit =
-	let tau_l = List.map (fun (_, tau) -> genType tau) fl in
+	let tau_l = List.map snd fl in
+	let offsetList = gcElemTypeList cont env 0 tau_l in
+	let tc_struct = (match offsetList with
+		[] -> const_null ptrType
+		| [DirectChild] -> const_null ptrType
+		| _ -> genGCType cont f offsetList
+	) in
+		(* - ignores alignment, values must be copied out *)
+	let tl' = List.map (fun tau -> fst (genStoreType env tau)) tau_l in
+	Hashtbl.add env (DTName f) (DTDef (StructTD_C(tl', tc_struct)))
+	(*let tau_l = List.map (fun (_, tau) -> genType env tau) fl in
 	(*let size = size_of_type cont (struct_type context (Array.of_list tau_l)) in*)
 		(* filter types to only pointer types *)
 	let ti_l = List.mapi (fun i tau -> (i, tau)) (List.map snd fl) in
@@ -443,14 +507,17 @@ let genStructTD (cont: llvm_cont) (env: dusk_env) (f: string) (fl: (string * g_t
 		let tc_inner = [const_int iType (List.length tp_list); offsets_global] in
 		let tc_global = define_global ("tc_" ^ f) (const_struct context (Array.of_list tc_inner)) cont.llmod in
 		Hashtbl.add env (DTName f) (DTDef (StructTD_C(tau_l, tc_global)))
-	)
+	)*)
 
-let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enum_case) list): unit = match cl with
+let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag union_case) list): unit = match cl with
 	[] -> ()
-	| (name, ext_o) :: ct -> let (v, i') = (match ext_o with
-			NoEB -> (DEnum i, i + 1)
-			| IntEB j -> (DEnum j, j + 1)
-			| GlobalEB ext -> (DGlobal (declare_global tagType ext cont.llmod, tagType), i + 1)
+	| (name, tau_l, ext_o) :: ct ->
+			(* - ignores alignment, value must be copied out *)
+		let tl' = List.map (fun tau -> fst (genStoreType env tau)) tau_l in
+		let (v, i') = (match ext_o with
+			NoEB -> (DEnum (IntEV i, tl'), i + 1)
+			| IntEB j -> (DEnum (IntEV j, tl'), j + 1)
+			| GlobalEB ext -> (DEnum (GlobalEV (declare_global tagType ext cont.llmod, tagType), tl'), i + 1)
 		) in
 		Hashtbl.add env (DCtor name) v;
 		genEnumTD cont env i' ct
@@ -458,18 +525,18 @@ let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag enu
 let genUnionTD (cont: llvm_cont) (env: dusk_env) (f: string) (cl: (canon_tag union_case) list): unit =
 	let zero_size = size_of_type cont tagType in
 	let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
-		size_of_type cont (virtTagTupleType tau_l)
+		size_of_type cont (genTagTupleType env tau_l)
 	) cl) in
 	let max_align = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
-		align_of_type cont (virtTagTupleType tau_l)
+		align_of_type cont (genTagTupleType env tau_l)
 	) cl) in
 	(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
 	Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
-	genEnumTD cont env 0 (List.map (fun (x, _, ext_o) -> (x, ext_o)) cl)
+	genEnumTD cont env 0 cl
 
 let genDec (cont: llvm_cont) (env: dusk_env) (initFun: llvalue) (f: string) (d: gen_dec): unit = match d with
 	FunDecC (MethodC(pl, tau_r, b)) ->
-		let fType = genFunType pl tau_r in
+		let fType = genFunType env pl tau_r in
 		let fVal = declare_function f fType cont.llmod in
 		let block = append_block context "entry" fVal in
 		position_at_end block cont.builder;
@@ -482,7 +549,10 @@ let genDec (cont: llvm_cont) (env: dusk_env) (initFun: llvalue) (f: string) (d: 
 		genPreAlloc cont env' b;
 		ignore (genBody cont env' (1, fVal) b)
 	| TDefDecC (StructTD fl) -> genStructTD cont env f fl
-	| TDefDecC (EnumTD cl) -> genEnumTD cont env 0 cl
+	| TDefDecC (EnumTD cl) ->
+		Hashtbl.add env (DTName f) (DTDef EnumTD_C);
+			(* - filler datatypes for data-less enums *)
+		genEnumTD cont env 0 (List.map (fun (x, ext) -> (x, [], ext)) cl)
 	| TDefDecC (UnionTD cl) -> genUnionTD cont env f cl
 	| ConstDecC e ->
 		let (v, t) = genConstExp cont env e in
@@ -490,7 +560,7 @@ let genDec (cont: llvm_cont) (env: dusk_env) (initFun: llvalue) (f: string) (d: 
 		Llvm.set_global_constant true cVal;
 		Hashtbl.add env (DVar f) (DGlobal (cVal, t))
 	| GlobalDecC tau ->
-		let t = genType tau in
+		let t = genType env tau in
 		let gVal = define_global f (const_null t) cont.llmod in
 		Hashtbl.add env (DVar f) (DGlobal (gVal, t))
 	| InitDecC _ -> ()
@@ -499,7 +569,7 @@ let genDecList (cont: llvm_cont) (env: dusk_env) (initFun: llvalue) (dl: (string
 	List.iter (fun (f, d) -> genDec cont env initFun f d) dl
 
 let genInitFun (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): unit =
-	let fType = genFunType [] unitTy in
+	let fType = genFunType env [] unitTy in
 	let fVal = declare_function "init_globals" fType cont.llmod in
 	let block = append_block context "entry" fVal in
 	position_at_end block cont.builder;
@@ -515,7 +585,7 @@ let genInitFun (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): 
 	*)
 
 let genGC (cont: llvm_cont): unit =
-	let new_arr_type = function_type ptrType (Array.of_list [iType; iType; iType; iType]) in
+	let new_arr_type = function_type ptrType (Array.of_list [iType; iType; iType; i8Type; ptrType]) in
 	let new_arr = declare_function "gc_alloc_array" new_arr_type cont.llmod in
 	let alloc_type = function_type ptrType (Array.of_list [iType; ptrType]) in
 	let gc_alloc = declare_function "gc_alloc" alloc_type cont.llmod in
@@ -540,8 +610,8 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 		*)
 	List.iter (fun (_, f, vd) -> match vd with
 		SymVD (ExternalSym vl, (tau_pl, tau_r)) ->
-			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType tau_p) tau_pl in
-			let fType = function_type (genType tau_r) (Array.of_list tau_plx) in
+			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType env tau_p) tau_pl in
+			let fType = function_type (genType env tau_r) (Array.of_list tau_plx) in
 			let v = declare_function f fType cont.llmod in
 			Hashtbl.add env (DVar f) (DFunVal(v, fType))
 		| SymVD _ -> ()
@@ -556,7 +626,10 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
 			genEnum cont env 0 cl*)
 		| TDefVD (StructTD fl) -> genStructTD cont env f fl
-		| TDefVD (EnumTD cl) -> genEnumTD cont env 0 cl
+		| TDefVD (EnumTD cl) ->
+			Hashtbl.add env (DTName f) (DTDef EnumTD_C);
+			(* - filler datatypes for data-less enums *)
+			genEnumTD cont env 0 (List.map (fun (x, ext) -> (x, [], ext)) cl)
 		| TDefVD (UnionTD cl) -> genUnionTD cont env f cl
 		| ResVD(r, _) ->
 			let ptr = define_global f (const_null ptrType) cont.llmod in

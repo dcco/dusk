@@ -39,6 +39,9 @@ let rec resolve_exp (env: res_env) (e: n_exp): r_exp rs_res = match e with
 		let* fl' = map_try_res (fun (f, e) ->
 			let* e' = resolve_exp env e in Valid (f, e')
 		) fl in Valid (NewStructExp(CT, x', fl', p))
+	| IsExp(x, y, p) ->
+		let* x' = resolve_name env p (QT None) x in
+		let* y' = resolve_name env p (QT None) y in Valid (IsExp(x', y', p))
 	| AppExp(ef, el, p) ->
 		let* ef' = resolve_exp env ef in
 		let* el' = resolve_exp_list env el in Valid (AppExp(ef', el', p))

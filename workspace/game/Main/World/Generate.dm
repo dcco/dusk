@@ -41,7 +41,7 @@ fn generateRoom() GameRoom
 	-- room creation
 	var grid = new 2d(_size, _size)[..
 		new GameTile{
-			baseType = 0,
+			baseType = DeepSea,
 			elevation = 0.0,
 			frontDiff = 0,
 			leftDiff = 0,
@@ -71,9 +71,9 @@ fn generateRoom() GameRoom
 		elsif h > floor(255.0 * avg * 0.5) then landType = Sea end -- sea
 		-- humidity
 		-- (hm > 0.7 && landType is High) ||
-		if (hm > 0.6 && landType = Mid) || (hm > 0.7 && landType = Low) then
+		if (hm > 0.6 && landType is Mid) || (hm > 0.7 && landType is Low) then
 			landType = Forest -- forest
-		elsif hm > 0.7 && landType = Beach then
+		elsif hm > 0.7 && landType is Beach then
 			landType = Mud -- mud
 		end
 		grid[i, j].baseType = landType
@@ -83,9 +83,9 @@ fn generateRoom() GameRoom
 	-- elevation normalizing
 	for i < _size, j < _size do
 		var landType = grid[i, j].baseType
-		if landType = 0 || landType = 1 then
+		if landType is DeepSea || landType is Sea then
 			grid[i, j].elevation = 0.0
-		elsif landType = 2 || landType = 3 then
+		elsif landType is Beach || landType is Mud then
 			grid[i, j].elevation = 1.0
 			--grid[i, j].elevType = 1
 		end
@@ -94,7 +94,7 @@ fn generateRoom() GameRoom
 	-- final elevation reification
 	for i < _size, j < _size do
 		var landType = grid[i, j].baseType
-		if landType != 0 && landType != 1 then
+		if !landType is DeepSea && !landType is Sea then
 			var e = grid[i, j].elevation
 			var eF = room.elevation(i, j + 1)
 			if eF < e then

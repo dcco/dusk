@@ -3,22 +3,22 @@
 
 	/* glyph datatype */
 
-typedef int8_t GLYPH_TYPE;
+typedef tag_type GLYPH_TYPE;
 enum { G_NOP = 0, G_BOX = 1, G_SPRITE = 3, G_TEXT = 4 };
 
-extern const int8_t C_NOP;
-extern const int8_t C_BOX;
-extern const int8_t C_SPRITE;
-extern const int8_t C_TEXT;
+extern const tag_type C_NOP;
+extern const tag_type C_BOX;
+extern const tag_type C_SPRITE;
+extern const tag_type C_TEXT;
 
-const int8_t C_NOP = G_NOP;
-const int8_t C_BOX = G_BOX;
-const int8_t C_SPRITE = G_SPRITE;
-const int8_t C_TEXT = G_TEXT;
+const tag_type C_NOP = G_NOP;
+const tag_type C_BOX = G_BOX;
+const tag_type C_SPRITE = G_SPRITE;
+const tag_type C_TEXT = G_TEXT;
 
 typedef struct glyph {
 	GLYPH_TYPE type;
-	int8_t raw[31];
+	int8_t raw[GLYPH_SIZE - sizeof(GLYPH_TYPE)];
 } glyph_t;
 
 typedef struct box_glyph {

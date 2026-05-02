@@ -3,24 +3,24 @@
 
 	/* glyph datatype */
 
-typedef int8_t GLYPH_3D_TYPE;
+typedef tag_type GLYPH_3D_TYPE;
 enum { G3_NOP = 0, G3_QX = 1, G3_QY = 2, G3_QZ = 3 };
 
-extern const int8_t C3_NOP;
-extern const int8_t C3_TEST;
+extern const tag_type C3_NOP;
+extern const tag_type C3_TEST;
 
-const int8_t C3_NOP = G3_NOP;
-const int8_t C3_QX = G3_QX;
-const int8_t C3_QY = G3_QY;
-const int8_t C3_QZ = G3_QZ;
+const tag_type C3_NOP = G3_NOP;
+const tag_type C3_QX = G3_QX;
+const tag_type C3_QY = G3_QY;
+const tag_type C3_QZ = G3_QZ;
 
 typedef struct glyph3d {
 	GLYPH_3D_TYPE type;
-	int8_t raw[31];
+	int8_t raw[GLYPH_3D_SIZE - sizeof(GLYPH_TYPE)];
 } glyph3d_t;
 
 typedef struct quad_glyph3d {
-	GLYPH_TYPE type;
+	GLYPH_3D_TYPE type;
 	float x;
 	float y;
 	float z;

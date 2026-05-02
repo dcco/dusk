@@ -23,13 +23,9 @@ void* map_gc_array(gc_array_t* list, size_t oldSize, size_t newSize, void (*f)(v
 
 	/* uniforms */
 
-typedef struct raw_enum {
-	int8_t type;
-} raw_enum_t;
-
 typedef struct raw_uniform_def {
 	dusk_string_t* name;
-	raw_enum_t* g;
+	tag_type g;
 	int32_t arity;
 } raw_uniform_def_t;
 
@@ -38,7 +34,7 @@ void read_uniform(void* dst, void* src)
 	shader_uniform_def_t* uniform = (shader_uniform_def_t*) dst;
 	raw_uniform_def_t* rawUniform = *((raw_uniform_def_t**) src);
 	uniform->name = &rawUniform->name->start;
-	uniform->glType = readGLType(rawUniform->g->type);
+	uniform->glType = readGLType(rawUniform->g);
 	uniform->arity = rawUniform->arity;
 }
 
@@ -54,8 +50,7 @@ void read_string(void* dst, void* src)
 void read_layer(void* dst, void* src)
 {
 	fbo_layer_def_t* layer = (fbo_layer_def_t*) dst;
-	raw_enum_t* e = *((raw_enum_t**) src);
-	layer->type = e->type;
+	layer->type = *((tag_type*) src);
 }
 
 #endif

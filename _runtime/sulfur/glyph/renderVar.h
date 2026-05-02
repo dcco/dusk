@@ -8,16 +8,16 @@
 		- GL_FLOAT_MAT4
 	*/
 
-typedef int8_t C_GL_TYPE;
+typedef tag_type C_GL_TYPE;
 enum { G_GL_NULL = 0, G_GL_UINT = 1, G_GL_FLOAT = 2, G_GL_MAT4 = 3 };
 
-extern const int8_t C_GL_UINT;
-extern const int8_t C_GL_FLOAT;
-extern const int8_t C_GL_MAT4;
+extern const tag_type C_GL_UINT;
+extern const tag_type C_GL_FLOAT;
+extern const tag_type C_GL_MAT4;
 
-const int8_t C_GL_UINT = G_GL_UINT;
-const int8_t C_GL_FLOAT = G_GL_FLOAT;
-const int8_t C_GL_MAT4 = G_GL_MAT4;
+const tag_type C_GL_UINT = G_GL_UINT;
+const tag_type C_GL_FLOAT = G_GL_FLOAT;
+const tag_type C_GL_MAT4 = G_GL_MAT4;
 
 GLint readGLType(C_GL_TYPE type) {
 	if (type == C_GL_UINT) return GL_UNSIGNED_INT;
@@ -26,17 +26,17 @@ GLint readGLType(C_GL_TYPE type) {
 }
 
 typedef struct gl_val {
-	int8_t type;
-	int8_t c[15];
+	C_GL_TYPE type;
+	int8_t c[GL_VAL_SIZE - sizeof(C_GL_TYPE)];
 } gl_val_t;
 
 typedef struct gl_float_val {
-	int8_t type;
+	C_GL_TYPE type;
 	float f;
 } gl_float_val_t;
 
 typedef struct gl_mat4_val {
-	int8_t type;
+	C_GL_TYPE type;
 	float* mat;
 } gl_mat4_val_t;
 

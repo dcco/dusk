@@ -114,7 +114,7 @@ extern frameBuffer_t* _String_Sys_Sulfur_newFrameBuffer(dusk_string_t* _vs, dusk
 {
 	// initialize shader + fbo
 	shader_t* shader = _String_Sys_Sulfur_newShader(_vs, _fs, NULL, _uPMat, uniforms, uniformTexs);
-	fbo_layer_def_t* layerList = map_gc_array(layers, sizeof(raw_enum_t*), sizeof(fbo_layer_def_t), &read_layer);
+	fbo_layer_def_t* layerList = map_gc_array(layers, sizeof(tag_type), sizeof(fbo_layer_def_t), &read_layer);
 	frameBuffer_t* buffer = newFrameBuffer(shader, w, h, layers->size, layerList);
 
 	// cleanup

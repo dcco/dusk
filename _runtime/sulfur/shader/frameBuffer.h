@@ -1,25 +1,25 @@
 #ifndef FRAME_BUFFER_H
 #define FRAME_BUFFER_H
 
-typedef int8_t FBO_LAYER_TYPE;
+typedef tag_type FBO_LAYER_TYPE;
 enum { FBO_COLOR = 0, FBO_DEPTH = 1, FBO_RENDER = 2 };
 
-extern const int8_t C_FBO_COLOR;
-extern const int8_t C_FBO_DEPTH;
-extern const int8_t C_FBO_RENDER;
+extern const tag_type C_FBO_COLOR;
+extern const tag_type C_FBO_DEPTH;
+extern const tag_type C_FBO_RENDER;
 
-const int8_t C_FBO_COLOR = FBO_COLOR;
-const int8_t C_FBO_DEPTH = FBO_DEPTH;
-const int8_t C_FBO_RENDER = FBO_RENDER;
+const tag_type C_FBO_COLOR = FBO_COLOR;
+const tag_type C_FBO_DEPTH = FBO_DEPTH;
+const tag_type C_FBO_RENDER = FBO_RENDER;
+
+typedef struct fbo_layer_def {
+	FBO_LAYER_TYPE type;
+} fbo_layer_def_t;
 
 	/*
 		buffer layer def: defines a layer of the frame buffer
 			(it's purpose / how to create it)
 	*/
-
-typedef struct fbo_layer_def {
-	FBO_LAYER_TYPE type;
-} fbo_layer_def_t;
 
 GLuint newColorBuffer(int32_t w, int32_t h, int32_t i)
 {

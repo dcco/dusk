@@ -1,6 +1,9 @@
 open Llvm
 open Llvm_target
 
+open Parser.Dusk_type
+open Fin_type
+
 	(* LLVM initialization *)
 
 let context = global_context ();;
@@ -61,12 +64,14 @@ let genRef (LCont(_, _, _, r): llvm_cont): int = r := !r + 1; !r - 1
 
 	(*
 		dusk compilation type definitions:
-			- opaque: opaque array of bytes used for unions, has size + alignment
-			- struct: heap-allocated struct, w/ reference to "size" information for GC
+			- opaque: opaque array of bytes used for unions
+				(size, alignment, GC type layout)
+			- struct: heap-allocated struct + GC type layout
 	*)
 
 type dusk_tdef =
-	OpaqueTD_C of int * int
+	EnumTD_C
+	| OpaqueTD_C of int * int
 	| StructTD_C of lltype list * llvalue
 
 	(*
@@ -79,12 +84,15 @@ type dusk_val = llvalue * lltype
 		- val: normal storage variable (includes alignment when applicable)
 	*)
 
+type dusk_enum_val = IntEV of int | GlobalEV of dusk_val
+
 type dusk_fval =
 	DVal of dusk_val * int option
 	| DGlobal of dusk_val
 	| DFunVal of llvalue * lltype
 	| DTDef of dusk_tdef
-	| DEnum of int
+	| DEnum of dusk_enum_val * lltype list
+	| DLayout of llvalue
 
 type dusk_key =
 	DVar of string
@@ -92,6 +100,7 @@ type dusk_key =
 	| DKeyLit of string
 	| DBox of int
 	| DTName of string
+	| DTAnon of g_type
 	| DCtor of string
 [@@deriving equal, hash]
 
@@ -105,12 +114,21 @@ let string_of_dkey (k: dusk_key): string = match k with
 	| DKeyLit k -> "KLIT " ^ k
 	| DBox i -> "BOX " ^ (string_of_int i)
 	| DTName t -> "TNAME " ^ t
+	| DTAnon t -> "TANON " ^ (string_of_type t)
 	| DCtor c -> "CTOR " ^ c
+
+let string_of_dval (v: dusk_fval): string = match v with
+	DVal(_, _) -> "VAL"
+	| DGlobal _ -> "GLOBAL"
+	| DFunVal(_, _) -> "FUNC"
+	| DTDef _ -> "TYPE DEF"
+	| DEnum(_, _) -> "ENUM"
+	| DLayout _ -> "GC LAYOUT TYPE"
 
 let dump_denv (env: dusk_env): unit =
 	print_string "#CODEGEN_ENV {\n";
-	Hashtbl.iter (fun k _ ->
-		print_string ((string_of_dkey k) ^ ": ");
+	Hashtbl.iter (fun k v ->
+		print_string ((string_of_dkey k) ^ ": " ^ (string_of_dval v));
 		print_string "\n"
 	) env;
 	print_string "}\n";;

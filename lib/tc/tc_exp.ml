@@ -39,7 +39,7 @@ type g_fun =
 	| ArrayDimsGF of int
 	| StructFieldGF of rw * int * string
 	| CallGF of int list
-	| NonGF
+	| EnumRawGF
 
 let rec index_type_list (tau_l: g_type list) (i: int): g_type option = match tau_l with
 	[] -> None
@@ -145,6 +145,15 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			| Some _ -> Error (BadCtorStruct_Err(cx, p))
 			| _ -> Error (NonCtor_Err(cx, p))
 		) in Valid (NewStructExpC(cx, el'), NamedTy(CT, cx))
+	| IsExp(x, ctor, p) ->
+		let* (ex, tau) = tc_exp env (VarExp(CT, x, p)) in
+		let* (derefFlag, ec) = (match Hashtbl.find_opt env.globalTIds ctor with
+			Some (TcCtorE _) -> Valid (false, EnumExpC ctor)
+			| Some (TcCtorU _) -> Valid (true, EnumExpC ctor)
+			| _ -> Error (NonCtorU_Err(ctor, p))
+		) in
+		let ev = if derefFlag then MemoryFieldExpC(RC, ex, 0, TypeDeref tau) else ex in
+		Valid (BinExpC("tag_eq", ev, ec), boolTy)
 	| AppExp(ef, el, p) ->
 		let* et_l' = tc_exp_list env el in
 		let tau_al = List.map snd et_l' in
@@ -154,7 +163,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			UnaryGF fsm -> Valid (UnaryExpC(fsm, List.nth el' 0), tau_rn)
 			| BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_rn)
 			| InternalGF fsm ->	let* c = calc_cfun env fsm el' p in Valid (c, tau_rn)
-			| TupleIndexGF i -> Valid (TupleIndexExpC(List.hd el', i, List.hd tau_pl), tau_rn)
+			| TupleIndexGF i -> Valid (MemoryFieldExpC(RC, List.hd el', i, TypeDeref (List.hd tau_pl)), tau_rn)
 			| ArrayIndexGF rw ->
 				let (rw', tau_r', et') =
 					if rw = RR then (RC, tau_rn, List.tl el')
@@ -164,13 +173,13 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			| ArrayDimsGF i -> Valid (ArrayDimsExpC(i, List.hd el'), tau_rn)
 			| StructFieldGF(rw, i, cx) ->
 				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
-				Valid (StructFieldExpC(rw', List.nth el' 0, i, cx), tau_rn)
+				Valid (MemoryFieldExpC(rw', List.nth el' 0, i, TypeDeref (NamedTy(CT, cx))), tau_rn)
 			| CallGF _ ->
 				(*let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
 				*)
 				let elx = List.map (fun (e', _) -> e') et_l' in
 				Valid (CallExpC(VarExpC f, elx, tau_rn), tau_rn)
-			| NonGF -> Valid (List.hd el', tau_rn)
+			| EnumRawGF -> Valid (EnumRawExpC (List.hd el'), tau_rn)
 		)
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
 	VarExp(_, f, p) -> (match lookup_fun_tenv env f tau_a with
@@ -242,7 +251,7 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 		| Some (NamedTy(_, cx)) ->
 			let tau = NamedTy(CT, cx) in
 			(match Hashtbl.find_opt env.globalTIds cx with
-				Some (TcTDef (EnumTD _)) -> Valid ("", NonGF, ([tau], intTy))
+				Some (TcTDef (EnumTD _)) -> Valid ("", EnumRawGF, ([tau], intTy))
 				| _ -> Error (NonEnum_Err(tau, p))
 			)
 		| Some tau -> Error (NonEnum_Err(tau, p))

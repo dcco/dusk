@@ -39,6 +39,8 @@ type ('m, 'ann) exp =
 	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
 	| FormatArrayExp of int * ('m, 'ann) exp list * ('m, 'ann) exp * 'ann
 	| NewStructExp of 'm * string * (string * ('m, 'ann) exp) list * 'ann
+		(* selectors *)
+	| IsExp of string * string * 'ann
 		(* function call *)
 	| AppExp of ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
 
@@ -79,6 +81,7 @@ let ann_exp e = match e with
 	| DataArrayExp(_, _, _, _, a) -> a
 	| FormatArrayExp(_, _, _, a) -> a
 	| NewStructExp(_, _, _, a) -> a
+	| IsExp(_, _, a) -> a
 	| AppExp(_, _, a) -> a
 
 let ann_stmt s = match s with

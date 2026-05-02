@@ -6,13 +6,10 @@
 #include <malloc.h>
 #include <pthread.h>
 
-#ifndef M_PI
-#define M_PI 3.1415926536f
-#endif
-
 #include "glad.h"
 #include "glfw3.h"
 
+#include "rc_constants.h"
 #include "time_api.h"
 #include "exit_log.h"
 #include "gc.h"

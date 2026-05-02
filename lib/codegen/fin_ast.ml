@@ -17,9 +17,11 @@ type gen_exp =
 	| BoxExpC of int * gen_exp * g_type*)
 		(* tuple operations (tuple creation also requires a box) *)
 	| EnumExpC of string
+	| EnumRawExpC of gen_exp
 	| TupleExpC of int * g_type * gen_exp list
+	| MemoryFieldExpC of gen_rw * gen_exp * int * deref_type
 	(*| TagTupleExpC of int * g_type * string * gen_exp list*)
-	| TupleIndexExpC of gen_exp * int * g_type
+	(*| TupleIndexExpC of gen_exp * int * g_type*)
 		(* array operations *)
 	| ConstArrayExpC of int list * gen_exp list * g_type
 	| ValueArrayExpC of int * int * gen_exp list * g_type
@@ -29,7 +31,7 @@ type gen_exp =
 	| ArrayDimsExpC of int * gen_exp
 		(* struct operations *)
 	| NewStructExpC of string * gen_exp list
-	| StructFieldExpC of gen_rw * gen_exp * int * string
+	(*| StructFieldExpC of gen_rw * gen_exp * int * string*)
 		(* garbage collection *)
 	| GCNewRootExpC of gen_exp
 and gen_rw = RC | WC of gen_exp
@@ -67,7 +69,8 @@ let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e
 	| BinExpC(_, e1, e2) -> (collect_thru_exp f e1) @ (collect_thru_exp f e2)
 	| CallExpC(ef, el, _) -> (collect_thru_exp f ef) @ (List.concat (List.map (collect_thru_exp f) el))
 	| TupleExpC(_, _, el) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
-	| TupleIndexExpC(e, _, _) -> collect_thru_exp f e
+	| MemoryFieldExpC(_, e, _, _) -> collect_thru_exp f e
+	(*| TupleIndexExpC(e, _, _) -> collect_thru_exp f e*)
 	| ValueArrayExpC(_, _, el, _) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
 	| NewArrayExpC(dim_l, el, _) ->
 		(List.concat (List.map (collect_thru_exp f) dim_l)) @
@@ -77,7 +80,7 @@ let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e
 	| ArrayLengthExpC e -> collect_thru_exp f e
 	| ArrayDimsExpC(_, e) -> collect_thru_exp f e
 	| NewStructExpC(_, el) -> List.concat (List.map (collect_thru_exp f) el)
-	| StructFieldExpC(_, e, _, _) -> collect_thru_exp f e
+	(*| StructFieldExpC(_, e, _, _) -> collect_thru_exp f e*)
 	| GCNewRootExpC e -> collect_thru_exp f e
 	| _ -> f e
 and collect_thru_stmt (f: gen_exp -> 'a list) (s: gen_stmt): 'a list = match s with
