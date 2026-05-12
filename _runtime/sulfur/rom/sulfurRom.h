@@ -35,13 +35,14 @@ void _updateRom(sf_rom_t* rom) {
 		if (nextRes->type == R_IMAGE) {
 			tex_image_t* imageData = (tex_image_t*) malloc(sizeof(tex_image_t));
 			initTexImage(rom->texArr, imageData, nextRes->storeId + 1, (char*) nextRes->xArgs);
-			//initTexImage(imageData, nextRes->a, nextRes->b, (char*) nextRes->xArgs);
+			// - does not free so the raw data may be accessed by user
+			// stbi_image_free(nextRes->xArgs);
 			*nextRes->storePtr = (void*) imageData;
 			rom->compTotal = rom->compTotal + 1;
 		} else if (nextRes->type == R_SPRITE) {
 			int* i_args = nextRes->iArgs;
 			tex_image_t* imgPtr = *((tex_image_t**) nextRes->xArgs);
-			sprite_t* sprite = initSprite(imgPtr, i_args[0], i_args[1], i_args[2], 1, 1);
+			sprite_t* sprite = initSprite(imgPtr, i_args[0], i_args[1], i_args[2], i_args[3], i_args[4]);
 			*nextRes->storePtr = (void*) sprite;
 			rom->compTotal = rom->compTotal + 1;
 		}

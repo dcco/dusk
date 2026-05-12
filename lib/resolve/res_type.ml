@@ -42,6 +42,9 @@ let rec resolve_type (env: res_env) (p: l_pos) (tau: m_type): g_type rs_res = ma
 	| ArrayTy(i, tau) -> let* tau' = resolve_type env p tau in Valid (ArrayTy(i, tau'))
 	| ValArrayTy tau -> let* tau' = resolve_type env p tau in Valid (ValArrayTy tau')
 	| TagOfTy tau -> let* tau' = resolve_type env p tau in Valid (TagOfTy tau')
+	| FunTy(tau_pl, tau_r) ->
+		let* tau_pl' = map_try_res (resolve_type env p) tau_pl in
+		let* tau_r' = resolve_type env p tau_r in Valid (FunTy(tau_pl', tau_r'))
 	| BotTy -> Valid BotTy
 
 let resolve_type_def (env: res_env) (p: l_pos) (td: m_tdef): g_tdef rs_res = match td with
@@ -49,11 +52,11 @@ let resolve_type_def (env: res_env) (p: l_pos) (td: m_tdef): g_tdef rs_res = mat
 		let* fl' = map_try_res (fun (x, tau) ->
 			let* tau' = resolve_type env p tau in Valid (x, tau')
 		) fl in Valid (StructTD fl')
-	| EnumTD cl ->
+	| EnumTD(extFlag, cl) ->
 		let* cl' = map_try_res (fun (x, ext) -> match ext with
 			GlobalEB _ -> Valid (x, ext)
 			| _ -> let x' = add_bind_dec_env env LocalOr x in Valid (x', ext)
-		) cl in Valid (EnumTD cl')
+		) cl in Valid (EnumTD(extFlag, cl'))
 	| UnionTD cl ->
 		(*let prefix = QT None in*)
 		let* cl' = map_try_res (fun (x, tau_l, ext) ->

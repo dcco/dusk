@@ -40,7 +40,7 @@ const int32_t K_x = GLFW_KEY_X;
 
 kbm_input_t* mainInput = NULL;
 
-extern void _none_Sys_Input_update() {
+extern void _none_Sys_Input_inUpdate() {
 	updateInput(mainInput);
 }
 

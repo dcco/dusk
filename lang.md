@@ -115,11 +115,85 @@ Note that the `=`/`equals` function is NOT defined for all types. In fact for mo
 
 ### 1.3 Math
 
-### 1.4 Tuples and Enums
+### 1.4 Enums
 
-#### Tuples
+In addition to the primitive types, Dusk allows for the definition of custom "enum" values.
 
-Dusk's most basic aggregate type is the tuple/enum type. Tuples are immutable, fixed-size lists of values (of possibly differing types). They may, for example, be used as the return type for a function returning multiple values. They are not heap-allocated, and thus care should be taken with using them to represent large objects.
+Enumeration types are explicitly defined using the `enum` keyword:
+
+```
+enum WeekDay = Sun | Mon | Tue | Wed | Thur | Fri | Sat
+```
+
+The `is` keyword may be used on an enum value to determine which enum is being used. Note that this is in contrast to using the `=` operator which is NOT in general defined for enums (although it may be explicitly defined and overloaded for any individual enum type).
+
+Ex:
+```
+var v = Sun
+if b then v = getDayOfWeek() end
+if v is Tue then
+  doTuesdaySpecial()
+end
+```
+
+Enumeration types are implemented using unsigned 16-bit integers, with each enum case being "enumerated" and assigned an integer starting from `0` (hence "enum" type). The raw integer may be obtained using the `.i` operator.
+
+Ex:
+```
+if z.i >= 2 || z.i <= 4 then
+  doMidweek()
+end
+```
+
+In some cases, it may be useful to have an enum definition skip numbers in the enumeration. An enum can be forced to a certain assignment using a number wrapped in parentheses, and the enumeration will continue from there.
+
+Ex:
+```
+enum KeyEnum =
+  KeyNull
+  | KeySpace(32) | KeyExclam
+  | KeyA(65) | KeyB | KeyC | ...
+```
+
+#### Implicit Enum Fields
+
+It's often useful to map enums to different values for each case. Dusk has special bracket syntax to do this in the definition of the enum
+
+```
+enum WeekDay{ String s } =
+  Sun{ s = "Sunday" }
+  | Mon{ s = "Monday" }
+  | Tue{ s = "Tuesday" }
+  | Wed{ s = "Wednesday" }
+  | Thu{ s = "Thursday" }
+  | Fri{ s = "Friday" }
+  | Sat{ s = "Sunday" }
+```
+
+This value can then be accessed using `.` syntax.
+
+Ex:
+```
+var d = Mon
+if b then d = yesterday() end
+print(d.s)
+```
+
+Note that enum fields are implemented as a lookup in a global constant table - enum fields do not store any extra data within the value itself.
+
+Enum fields may be left undefined, in which case the previous assignment will be used as a default. 
+
+Ex:
+```
+enum TileData{ ColType cType, Int frame } =
+  Empty{ cType = Empty, frame = 0 }
+  | Grass{ cType = Solid, frame = 1 }
+  | Dirt{ frame = 2 }  -- implicitly has cType = Solid
+```
+
+### 1.5 Tuples
+
+Dusk's most basic aggregate type is the tuple type. Tuples are immutable, fixed-size lists of values (of possibly differing types). They may, for example, be used as the return type for a function returning multiple values. They are not heap-allocated, and thus care should be taken with using them to represent large objects.
 
 Examples of tuple literals and their types include:
 ```
@@ -135,65 +209,24 @@ pair.2
 pairTriple.1.3
 ```
 
-Tuples don't have any write operation because they are declared on the heap
+Tuples are immutable, and so there are no operators for writing to a tuple.
 
 #### Pattern Variable Declaration
 
-The `var` keyword can be used to index the elements of a tuple and bind them to variables in one step through the use of tuple patterns. Rather than having `var` followed by an identifier, we have `var` followed by a tuple of either identifiers, or empty `_` wildcard spaces (for elements that we want to remain unmatched).
+The `var` keyword can be used to bind the elements of a tuple to variables in one step through the use of tuple "patterns". Rather than having `var` followed by an identifier, we have `var` followed by a tuple of identifiers, or `_` wildcard spaces (for elements that we wish to ignore).
 
 Ex:
 ```
 var (r, g, _) = color
 ```
 
-Note that tuple patterns cannot be nested, as nested tuples are not idiomatic.
+Note that tuple patterns cannot be nested (we consider nested tuples to be un-idiomatic).
 
-#### Enums
+### 1.6 Arrays and Tensors
 
-Standard enumeration types may be explicitly defined and named using the `enum` keyword:
+Dusk also has mutable, variable-size lists in the form of arrays. Arrays are heap-allocated, and function like "vectors" in other languages (they may be resized in-place).
 
-```
-enum WeekDay = Sun | Mon | Tue | Wed | Thur | Fri | Sat
-```
-
-Dusk generalizes enums so that they can store data, defining a "union" of tuples that may be distinguished with an extra byte of information storing a tag. 
-
-Ex:
-```
-enum TileType = None | Solid(Int) | Water(Float) | Lava
-```
-
-Note that enums, like tuples, are not heap-allocated. This means that unlike other similar datatypes (Algebraic Datatypes, etc), they cannot be recursive. Such datatypes may be implemented through heap-allocated "union" datatypes instead (specified later in this section).
-
-The `is` keyword may be used on enums to determine its tag which case is being stored. Once the tag of an enum is known, the data inside may also be indexed or unpacked using.
-
-Ex:
-```
-if v is Solid then
-  x = v.1
-elsif v is Water then
-  var (f) = v
-  foo(f) 
-end
-```
-
-If an enum has already been checked for all but one case, the final case does not need to be checked to unpack the data. Eg, the following is valid:
-
-```
-type Story = A(Int, Int) | B(Int, Int, Int) | C(Float)
-
-fn f(Story s) Int
-  if s is A then return s.1
-  elsif s is B then return s.2 + s.3 end
-  return floor(s.1)
-end
-```
-
-### 1.5 Arrays and Tensors
-
-Dusk also has mutable lists of values of variable size in the form of arrays. Arrays are heap-allocated, and function like "vectors" in other languages in the sense that they may be resized in-place.
-
-Dusk additionally supports multi-dimensional arrays, known as "tensors". The type of an array is written with the dimensionality of the array, followed by the type of value contained by the array.
+Dusk also supports multi-dimensional arrays, known as "tensors". The type of an array is written with the dimensionality of the array, followed by the type of value contained by the array.
 
 Ex:
 ```
@@ -205,7 +238,7 @@ Ex:
 
 #### Arrays
 
-Examples of 1-dimensional array literals include:
+Array literals are declared using the `new` keyword (which is used in general for initializing heap-allocated values). Examples of 1-dimensional array literals include:
 ```
 new 1d[1, 2, 3, 4, 5, 6]
 new 1d[String]    -- initializes an empty array of the given type
@@ -260,13 +293,11 @@ var a = new 2d[3, 2][
 return a[0, 1]   -- returns 3
 ```
 
-### 1.6 Structs and Unions
+### 1.7 Structs
 
-#### Structs
+Tuples, and Arrays are accessed through integer indices. Structs are heap-allocated, mutable data structures accessed through a fixed set of field identifiers.
 
-Tuples, Enums, and Arrays are accessed through integer indices. Structs are heap-allocated, mutable sets of values accessed through a fixed set of field identifiers.
-
-Struct types, like enums, must be explicitly defined through the `struct` keyword.
+Struct types, must be explicitly named using the `struct` keyword.
 
 Ex:
 ```
@@ -293,24 +324,78 @@ return box.x + box.width   -- struct read
 box.y = box.y + gravity    -- struct update
 ```
 
-#### Unions
+### 1.8 Dictionaries
 
-Union types define a "union" of structs which may be distinguished by use of a tag. Unions are to structs as enums are to tuples. Since Unions are heap-allocated, they may be of arbitrary size, and can be used to define recursive structures.
+Dictionaries are heap-allocated, mutable sets of values accessed through a variable set of keys. Dictionaries are to structs as arrays are to tuples.
+
+### 1.9 Unions
+
+Tuples, arrays, structs, and dictionaries all define datatypes with a fixed structure. Dusk also allows for datatypes with varying structure by combining them with enums. We call such a data structure a "union".
+
+Unions are defined using the `union` keyword as either a union of tuples or structs. These tuple/struct cases are combined with an enum used to distinguish each case, known as the union "tag".
 
 Ex:
 ```
+union TileType = None | Solid(Int) | Water(Float) | Lava
+
 union WordTree =
   Leaf{ String word }
   | Branch{ String word, WordTree left, WordTree right }
 ```
 
-All other struct syntax also applies to unions. The `is` operator may also be used on unions to distinguish cases in the same manner as for enums.
+Note the unions of tuples, like regular tuples, are not heap-allocated. As a result, they cannot be recursive. Recursive unions must be unions of structs instead.
 
-### 1.7 Dictionaries
+The `is` keyword may be used on unions to determine its tag. Once the tag of an enum is known. The data inside may also be indexed or unpacked using standard tuple / struct notation.
 
-Dictionaries are heap-allocated, mutable sets of values accessed through a variable set of keys. Dictionaries are to structs as arrays are to tuples.
+Ex:
+```
+if v is Solid then
+  x = v.1
+elsif v is Water then
+  var (f) = v
+  foo(f) 
+end
 
-### 1.8 Nullables
+if d is Branch then
+  traverse(d.left)
+  traverse(d.right)
+end
+```
+
+If an enum has already been checked for all but one case, the final case does not need to be checked to unpack the data. Eg, the following is valid:
+
+```
+union Story = A(Int, Int) | B(Int, Int, Int) | C(Float)
+
+fn f(Story s) Int
+  if s is A then return s.1
+  elsif s is B then return s.2 + s.3 end
+  return floor(s.1)
+end
+```
+
+#### Implicit Enums
+
+The tag of a union may also be explicitly accessed using the `.t` operator.
+
+Ex:
+```
+var v = Water(4.67)
+v = flood(v)
+if v.t.i = 2 then print(v) end
+```
+
+Union types implicitly define a corresponding enum type for the union's tag value. This enum type is named by adding `.t`, and values of this enum type can be constructed using the `@` symbol.
+
+For example, the above example essentially defines enum types where:
+```
+enum TileType.t = @None | @Solid | @Water | @Lava
+enum WordTree.t = @Leaf | @Branch
+```
+
+(Note that this isn't valid syntax, it just illustrates what the implicitly defined enums look like).
+
+### 1.10 Nullables
 
 Sometimes it is useful to allow "null" pointers, for instance in arrays where most of the etnries will be some empty. To interact with such values safely, we introduce a notion of a nullable datatype.
 
@@ -595,7 +680,7 @@ The main implication is that types without explicit names (tuples, arrays, nulla
 
 ### 3.5 Global Variables
 
-Dusk supports the use of global variables, but only in very explicit fashion. Any function that modifies a global variable must declare that it does so explicitly,
+Dusk supports the use of global variables, 
 
 ## 3. Module System
 

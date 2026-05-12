@@ -12,8 +12,20 @@ open Calc_exp
 	
 	(* type-checking basics *)
 
+let is_boxed_type (env: type_env) (tau: g_type): bool = match tau with
+	TupleTy _ -> true
+	| NamedTy(_, cx) -> (match Hashtbl.find_opt env.globalTIds cx with
+		Some (TcTDef td) -> (match td with
+			UnionTD _ -> true
+			| _ -> false
+		)
+		| _ -> failwith "BUG: tc_exp.ml - Invalid type encountered while checking boxed type status."
+	)
+	| _ -> false
+
 let is_heap_type (env: type_env) (tau: g_type): bool = match tau with
 		(* 
+			- does not include all built types, only ones needing GC
 			TODO: replace doing this for builtins with a more structured method
 		*)
 	BuiltinTy x -> List.mem x ["PRNG"; "Mat4"]
@@ -37,6 +49,7 @@ type g_fun =
 	| ArrayIndexGF of rw
 	| ArrayLengthGF
 	| ArrayDimsGF of int
+	| ArrayAddGF
 	| StructFieldGF of rw * int * string
 	| CallGF of int list
 	| EnumRawGF
@@ -85,7 +98,8 @@ let tc_const (c: const): g_type = match c with
 	| FConst _ -> floatTy
 	| SConst _ -> stringTy
 	| BConst _ -> boolTy
-	| LConst _ -> longTy
+	| U8Const _ -> uint8Ty
+	| LConst _ -> uint64Ty
 	| KConst _ -> failwith "BUG: tc_const.ml - Type lookup performed directly on key constant."
 
 let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e with
@@ -171,6 +185,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				Valid (ArrayIndexExpC(rw', List.hd el', FullIndexC et', tau_rn), tau_r')
 			| ArrayLengthGF -> Valid (ArrayLengthExpC (List.hd el'), tau_rn)
 			| ArrayDimsGF i -> Valid (ArrayDimsExpC(i, List.hd el'), tau_rn)
+			| ArrayAddGF -> Valid (ArrayAddExpC(List.hd el', List.nth el' 1, List.nth tau_pl 1), tau_rn)
 			| StructFieldGF(rw, i, cx) ->
 				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
 				Valid (MemoryFieldExpC(rw', List.nth el' 0, i, TypeDeref (NamedTy(CT, cx))), tau_rn)
@@ -178,7 +193,8 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				(*let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
 				*)
 				let elx = List.map (fun (e', _) -> e') et_l' in
-				Valid (CallExpC(VarExpC f, elx, tau_rn), tau_rn)
+				let iOpt = if is_boxed_type env tau_rn then Some (get_box_id_tenv env) else None in
+				Valid (CallExpC(iOpt, VarExpC f, elx, tau_rn), tau_rn)
 			| EnumRawGF -> Valid (EnumRawExpC (List.hd el'), tau_rn)
 		)
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_tag fun_type) tc_res = match ef with
@@ -209,7 +225,7 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 			let tau_il = if rw = RR then tau_i else tau_v :: tau_i in
 			Valid ("", ArrayIndexGF rw, (ArrayTy(i, tau_v) :: tau_il, tau_v))
 		| Some _ ->
-			let fName = if rw = RR then "_builtin_lookup" else "_builtin_update" in 
+			let fName = if rw = RR then "_builtin_lookup" else "_builtin_update" in
 			tc_fun_exp env (VarExp(CT, fName, p)) tau_a
 	)
 	| OpExp(StructFieldOp(rw, x), p) -> (match tau_a with
@@ -235,6 +251,18 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 			if i = 1 then Valid ("", ArrayLengthGF, ([ArrayTy(i, tau_v)], intTy))
 			else Valid ("", ArrayDimsGF i, ([ArrayTy(i, tau_v)], TupleTy (List.init i (fun _ -> intTy))))
 		| Some _ -> tc_fun_exp env (VarExp(CT, "_builtin_measure", p)) tau_a
+	)
+	| OpExp(ArrayAddOp, _) -> (match tau_a with
+		None -> failwith "BUG: tc_exp.ml - No argument for array add operation."
+		| Some (ArrayTy(1, tau_v)) ->
+			Valid ("", ArrayAddGF, ([ArrayTy(1, tau_v); tau_v], unitTy))
+		| Some _ -> failwith "UNIMPLEMENTED: tc_exp.ml - No default function name for array add operation."
+	)
+	| OpExp(ArrayRemoveOp, _) -> (match tau_a with
+		None -> failwith "BUG: tc_exp.ml - No argument for array removal operation."
+		| Some (ArrayTy(1, tau_v)) ->
+			Valid ("_builtin_remove", CallGF [], ([ArrayTy(1, tau_v); intTy], unitTy))
+		| Some _ -> failwith "UNIMPLEMENTED: tc_exp.ml - No default function name for array removal operation."
 	)
 	| OpExp(TupleTagOp, p) -> (match tau_a with
 		None -> failwith "BUG: tc_exp.ml - No argument for tuple tag operation."
@@ -290,8 +318,8 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt): (type_env * gen_st
 		)
 	)
 	| ReturnStmt(eo, _) -> (match eo with
-		None -> Valid (env, [ReturnStmtC None], true)
-		| Some e -> let* (e', _) = tc_exp env e in Valid (env, [ReturnStmtC (Some e')], true)
+		None -> Valid (env, [ReturnStmtC (None, unitTy)], true)
+		| Some e -> let* (e', t) = tc_exp env e in Valid (env, [ReturnStmtC (Some e', t)], true)
 	)
 	| PatStmt(px, e, _) -> (match px with
 		VarPat x ->
@@ -356,9 +384,10 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 		let* (_, b', term) = tc_body { f = fName; lf = lf; } localEnv b in
 		if not term then (
 			if tau_r <> unitTy then Error (NoReturn_Err(fName, p))
-			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
+			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC(None, unitTy)])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 	| TDefDec(x, td, _) -> add_tdef_tenv env x td; Valid [(x, TDefDecC td)]
+	| ExtendsDec(_, _, _, _) -> Valid []
 	| ConstDec(x, e, _) ->
 		let* (e', tau) = tc_exp env e in
 		let* ef = calc_exp env e' in
@@ -374,7 +403,7 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 		let sl = (List.map (fun (x, e', tau) ->
 			let e_gc = if is_heap_type env tau then GCNewRootExpC e' else e' in
 			AssignStmtC(x, e_gc)
-		) fl') @ [ReturnStmtC None] in
+		) fl') @ [ReturnStmtC(None, unitTy)] in
 		let iDec =
 			if c = None then [("", InitDecC sl)]
 			else [("init" ^ x, FunDecC (MethodC([], unitTy, sl)))]

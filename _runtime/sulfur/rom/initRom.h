@@ -1,9 +1,6 @@
 #ifndef LOAD_ROM_H
 #define LOAD_ROM_H
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 	/* resource loading */
 
 const char* ROM_DIR = "workspace/game/rom/";
@@ -41,7 +38,7 @@ void* initRomLoad(void* arg) {
 		iData.type = R_IMAGE;
 		iData.storePtr = res_ptr_list[i];
 		iData.storeId = i;
-		char* img = stbi_load(full_url, &iData.a, &iData.b, &n, 0);
+		char* img = stbi_load(full_url, &iData.a, &iData.b, &n, 4);
 		if (img == NULL) {
 			// TODO: throw exception
 			printf("Failed to load: %s\n", full_url);

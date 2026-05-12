@@ -19,6 +19,7 @@ rule token = parse
 	| "\r\n" | "\r" | "\n" { new_line lexbuf; token lexbuf }
 	| "(*" { comment 1 lexbuf }
 	| "--" { comment_line lexbuf }
+	| "Fn" { lexWrap lexbuf T_FN }
 	| "references" { lexWrap lexbuf REFERENCES }
 	| "module" { lexWrap lexbuf MODULE }
 	| "modules" { lexWrap lexbuf MODULES }
@@ -26,6 +27,9 @@ rule token = parse
 	| "end" { lexWrap lexbuf END }
 	| "struct" { lexWrap lexbuf STRUCT }
 	| "enum" { lexWrap lexbuf ENUM }
+	| "enum+" { lexWrap lexbuf ENUMP }
+	| "extends" { lexWrap lexbuf EXTENDS }
+	| "attrs" { lexWrap lexbuf ATTRS }
 	| "union" { lexWrap lexbuf UNION }
 	| "const" { lexWrap lexbuf CONST }
 	| "globals" { lexWrap lexbuf GLOBALS }
@@ -57,7 +61,8 @@ rule token = parse
 	| ("-"? "0x" hexChar+) as h { lexWrap lexbuf (INT (int_of_string h)) }
 	| ("-"? numChar+ "." numChar+) as f { lexWrap lexbuf (FLOAT (float_of_string f)) }
 	| ("-"? numChar+) as i { lexWrap lexbuf (INT (int_of_string i)) }
-	| (("-"? numChar+) as l) ("l" | "L") { lexWrap lexbuf (LONG (Int64.of_string l)) }
+	| ((numChar+) as b) ("b" | "B") { lexWrap lexbuf (U8 (int_of_string b)) }
+	| ((numChar+) as l) ("l" | "L") { lexWrap lexbuf (LONG (Int64.of_string l)) }
 	| "^" (['a'-'z']+ as k) { lexWrap lexbuf (KLIT k) }
 	| "_" { lexWrap lexbuf UNDERSCORE }
 	| ".." { lexWrap lexbuf ELLIP }
@@ -71,6 +76,8 @@ rule token = parse
 	| "&&" { lexWrap lexbuf AND }
 	| "||" { lexWrap lexbuf OR }
 	| "!" { lexWrap lexbuf EXCLAM }
+	| "+=" { lexWrap lexbuf PLUS_EQ }
+	| "/=" { lexWrap lexbuf SLASH_EQ }
 	| "+" { lexWrap lexbuf PLUS }
 	| "-" { lexWrap lexbuf DASH }
 	| "**" { lexWrap lexbuf EXPO }

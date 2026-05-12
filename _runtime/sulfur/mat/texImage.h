@@ -5,9 +5,10 @@ typedef struct tex_image {
 	int index;
 	int width;
 	int height;
+	unsigned char* data;
 } tex_image_t;
 
-void initTexImage(tex_array_t* texArray, tex_image_t* image, int index, const char* data) {
+void initTexImage(tex_array_t* texArray, tex_image_t* image, int index, unsigned char* data) {
 	// upload texture data to array
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texArray->id);
 	glTexSubImage3D(
@@ -21,6 +22,15 @@ void initTexImage(tex_array_t* texArray, tex_image_t* image, int index, const ch
 	image->index = index;
 	image->width = texArray->width;
 	image->height = texArray->height;
+	image->data = data;
+}
+
+int8_t checkPixel(tex_image_t* image, int x, int y, uint8_t tr, uint8_t tg, uint8_t tb) {
+	int i = ((y * image->width) + x) * 4;
+	uint8_t r = image->data[i];
+	uint8_t g = image->data[i + 1];
+	uint8_t b = image->data[i + 2];
+	return r == tr && g == tg && b == tb;
 }
 
 /*typedef struct tex_image {

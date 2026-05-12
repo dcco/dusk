@@ -113,6 +113,19 @@ let resolve_dec (env: res_env) (d: n_dec): r_dec rs_res = match d with
 	| TDefDec(x, td, p) ->
 		let tName = add_bind_dec_env env LocalOr x in
 		let* td' = resolve_type_def env p td in	Valid (TDefDec(tName, td', p))
+	| ExtendsDec(x, al, cl, p) ->
+		let* al' = map_try_res (fun (x, tau) ->
+			let* t' = resolve_type env p tau in Valid (x, t')
+		) al in
+		let* cl' = map_try_res (fun ((ctor, eb), e_al) ->
+			let* e_al' = map_try_res (fun (x, e) ->
+				let* e' = resolve_exp env e in Valid (x, e')
+			) e_al in
+			let ctor' = (match lookup_bind_dec_env env LocalOr ctor with
+				None -> add_bind_dec_env env LocalOr ctor
+				| Some ctor' -> ctor'
+			) in Valid ((ctor', eb), e_al')
+		) cl in Valid (ExtendsDec(x, al', cl', p))
 	| ConstDec(x, e, p) ->
 		let x' = add_bind_dec_env env LocalOr x in
 		let* e' = resolve_exp env e in

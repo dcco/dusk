@@ -31,35 +31,35 @@ let gcDimsType n = struct_type context (Array.of_list (List.init n (fun _ -> iTy
 			(the one handled in expressions / used in arguments)
 	*)
 
-let genType (env: dusk_env) (tau: g_type): lltype = match tau with
-	PrimTy "Unit" -> voidType
+let genType (debug: string) (env: dusk_env) (tau: g_type): lltype = match tau with
+	PrimTy "Unit" -> failwith ("BUG: gen_type.ml - Unit type used outside of return type. " ^ debug)
 	| PrimTy "Int" -> iType
 	| PrimTy "Float" -> fType
 	| PrimTy "Bool" -> bType
 	| PrimTy "String" -> ptrType
-	| PrimTy "Long" -> i64Type
+	| PrimTy "Uint8" -> i8Type
+	| PrimTy "Uint32" -> iType
+	| PrimTy "Uint64" -> i64Type
 	| PrimTy "Key" -> iType
-	| PrimTy _ -> failwith "BUG: gen_type.ml - Non-existent primitive type."
+	| PrimTy _ -> failwith ("BUG: gen_type.ml - Non-existent primitive type. " ^ debug)
 	| BuiltinTy _ -> ptrType
 	| NamedTy(_, t) -> (match Hashtbl.find_opt env (DTName t) with
 		Some (DTDef td) -> (match td with
 			EnumTD_C -> tagType
 			| _ -> ptrType
 		) 
-		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while generating type.")
+		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while generating type. " ^ debug)
 	)
 	| TupleTy _ -> ptrType
 	| ArrayTy(_, _) -> ptrType
 	| ValArrayTy _ -> ptrType
 	| TagOfTy _ -> tagType
+	| FunTy _ -> ptrType
 	| BotTy -> ptrType
 
 let genTagTupleType (env: dusk_env) (tau_l: g_type list): lltype =
-	let tau_l' = List.map (genType env) tau_l in
+	let tau_l' = List.map (genType "(Tag Tuple)" env) tau_l in
 	struct_type context (Array.of_list (tagType :: tau_l'))
-
-let genFunType (env: dusk_env) (pl: (string * g_type) list) (tau_r: g_type): lltype =
-	function_type (genType env tau_r) (Array.of_list (List.map (fun (_, t) -> genType env t) pl))
 
 	(*
 		genStoreType: gives the type a datatype should be "stored" with.
@@ -67,41 +67,57 @@ let genFunType (env: dusk_env) (pl: (string * g_type) list) (tau_r: g_type): llt
 			which are stored as hard copies)
 	*)
 
-let genStoreType (env: dusk_env) (tau: g_type): lltype * int option = match tau with
-	TupleTy tau_l -> (struct_type context (Array.of_list (List.map (genType env) tau_l)), None)
+type store_type =
+	TStore of lltype
+	| CopyStore of lltype * int option
+
+let genStoreTypeFull (debug: string) (env: dusk_env) (tau: g_type): store_type = match tau with
+	PrimTy "Unit" -> TStore voidType
+	| TupleTy tau_l -> CopyStore (struct_type context (Array.of_list (List.map (genType debug env) tau_l)), None)
 	| NamedTy(_, t) -> (match Hashtbl.find_opt env (DTName t) with
 		Some (DTDef td) -> (match td with
-			EnumTD_C -> (tagType, None)
-			| OpaqueTD_C(i, align) -> (array_type i8Type i, Some align)
-			| _ -> (ptrType, None)
+			EnumTD_C -> TStore tagType
+			| OpaqueTD_C(i, align) -> CopyStore (array_type i8Type i, Some align)
+			| _ -> TStore ptrType
 		) 
 		| Some v -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^
 			"\" mapped to unexpected value " ^ (string_of_dval v) ^ " while generating storage type.")
 		| None -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while generating storage type.")
 	)
-	| _ -> (genType env tau, None)
+	| _ -> TStore (genType debug env tau)
+
+let genStoreType (debug: string) (env: dusk_env) (tau: g_type): lltype * int option =
+	match genStoreTypeFull debug env tau with
+		TStore t -> (t, None)
+		| CopyStore(t, alignOpt) -> (t, alignOpt)
+
+let genFunType (debug: string) (env: dusk_env) (tau_pl: g_type list) (tau_r: g_type): lltype =
+	let tau_pl' = List.map (genType debug env) tau_pl in
+	match genStoreTypeFull debug env tau_r with
+		TStore tau_r' -> function_type tau_r' (Array.of_list tau_pl')
+		| CopyStore(_, _) -> function_type voidType (Array.of_list (ptrType :: tau_pl'))
 
 	(*
 		genDerefType: gives the underlying type for dusk pointer types
 			(used for struct/array RW operations)
 	*)
 
-let genDerefType (env: dusk_env) (tau: deref_type): lltype = match tau with
-	TypeDeref (TupleTy tau_l) -> struct_type context (Array.of_list (List.map (genType env) tau_l))
+let genDerefType (debug: string) (env: dusk_env) (tau: deref_type): lltype = match tau with
+	TypeDeref (TupleTy tau_l) -> struct_type context (Array.of_list (List.map (genType debug env) tau_l))
 	| TypeDeref (NamedTy(_, t)) -> (match Hashtbl.find_opt env (DTName t) with
 		Some (DTDef td) -> (match td with
 			EnumTD_C -> tagType
 			| OpaqueTD_C(_, _) ->
-				failwith ("BUG: gen_type.ml - Ambiguous union type \"" ^ t ^ "\" encountered while dereferencing type.")
+				failwith ("BUG: gen_type.ml - Ambiguous union type \"" ^ t ^ "\" encountered while dereferencing type. " ^ debug)
 			| StructTD_C(tl', _) -> struct_type context (Array.of_list tl') 
 		) 
-		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while dereferencing type.")
+		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while dereferencing type." ^ debug)
 	)
 	| CtorDeref t -> (match Hashtbl.find_opt env (DCtor t) with
 		Some (DEnum(_, tau_l)) -> struct_type context (Array.of_list tau_l)
-		| _ -> failwith ("BUG: gen_type.ml - Could not find enum definition for \"" ^ t ^ "\" encountered while dereferencing type.")
+		| _ -> failwith ("BUG: gen_type.ml - Could not find enum definition for \"" ^ t ^ "\" encountered while dereferencing type." ^ debug)
 	)
-	| _ -> failwith ("BUG: gen_type.ml - Invalid/non-pointer type encountered while dereferencing type.")
+	| _ -> failwith ("BUG: gen_type.ml - Invalid/non-pointer type encountered while dereferencing type." ^ debug)
 
 	(*
 		garbage collection layout type
@@ -134,7 +150,7 @@ let rec gcElemType (cont: llvm_cont) (env: dusk_env) (tau: g_type): gc_child lis
 	| ValArrayTy _ -> failwith ("BUG: gen_type.ml - Value-arrays cannot be stored in other data structures.")
 	| _ -> []
 and gcElemTypeList (cont: llvm_cont) (env: dusk_env) (fieldOffset: int) (tau_l: g_type list): gc_child list =
-	let tau_s = struct_type context (Array.of_list (List.map (genType env) tau_l)) in
+	let tau_s = struct_type context (Array.of_list (List.map (genType "(GC Layout)" env) tau_l)) in
 	let childList = ref [] in
 	List.iteri (fun i tau ->
 		let offset = Int64.to_int (DataLayout.offset_of_element tau_s (i + fieldOffset) cont.data_layout) in

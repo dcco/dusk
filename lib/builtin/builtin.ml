@@ -60,6 +60,7 @@ let builtinList =  [
 	("mul", BinaryASMSym "imul", [intTy; intTy], intTy);
 	("div", BinaryASMSym "idiv", [intTy; intTy], intTy);
 	("mod", BinaryASMSym "imod", [intTy; intTy], intTy);
+	("flDiv", BinaryASMSym "ifdiv", [intTy; intTy], floatTy);
 
 	("neg", UnaryASMSym "fneg", [floatTy], floatTy);
 	("add", BinaryASMSym "fadd", [floatTy; floatTy], floatTy);
@@ -85,19 +86,25 @@ let builtinList =  [
 	("and", BinaryASMSym "band", [boolTy; boolTy], boolTy);
 	("or", BinaryASMSym "bor", [boolTy; boolTy], boolTy);
 
-	("add", BinaryASMSym "i64add", [longTy; longTy], longTy);
-	("sub", BinaryASMSym "i64sub", [longTy; longTy], longTy);
-	("mul", BinaryASMSym "i64mul", [longTy; longTy], longTy);
-	("div", BinaryASMSym "i64div", [longTy; longTy], longTy);
+	("add", BinaryASMSym "ui64add", [uint64Ty; uint64Ty], uint64Ty);
+	("sub", BinaryASMSym "ui64sub", [uint64Ty; uint64Ty], uint64Ty);
+	("mul", BinaryASMSym "ui64mul", [uint64Ty; uint64Ty], uint64Ty);
+	("div", BinaryASMSym "ui64div", [uint64Ty; uint64Ty], uint64Ty);
+
+	("eq", BinaryASMSym "ieq", [uint32Ty; uint32Ty], boolTy);
+	("neq", BinaryASMSym "ineq", [uint32Ty; uint32Ty], boolTy);
+
+	("eq", BinaryASMSym "ieq", [uint8Ty; uint8Ty], boolTy);
+	("neq", BinaryASMSym "ineq", [uint8Ty; uint8Ty], boolTy);
 
 	("add", ExternalSym [], [stringTy; stringTy], stringTy);
 	("toString", ExternalSym [], [intTy], stringTy);
 	("toString", ExternalSym [], [floatTy], stringTy);
 
 	("toInt", UnaryASMSym "ftoi", [floatTy], intTy);
-	("toInt", UnaryASMSym "i64toi", [longTy], intTy);
+	("toInt", UnaryASMSym "ui64toi", [uint64Ty], intTy);
 	("toFloat", UnaryASMSym "itof", [intTy], floatTy);
-	("toLong", UnaryASMSym "itoi64", [intTy], longTy);
+	("toUint64", UnaryASMSym "itoui64", [intTy], uint64Ty);
 	("floor", ExternalSym [], [floatTy], floatTy);
 	("ceil", ExternalSym [], [floatTy], floatTy);
 
@@ -109,7 +116,12 @@ let builtinList =  [
 
 	("measure", ExternalSym [], [stringTy], intTy);
 
-	("cLoad", InternalSym "cLoad", [stringTy], stringTy)
+	("color", ExternalSym [], [uint8Ty; uint8Ty; uint8Ty], uint32Ty);
+	("rgb", ExternalSym [], [uint32Ty], uint32Ty);
+
+	("remove", ExternalSym [], [ArrayTy(1, intTy); intTy], unitTy);
+
+	("cLoad", InternalSym "cLoad", [stringTy], stringTy);
 ]
 
 let prngTy = builtinTy "PRNG"
@@ -124,11 +136,11 @@ let osList = [
 	("randomInt", ExternalSym [], [prngTy; intTy], intTy);
 	("randomFloat", ExternalSym [], [prngTy], floatTy);
 	
-	("time", ExternalSym [], [], longTy);
+	("time", ExternalSym [], [], uint64Ty);
 ]
 
 let inputList = [
-	("update", ExternalSym [], [], unitTy);
+	("inUpdate", ExternalSym [], [], unitTy);
 	("keyDown", ExternalSym [], [keyTy], boolTy);
 	("keyPress", ExternalSym [], [keyTy], boolTy)
 ]
@@ -146,7 +158,13 @@ let sulfurList = [
 	("waitRom", ExternalSym [], [], unitTy);
 	("refresh", ExternalSym [], [], unitTy);
 	("draw", ExternalSym [], [namedTy "Glyph"], unitTy);
-	("draw", ExternalSym [], [namedTy "Glyph3d"], unitTy);
+	("drawQuadX", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
+	("drawQuadY", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
+	("drawQuadZ", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
+	("drawSprite", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
+
+		(* rom data *)
+	("pixel", ExternalSym [], [imageTy; intTy; intTy], uint32Ty);
 
 		(* shader / fbo setup *)
 	("newShader", ExternalSym [], [stringTy; stringTy; ValArrayTy intTy;
@@ -189,12 +207,12 @@ let sulfurTypes = [
 		("GSprite", [intTy; intTy; spriteTy; intTy], GlobalEB "C_SPRITE");
 		("GText", [spriteTy; stringTy], GlobalEB "C_TEXT")
 	]));
-	(QT None, "Glyph3d", TDefVD (UnionTD [
+	(*(QT None, "Glyph3d", TDefVD (UnionTD [
 		("G3Nop", [], GlobalEB "C3_NOP");
 		("G3QuadX", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QX");
 		("G3QuadY", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QY");
 		("G3QuadZ", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QZ");
-	]));
+	]));*)
 	(QT None, "GLVal", TDefVD (UnionTD [
 		("GLFloat", [floatTy], GlobalEB "C_GL_FLOAT");
 		("GLMat4", [mat4Ty], GlobalEB "C_GL_MAT4");
@@ -207,11 +225,11 @@ let sulfurTypes = [
 		("GLFloatV", [floatTy], Some "C_GL_FLOAT");
 		("GLMat4V", [mat4Ty], Some "C_GL_MAT4");
 	]));*)
-	(QT None, "BufferType", TDefVD (EnumTD [
+	(QT None, "BufferType", TDefVD (EnumTD(false, [
 		("FBOColor", GlobalEB "C_FBO_COLOR");
 		("FBODepth", GlobalEB "C_FBO_DEPTH");
 		("FBORender", GlobalEB "C_FBO_RENDER")
-	]))
+	])))
 ]
 
 	(*
@@ -235,7 +253,7 @@ type prim_flag = PF | NPF
 
 let extractSymbols (symList: 'm virt_bind list): (prim_flag * string) list =
 	List.concat (List.map (fun (_, f, vd) -> match vd with
-		TDefVD (EnumTD cl) -> (PF, f) :: (List.map (fun (c, _) -> (PF, c)) cl)
+		TDefVD (EnumTD(_, cl)) -> (PF, f) :: (List.map (fun (c, _) -> (PF, c)) cl)
 		| TDefVD (UnionTD cl) -> (PF, f) :: (List.map (fun (c, _, _) -> (PF, c)) cl)
 		| _ -> [(NPF, f)]
 	) symList)

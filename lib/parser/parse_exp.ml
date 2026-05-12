@@ -94,7 +94,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 
 let rec parseType: m_type parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem ->
-		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "Long"] then Valid (primTy x, tkRem)
+		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "Uint8"; "Uint32"; "Uint64"] then Valid (primTy x, tkRem)
 		else if List.mem x ["PRNG"; "Mat4"; "Image"; "Sprite"; "RenderData"] then Valid (builtinTy x, tkRem)
 		else Valid (NamedTy(QT None, x), tkRem)
 	| (DIM i, _) :: tkRem ->
@@ -103,6 +103,11 @@ let rec parseType: m_type parser = fun tkList -> match tkList with
 	| (LPAREN, _) :: _ ->
 		let* (tau_l, tkRem) = parseParenWrap (parseSepList parseType chkComma) "Tuple Type" tkList in
 		Valid (TupleTy tau_l, tkRem)
+	| (T_FN, _) :: tkRem ->
+		let* (tau_pl, tkRem2) = parseParenWrap (
+			parseOrEmpty (parseSepList parseType chkComma) chkBrackR) "Function Type" tkRem in
+		let* (tau_r, tkRem3) = parseRetTy tkRem2 in
+		Valid (FunTy(tau_pl, tau_r), tkRem3)
 	| tk :: _ -> Error (BadToken_Err(tk, "Type Name"))
 	| _ -> Error (EOF_Err "Type Name")
 
@@ -202,6 +207,7 @@ and parseAtomExp: n_exp parser = fun tkList -> match tkList with
 	| (FALSE, p) :: tkRem -> Valid (ConstExp(BConst false, p), tkRem)
 	| (TRUE, p) :: tkRem -> Valid (ConstExp(BConst true, p), tkRem)
 	| (STRLIT s, p) :: tkRem -> Valid (ConstExp(SConst s, p), tkRem)
+	| (U8 i, p) :: tkRem -> Valid (ConstExp(U8Const i, p), tkRem)
 	| (LONG l, p) :: tkRem -> Valid (ConstExp(LConst l, p), tkRem)
 	| (KLIT k, p) :: tkRem -> Valid (ConstExp(KConst k, p), tkRem)
 	| (ID x, p) :: tkRem -> (match tkRem with
@@ -335,8 +341,19 @@ and parseAddExp: n_exp parser = fun tkList ->
 	let* ((e0, eOpList), tkRem) = parseSepListFull parseMulExp readAddOp tkList in
 	Valid (foldOpListL e0 eOpList, tkRem)
 
+and parseArrOpExp: n_exp parser = fun tkList ->
+	let* (e1, tkRem) = parseAddExp tkList in (match tkRem with
+		(PLUS_EQ, p) :: tkRem2 ->
+			let* (e2, tkRem3) = parseRelExp tkRem2 in
+			Valid (AppExp(OpExp(ArrayAddOp, p), [e1; e2], p), tkRem3)
+		| (SLASH_EQ, p) :: tkRem2 ->
+			let* (e2, tkRem3) = parseRelExp tkRem2 in
+			Valid (AppExp(OpExp(ArrayRemoveOp, p), [e1; e2], p), tkRem3)
+		| _ -> Valid (e1, tkRem)
+	)
+
 and parseCompExp: n_exp parser = fun tkList ->
-	let* ((e0, eOpList), tkRem) = parseSepListFull parseAddExp readCompOp tkList in
+	let* ((e0, eOpList), tkRem) = parseSepListFull parseArrOpExp readCompOp tkList in
 	Valid (foldOpListL e0 eOpList, tkRem)
 
 and parseRelExp: n_exp parser = fun tkList ->
@@ -397,7 +414,7 @@ let rec parseStmt: n_stmt parser = fun tkList -> match tkList with
 	| (GC_COLLECT, p) :: tkRem ->
 		Valid (GCCollectStmt p, tkRem)
 	| (tk, p) :: _ ->
-		let* (e, tkRem) = parseAddExp tkList in (match tkRem with
+		let* (e, tkRem) = parseArrOpExp tkList in (match tkRem with
 		(EQ, _) :: tkRem2 -> (match asLvalue e with
 			None -> Error (BadLValue_Err(tk, ann_exp e))
 			| Some lv ->
@@ -461,55 +478,123 @@ let parseMet (lf: lin_flag): n_met parser = fun tkList ->
 	let* ((pl, tau_r, body), tkRem2) = parseFnMain tkRem in
 	Valid (Method(lf, f, pl, tau_r, body), tkRem2)
 
-	(* declaration / type definition parsing *)
+	(*
+		enum / union / enum extension parsing
+		- superficially, they are all parsed the same way.
+		- at parse-time, attributes are always split off into an enum extension.
+	*)
 
 let parseFieldDef: (string * m_type) parser = fun tkList ->
 	let* (t, tkRem) = parseType tkList in
 	let* (x, tkRem2) = parseId tkRem in
 	Valid ((x, t), tkRem2)
 
+let parseAttrs: m_field_list parser = fun tkList -> match tkList with
+	(ATTRS, _) :: tkRem ->
+		let* (fl, tkRem2) = parseBrackWrap (parseSepList parseFieldDef chkComma) "Enum Attr Definition" tkRem in
+		Valid (fl, tkRem2)
+	| _ -> Valid ([], tkList)
+
+let parseAttrInit: n_field_init parser = fun tkList -> match tkList with
+	(LBRACK, _) :: _ ->
+		parseBrackWrap (parseSepList parseStructInit chkComma) "Enum/Union Case Attribute" tkList
+	| _ -> Valid ([], tkList)
+
+(*let parseEnumCase: (string * (string * n_exp) list) list parser = fun tkList ->
+	let* (ctor, tkRem) = parseTId tkList in
+	let* (al, tkRem2) = parseCaseAttr tkRem in Valid ((ctor, al), tkRem2) *)
+
+let parseUnionCase: (string * m_type list * n_field_init) parser = fun tkList ->
+	let* (ctor, tkRem) = parseTId tkList in
+	let* (tau_l, tkRem2) = (match tkRem with
+		(LPAREN, _) :: _ ->
+			parseParenWrap (parseSepList parseType chkComma) "Union Case Definition" tkRem
+		| _ -> Valid ([], tkRem)
+	) in (*Valid ((ctor, tau_l), tkRem2)*)
+	let* (al, tkRem3) = parseAttrInit tkRem2 in Valid ((ctor, tau_l, al), tkRem3)
+
+let parseUnionDef (p: l_pos): (string * (qual_tag union_case) list * n_dec list) parser = fun tkList ->
+	let* (x, tkRem) = parseTId tkList in
+	let* (al, tkRem2) = parseAttrs tkRem in
+	(match tkRem2 with
+		(EQ, _) :: tkRem3 ->
+			let* (cl, tkRem4) = parseSepList parseUnionCase chkBar tkRem3 in
+			let cl' = List.map (fun (ctor, tau_l, _) -> (ctor, tau_l, NoEB)) cl in
+			let extOpt =
+				if List.exists (fun (_, _, al) -> List.length al > 0) cl then
+						(* TODO: implement error if cases are defined while extending *)
+					let ext_cl' = List.map (fun (ctor, _, al) -> ((ctor, NoEB), al)) cl in
+					[ExtendsDec(x, al, ext_cl', p)]
+				else if List.length al > 0 then
+					failwith "UNIMPLEMENTED ERROR: parse_exp.ml - Enum/Union defined with attributes, but without attribute initialization."
+				else []
+			in Valid ((x, cl', extOpt), tkRem4)
+		| _ ->
+			let extOpt = if List.length al > 0 then [ExtendsDec(x, al, [], p)] else [] in
+			Valid ((x, [], extOpt), tkRem2)
+	)
+
+let parseEnumDefFull (extendFlag: bool) (p: l_pos): (n_dec list) parser = fun tkList ->
+	let* ((x, cl, extOpt), tkRem) = parseUnionDef p tkList in
+		(* TODO: throw error for "empty", non-extensible enum *)
+	if List.exists (fun (_, tau_l, _) -> List.length tau_l > 0) cl then
+		failwith "UNIMPLEMENTED ERROR: parse_exp.ml - Enum defined with data, try defining a union instead."
+	else let cl' = List.map (fun (x, _, eb) -> (x, eb)) cl in
+		Valid ((TDefDec(x, EnumTD(extendFlag, cl'), p)) :: extOpt, tkRem)
+
+let parseUnionDefFull (p: l_pos): (n_dec list) parser = fun tkList ->
+	let* ((x, cl, extOpt), tkRem) = parseUnionDef p tkList in
+		(* TODO: throw error for "empty", non-extensible union *)
+	Valid ((TDefDec(x, UnionTD cl, p)) :: extOpt, tkRem)
+
+let parseExtendsOnly (p: l_pos): (n_dec list) parser = fun tkList ->
+	let* ((_, _, extOpt), tkRem) = parseUnionDef p tkList in Valid (extOpt, tkRem)
+
+(*
+let parseEnumDefFull (extendFlag: bool) (p: l_pos): (n_dec list) parser = fun tkList ->
+	let* ((d, attrOpt), tkRem) = parseEnumDef extendFlag p tkList in (match attrOpt with
+		None -> Valid ([d], tkRem)
+		| Some attr -> Valid ([d; ExtendsDec(attr, [], p)], tkRem)
+	)
+*)
+
+	(* declaration / type definition parsing *)
+
 and parseGlobArg: string option parser = fun tkList -> match tkList with
 	(IN, _) :: tkRem -> let* (x, tkRem2) = parseTId tkRem in Valid (Some x, tkRem2)
 	| _ -> Valid (None, tkList)
 
-let parseCaseDef: (string * m_type list) parser = fun tkList ->
-	let* (x, tkRem) = parseTId tkList in match tkRem with
-		(LPAREN, _) :: _ ->
-			let* (tl, tkRem2) = parseParenWrap (parseSepList parseType chkComma)
-				"Enum Case Definition" tkRem in Valid ((x, tl), tkRem2)
-		| _ -> Valid ((x, []), tkRem)
-
-let parseDec: n_dec parser = fun tkList -> match tkList with
+let parseDec: (n_dec list) parser = fun tkList -> match tkList with
 	(FN, p) :: tkRem ->
 		let* (m, tkRem2) = parseMet Fn tkRem in
-		Valid (FunDec(m, p), tkRem2)
+		Valid ([FunDec(m, p)], tkRem2)
 	| (LIN, p) :: tkRem ->
 		let* (m, tkRem2) = parseMet Lin tkRem in
-		Valid (FunDec(m, p), tkRem2)
+		Valid ([FunDec(m, p)], tkRem2)
 	| (STRUCT, p) :: tkRem ->
 		let* (x, tkRem2) = parseTId tkRem in
 		let* (fl, tkRem3) = parseBrackWrap (parseSepList parseFieldDef chkComma) "Struct Definition" tkRem2 in
-		Valid (TDefDec(x, StructTD fl, p), tkRem3)
-	| (ENUM, p) :: tkRem ->
-		let* (x, tkRem2) = parseTId tkRem in
-		let* (_, tkRem3) = parseTk EQ "Enum Definition" tkRem2 in
-		let* (cl, tkRem4) = parseSepList parseTId chkBar tkRem3 in
-		Valid (TDefDec(x, EnumTD (List.map (fun x -> (x, NoEB)) cl), p), tkRem4)
-	| (UNION, p) :: tkRem ->
-		let* (x, tkRem2) = parseTId tkRem in
+		Valid ([TDefDec(x, StructTD fl, p)], tkRem3)
+	| (ENUM, p) :: tkRem ->	parseEnumDefFull false p tkRem
+	| (ENUMP, p) :: tkRem -> parseEnumDefFull true p tkRem
+	| (EXTENDS, p) :: tkRem ->
+		let* (_, tkRem2) = parseTk ENUM "Enum Extension" tkRem in
+		parseExtendsOnly p tkRem2
+	| (UNION, p) :: tkRem -> parseUnionDefFull p tkRem
+		(*let* (x, tkRem2) = parseTId tkRem in
 		let* (_, tkRem3) = parseTk EQ "Enum Definition" tkRem2 in
 		let* (cl, tkRem4) = parseSepList parseCaseDef chkBar tkRem3 in
-		Valid (TDefDec(x, UnionTD (List.map (fun (x, tl) -> (x, tl, NoEB)) cl), p), tkRem4)
+		Valid ([TDefDec(x, UnionTD (List.map (fun (x, tl) -> (x, tl, NoEB)) cl), p)], tkRem4)*)
 	| (CONST, p) :: tkRem ->
 		let* (x, tkRem2) = parseCId tkRem in
 		let* (_, tkRem3) = parseTk EQ "Constant Declaration" tkRem2 in
 		let* (e, tkRem4) = parseExp tkRem3 in
-		Valid (ConstDec(x, e, p), tkRem4)
+		Valid ([ConstDec(x, e, p)], tkRem4)
 	| (GLOBALS, p) :: tkRem ->
 		let* (x, tkRem2) = parseTId tkRem in
 		let* (cont, tkRem3) = parseGlobArg tkRem2 in
 		let* (fl, tkRem4) = parseBrackWrap (parseSepList parseStructInit chkComma) "Global Initializer" tkRem3 in
-		Valid (GlobalsDec(x, cont, fl, p), tkRem4)
+		Valid ([GlobalsDec(x, cont, fl, p)], tkRem4)
 	| tk :: _ -> Error (BadToken_Err(tk, "Dec"))
 	| _ -> Error (EOF_Err "Dec")
 
@@ -531,7 +616,7 @@ let parseReq: n_req parser = fun tkList -> match tkList with
 
 let parseMain (tkList: token list): n_section parse_res =
 	let* (rList, tkRem) = (parseList parseReq chkReqEnd) tkList in 
-	let* (dList, _) = (parseList parseDec neverEnd) tkRem in Valid (Section(rList, dList))
+	let* (dList, _) = (parseList parseDec neverEnd) tkRem in Valid (Section(rList, List.concat dList))
 
 	(* table of contents parsing *)
 

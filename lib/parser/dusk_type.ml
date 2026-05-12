@@ -25,6 +25,7 @@ type 'm raw_type =
 	| ArrayTy of int * 'm raw_type
 	| ValArrayTy of 'm raw_type
 	| TagOfTy of 'm raw_type
+	| FunTy of 'm raw_type list * 'm raw_type
 	| BotTy
 
 type 'm fun_type = 'm raw_type list * 'm raw_type
@@ -39,10 +40,11 @@ let rec string_of_type (tau: 'm raw_type): string = match tau with
 	| ArrayTy(i, tau) -> (string_of_int i) ^ "d[" ^ (string_of_type tau) ^ "]"
 	| ValArrayTy tau -> "1v[" ^ (string_of_type tau) ^ "]"
 	| TagOfTy tau -> (string_of_type tau) ^ ".t"
+	| FunTy(tau_pl, tau_r) -> string_of_fun_type (tau_pl, tau_r)
 	| BotTy -> "BOT"
-
-let string_of_fun_type ((tau_pl, tau_r): 'm fun_type): string =
-	"fn(" ^ (String.concat ", " (List.map string_of_type tau_pl)) ^ ") " ^ (string_of_type tau_r)
+	
+and string_of_fun_type ((tau_pl, tau_r): 'm fun_type): string =
+	"Fn(" ^ (String.concat ", " (List.map string_of_type tau_pl)) ^ ") " ^ (string_of_type tau_r)
 
 	(* - auxiliary function, used to find the "first" argument of a function type *)
 
@@ -62,7 +64,9 @@ let floatTy = primTy "Float"
 let stringTy = primTy "String"
 let boolTy = primTy "Bool"
 
-let longTy = primTy "Long"
+let uint8Ty = primTy "Uint8"
+let uint32Ty = primTy "Uint32"
+let uint64Ty = primTy "Uint64"
 let keyTy = primTy "Key"
 
 	(*
@@ -72,12 +76,15 @@ let keyTy = primTy "Key"
 
 type enum_back = NoEB | IntEB of int | GlobalEB of string
 
-type 'm enum_case = string * enum_back
+type 'm field_list = (string * 'm raw_type) list
+
+type enum_case = string * enum_back
 type 'm union_case = string * 'm raw_type list * enum_back
 
 type 'm raw_tdef =
-	StructTD of (string * 'm raw_type) list
-	| EnumTD of ('m enum_case) list
+	StructTD of 'm field_list
+	| EnumTD of bool * enum_case list
 	| UnionTD of ('m union_case) list
 
+type m_field_list = qual_tag field_list
 type m_tdef = qual_tag raw_tdef

@@ -17,6 +17,7 @@ Llvm_all_backends.initialize ();;
 
 type gc_iface = {
 	new_array: llvalue * lltype;
+	array_grow: llvalue * lltype;
 	gc_alloc: llvalue * lltype;
 	gc_new_root: llvalue * lltype;
 	gc_collect: llvalue * lltype;
@@ -42,6 +43,7 @@ let newLCont (): llvm_cont =
 		builder = builder context;
 		gc = ref {
 			new_array = (const_null ptrType, ptrType);
+			array_grow = (const_null ptrType, ptrType);
 			gc_alloc = (const_null ptrType, ptrType);
 			gc_new_root = (const_null ptrType, ptrType);
 			gc_collect = (const_null ptrType, ptrType);
@@ -96,6 +98,7 @@ type dusk_fval =
 
 type dusk_key =
 	DVar of string
+	| DRetVar
 	| DStrLit of string
 	| DKeyLit of string
 	| DBox of int
@@ -110,6 +113,7 @@ type dusk_env = (dusk_key, dusk_fval) Hashtbl.t
 
 let string_of_dkey (k: dusk_key): string = match k with
 	DVar x -> "VAR " ^ x
+	| DRetVar -> "RET"
 	| DStrLit s -> "STRLIT " ^ s
 	| DKeyLit k -> "KLIT " ^ k
 	| DBox i -> "BOX " ^ (string_of_int i)

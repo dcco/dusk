@@ -1,6 +1,9 @@
 #ifndef SULFUR_BINDINGS_H
 #define SULFUR_BINDINGS_H
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "sulfur.h"
 #include "sulfurData.h"
 #include "initRom.h"
@@ -20,17 +23,60 @@ extern void _none_Sys_Sulfur_refresh()
 	swapBackBuffer(sulfur);
 }
 
+/*
 extern void _Glyph3d_Sys_Sulfur_draw(int8_t raw[32])
 {
 	#ifdef PIPELINE_DEF
 		renderTable_t* rt = &sulfur->back_buffer->table3d;
 		addGlyph3dRTable(sulfur->r3d, rt, (glyph3d_t*) raw);
 	#endif
+}*/
+
+extern void _Float_Sys_Sulfur_drawQuadX(float x, float y, float z, sprite_t* spritePtr, int32_t frame)
+{
+	#ifdef PIPELINE_DEF
+		renderTable_t* rt = &sulfur->back_buffer->table3d;
+		addQuad3dRTable(sulfur->r3d, rt, 0, x, y, z, spritePtr, frame);
+	#endif
+}
+
+extern void _Float_Sys_Sulfur_drawQuadY(float x, float y, float z, sprite_t* spritePtr, int32_t frame)
+{
+	#ifdef PIPELINE_DEF
+		renderTable_t* rt = &sulfur->back_buffer->table3d;
+		addQuad3dRTable(sulfur->r3d, rt, 1, x, y, z, spritePtr, frame);
+	#endif
+}
+
+extern void _Float_Sys_Sulfur_drawQuadZ(float x, float y, float z, sprite_t* spritePtr, int32_t frame)
+{
+	#ifdef PIPELINE_DEF
+		renderTable_t* rt = &sulfur->back_buffer->table3d;
+		addQuad3dRTable(sulfur->r3d, rt, 2, x, y, z, spritePtr, frame);
+	#endif
+}
+
+extern void _Float_Sys_Sulfur_drawSprite(float x, float y, float z, sprite_t* spritePtr, int32_t frame)
+{
+	#ifdef PIPELINE_DEF
+		renderTable_t* rt = &sulfur->back_buffer->table3d;
+		addSprite3dRTable(sulfur->r3d, rt, x, y, z, spritePtr, frame);
+	#endif
 }
 
 extern void _none_Sys_Sulfur_waitRom()
 {
 	waitRom(sulfur->rom);
+}
+
+	/* resource bindings */
+
+extern uint32_t _Image_Sys_Sulfur_pixel(tex_image_t* imagePtr, int32_t x, int32_t y)
+{
+	int i = ((y * imagePtr->width) + x) * 4;
+	uint32_t c = imagePtr->data[i] << 24 | imagePtr->data[i + 1] << 16 |
+		imagePtr->data[i + 2] << 8 | imagePtr->data[i + 3];
+	return c;
 }
 
 	/* special pipeline bindings */
@@ -242,9 +288,12 @@ extern renderData_t* _none_Sys_Sulfur_renderData() {
 	return sulfur->back_buffer;
 }
 
-extern gl_val_t* _RenderData_Sys_Sulfur_get(renderData_t* rd, int32_t i) {
-	if (i >= rd->varTotal) return NULL;
-	return &rd->varList[i];
+extern void _RenderData_Sys_Sulfur_get(gl_val_t* ret, renderData_t* rd, int32_t i) {
+	if (i >= rd->varTotal) {
+		ret->type = G_GL_NULL;
+		return;
+	}
+	*ret = rd->varList[i];
 }
 
 extern void _RenderData_Sys_Sulfur_set(renderData_t* rd, int32_t i, gl_val_t* v) {

@@ -21,6 +21,7 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 	| Some (ArrayTy(i, _)) -> "a" ^ (string_of_int i)
 	| Some (ValArrayTy _) -> "a1v"
 	| Some (TagOfTy _) -> "tag"
+	| Some (FunTy _) -> "fn"
 	| Some BotTy -> "bot"
 
 	(*
@@ -99,8 +100,8 @@ let add_fun_tenv (env: type_env) (f: string) (v: sym_fun_type): unit =
 let add_tdef_tenv (env: type_env) (f: string) (td: g_tdef): unit = match td with
 	| StructTD fl ->
 		Hashtbl.add env.globalTIds f (TcTDef (StructTD fl))
-	| EnumTD cl ->
-		Hashtbl.add env.globalTIds f (TcTDef (EnumTD cl));
+	| EnumTD(extFlag, cl) ->
+		Hashtbl.add env.globalTIds f (TcTDef (EnumTD(extFlag, cl)));
 		List.iter (fun (c, _) -> Hashtbl.add env.globalTIds c (TcCtorE f)) cl
 	| UnionTD cl ->
 		Hashtbl.add env.globalTIds f (TcTDef (UnionTD cl));

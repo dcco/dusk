@@ -12,6 +12,7 @@ type const =
 	| FConst of float
 	| SConst of string
 	| BConst of bool
+	| U8Const of int
 	| LConst of Int64.t
 	| KConst of string
 
@@ -24,6 +25,8 @@ type x_op =
 	| StructFieldOp of rw * string
 	| ArrayIndexOp of rw
 	| MeasureOp
+	| ArrayAddOp
+	| ArrayRemoveOp
 	| TupleTagOp
 	| EnumRawOp
 
@@ -38,11 +41,12 @@ type ('m, 'ann) exp =
 	| ValueArrayExp of ('m, 'ann) exp list * 'ann
 	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
 	| FormatArrayExp of int * ('m, 'ann) exp list * ('m, 'ann) exp * 'ann
-	| NewStructExp of 'm * string * (string * ('m, 'ann) exp) list * 'ann
+	| NewStructExp of 'm * string * ('m, 'ann) field_init * 'ann
 		(* selectors *)
 	| IsExp of string * string * 'ann
 		(* function call *)
 	| AppExp of ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
+and ('m, 'ann) field_init = (string * ('m, 'ann) exp) list
 
 type pat =
 	VarPat of string
@@ -66,6 +70,7 @@ type ('m, 'ann) stmt =
 		######################
 	*)
 
+type n_field_init = (qual_tag, l_pos) field_init
 type n_exp = (qual_tag, l_pos) exp
 type n_stmt = (qual_tag, l_pos) stmt
 
@@ -105,9 +110,12 @@ type lin_flag = Fn | Lin
 type ('m, 'ann) met =
 	Method of lin_flag * string * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
 
+type ('m, 'ann) attr_case = enum_case * ('m, 'ann) field_init
+
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann
 	| TDefDec of string * 'm raw_tdef * 'ann
+	| ExtendsDec of string * 'm field_list * ('m, 'ann) attr_case list * 'ann
 	| ConstDec of string * ('m, 'ann) exp * 'ann
 	| GlobalsDec of string * string option * (string * ('m, 'ann) exp) list * 'ann
 
@@ -131,6 +139,7 @@ type 'ann toc =
 	Toc of 'ann _mod list
 
 type n_met = (qual_tag, l_pos) met
+type n_attr_case = (qual_tag, l_pos) attr_case
 type n_dec = (qual_tag, l_pos) dec
 type n_req = l_pos req
 type n_section = (qual_tag, l_pos) section

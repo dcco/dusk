@@ -97,6 +97,14 @@ let add_import_env (env: res_env) (path: string list) (handle: string): unit =
 			)
 	) symList
 
+let lookup_bind_dec_env (env: res_env) (ox: bind_origin) (x: string): string option =
+	match Hashtbl.find_opt env.importIds x with
+		None -> None
+		| Some xl ->
+			if List.exists (fun (b, _) -> b = ox) xl then
+				Some (canonize_scope env.curPath x)
+			else None
+
 	(* - non-overload case: creates locally scoped name, even with conflict *)
 let add_bind_dec_env (env: res_env) (ox: bind_origin) (x: string): string =
 	(match Hashtbl.find_opt env.importIds x with

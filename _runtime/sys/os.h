@@ -29,6 +29,38 @@ extern float _Int_builtin_toRadians(int32_t i) {
 	return ((float) i) * M_PI / 180.0f;
 }
 
+extern uint32_t _Uint8_builtin_color(uint8_t r, uint8_t g, uint8_t b) {
+	return ((uint32_t) r) << 16 | ((uint32_t) g) << 8 | ((uint32_t) b);
+}
+
+extern uint32_t _Uint32_builtin_rgb(uint32_t c) {
+	return c >> 8;
+}
+
+extern void array_grow(gc_array_t* arr) {
+	arr->size = arr->size + 1;
+	if (arr->size >= arr->capacity) {
+		int32_t newCap = arr->capacity * 3 / 2;
+		arr->capacity = newCap;
+		arr->data = realloc(arr->data, arr->elemSize * newCap);
+	}
+}
+
+extern void _a1_builtin_remove(gc_array_t* arr, int32_t i) {
+	if (i < 0 || i >= arr->size) exit_log("Out of bounds exception on array removal.", "");
+	if (i != arr->size - 1) {
+		int8_t* rawData = (int8_t*) arr->data;
+		memcpy(rawData + (i * arr->elemSize), rawData + ((arr->size - 1) * arr->elemSize), arr->elemSize);  
+	}
+	// downsize if necessary
+	arr->size = arr->size - 1;
+	if (arr->capacity > 32 && arr->size <= arr->capacity / 2) {
+		int32_t newCap = arr->capacity * 3 / 4;
+		arr->capacity = newCap;
+		arr->data = realloc(arr->data, arr->elemSize * newCap);
+	}
+}
+
 	/*
 		os - console / printing functions
 	*/
@@ -73,7 +105,7 @@ extern float _PRNG_Sys_Os_randomFloat(xoshiro_state_t* prng) {
 		os - time
 	*/
 
-extern int64_t _none_Sys_Os_time() {
+extern uint64_t _none_Sys_Os_time() {
 	return time_ns();
 }
 
