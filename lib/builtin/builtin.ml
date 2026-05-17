@@ -18,6 +18,13 @@ open Parser.Dusk_type
 			< composite type, string arguments, integer arguments >
 	*)
 
+type raw_bind =
+	PrimBind of string
+	| RawBind of string
+
+let pb x = PrimBind x
+let rb x = RawBind x
+
 type sym =
 	UnaryASMSym of string
 	| BinaryASMSym of string
@@ -35,16 +42,16 @@ type 'm virt_dec =
 		(* url *)
 	| ResVD of resource_def * 'm raw_type
 
-type 'm virt_bind = 'm * string * 'm virt_dec
+type ('b, 'm) virt_bind = 'b * 'm virt_dec
 
-type m_virt_bind = qual_tag virt_bind
+type m_virt_bind = (raw_bind, qual_name) virt_bind
 
 	(*
 		builtins
 	*)
 
 let toVirtList (rawList: (string * sym * m_type list * m_type) list): m_virt_bind list =
-	List.map (fun (x, v, tau_pl, tau_r) -> (QT None, x, SymVD(v, (tau_pl, tau_r)))) rawList
+	List.map (fun (x, v, tau_pl, tau_r) -> (rb x, SymVD(v, (tau_pl, tau_r)))) rawList
 
 (*
 let completeTdefList (vl: m_virt_bind list): virt_bind list =
@@ -53,7 +60,7 @@ let completeTdefList (vl: m_virt_bind list): virt_bind list =
 		| _ -> nl
 	) vl vl
 *)
-let builtinList =  [
+let builtinList = [
 	("neg", UnaryASMSym "ineg", [intTy], intTy);
 	("add", BinaryASMSym "iadd", [intTy; intTy], intTy);
 	("sub", BinaryASMSym "isub", [intTy; intTy], intTy);
@@ -104,9 +111,9 @@ let builtinList =  [
 	("toInt", UnaryASMSym "ftoi", [floatTy], intTy);
 	("toInt", UnaryASMSym "ui64toi", [uint64Ty], intTy);
 	("toFloat", UnaryASMSym "itof", [intTy], floatTy);
-	("toUint64", UnaryASMSym "itoui64", [intTy], uint64Ty);
-	("floor", ExternalSym [], [floatTy], floatTy);
-	("ceil", ExternalSym [], [floatTy], floatTy);
+	("toU64", UnaryASMSym "itoui64", [intTy], uint64Ty);
+	("floor", ExternalSym [], [floatTy], intTy);
+	("ceil", ExternalSym [], [floatTy], intTy);
 
 	("expo", ExternalSym [], [floatTy; floatTy], floatTy);
 	("sqrt", ExternalSym [], [floatTy], floatTy);
@@ -161,7 +168,7 @@ let sulfurList = [
 	("drawQuadX", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
 	("drawQuadY", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
 	("drawQuadZ", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
-	("drawSprite", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
+	("drawSprite", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy; boolTy], unitTy);
 
 		(* rom data *)
 	("pixel", ExternalSym [], [imageTy; intTy; intTy], uint32Ty);
@@ -201,11 +208,11 @@ let sulfurList = [
 ]
 
 let sulfurTypes = [
-	(QT None, "Glyph", TDefVD (UnionTD [
-		("GNop", [], GlobalEB "C_NOP");
-		("GBox", [intTy; intTy; intTy; intTy; intTy], GlobalEB "C_BOX");
-		("GSprite", [intTy; intTy; spriteTy; intTy], GlobalEB "C_SPRITE");
-		("GText", [spriteTy; stringTy], GlobalEB "C_TEXT")
+	(pb "Glyph", TDefVD (UnionTD [
+		(qn "GNop", [], GlobalEB "C_NOP");
+		(qn "GBox", [intTy; intTy; intTy; intTy; intTy], GlobalEB "C_BOX");
+		(qn "GSprite", [intTy; intTy; spriteTy; intTy], GlobalEB "C_SPRITE");
+		(qn "GText", [spriteTy; stringTy], GlobalEB "C_TEXT")
 	]));
 	(*(QT None, "Glyph3d", TDefVD (UnionTD [
 		("G3Nop", [], GlobalEB "C3_NOP");
@@ -213,9 +220,9 @@ let sulfurTypes = [
 		("G3QuadY", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QY");
 		("G3QuadZ", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QZ");
 	]));*)
-	(QT None, "GLVal", TDefVD (UnionTD [
-		("GLFloat", [floatTy], GlobalEB "C_GL_FLOAT");
-		("GLMat4", [mat4Ty], GlobalEB "C_GL_MAT4");
+	(pb "GLVal", TDefVD (UnionTD [
+		(qn "GLFloat", [floatTy], GlobalEB "C_GL_FLOAT");
+		(qn "GLMat4", [mat4Ty], GlobalEB "C_GL_MAT4");
 	]));
 	(*(QT None, "GLType", TDefVD (UnionTD [
 		("GLFloat", [], Some "C_GL_FLOAT");
@@ -225,10 +232,10 @@ let sulfurTypes = [
 		("GLFloatV", [floatTy], Some "C_GL_FLOAT");
 		("GLMat4V", [mat4Ty], Some "C_GL_MAT4");
 	]));*)
-	(QT None, "BufferType", TDefVD (EnumTD(false, [
-		("FBOColor", GlobalEB "C_FBO_COLOR");
-		("FBODepth", GlobalEB "C_FBO_DEPTH");
-		("FBORender", GlobalEB "C_FBO_RENDER")
+	(pb "BufferType", TDefVD (EnumTD(false, [
+		(qn "FBOColor", GlobalEB "C_FBO_COLOR");
+		(qn "FBODepth", GlobalEB "C_FBO_DEPTH");
+		(qn "FBORender", GlobalEB "C_FBO_RENDER")
 	])))
 ]
 
@@ -242,18 +249,15 @@ let builtinTreeMap (): (m_virt_bind list) tree_map =
 	let m3 = add_tree m2 ["Sys"; "Input"] (toVirtList inputList) in
 	add_tree m3 ["Sys"; "Sulfur"] (sulfurTypes @ (toVirtList sulfurList))
 
-(*
-let builtinQualList (): (string list * m_virt_bind) list =
-	List.concat (List.map (fun (path, vdl) ->
-		List.map (fun vd -> (path, vd)) vdl
-	) (flatten_tree (builtinTreeMap ())))
-*)
-
-type prim_flag = PF | NPF
-
-let extractSymbols (symList: 'm virt_bind list): (prim_flag * string) list =
-	List.concat (List.map (fun (_, f, vd) -> match vd with
-		TDefVD (EnumTD(_, cl)) -> (PF, f) :: (List.map (fun (c, _) -> (PF, c)) cl)
-		| TDefVD (UnionTD cl) -> (PF, f) :: (List.map (fun (c, _, _) -> (PF, c)) cl)
-		| _ -> [(NPF, f)]
+let extractSymbols (symList: (raw_bind, qual_name) virt_bind list): raw_bind list =
+	List.concat (List.map (fun (f, vd) -> match vd with
+		TDefVD (EnumTD(_, cl)) -> f :: (List.map (fun (QN(_, c), _) -> RawBind c) cl)
+		| TDefVD (UnionTD cl) -> f :: (List.map (fun (QN(_, c), _, _) -> RawBind c) cl)
+		| _ -> [f]
 	) symList)
+
+(*
+		primitive flag - flag indicating that the canonical name should be unqualified 
+
+
+type prim_flag = PF | NPF	*)

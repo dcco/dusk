@@ -1,6 +1,7 @@
 open Llvm
 open Llvm_target
 
+open Parser.Dusk_type
 open Fin_type
 open Gen_cont
 
@@ -37,18 +38,18 @@ let genType (debug: string) (env: dusk_env) (tau: g_type): lltype = match tau wi
 	| PrimTy "Float" -> fType
 	| PrimTy "Bool" -> bType
 	| PrimTy "String" -> ptrType
-	| PrimTy "Uint8" -> i8Type
-	| PrimTy "Uint32" -> iType
-	| PrimTy "Uint64" -> i64Type
+	| PrimTy "U8" -> i8Type
+	| PrimTy "U32" -> iType
+	| PrimTy "U64" -> i64Type
 	| PrimTy "Key" -> iType
-	| PrimTy _ -> failwith ("BUG: gen_type.ml - Non-existent primitive type. " ^ debug)
+	| PrimTy x -> failwith ("BUG: gen_type.ml - Non-existent primitive type \"" ^ x ^ "\". " ^ debug)
 	| BuiltinTy _ -> ptrType
-	| NamedTy(_, t) -> (match Hashtbl.find_opt env (DTName t) with
+	| NamedTy t -> (match Hashtbl.find_opt env (DTName (cr t)) with
 		Some (DTDef td) -> (match td with
 			EnumTD_C -> tagType
 			| _ -> ptrType
 		) 
-		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while generating type. " ^ debug)
+		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^ "\" encountered while generating type. " ^ debug)
 	)
 	| TupleTy _ -> ptrType
 	| ArrayTy(_, _) -> ptrType
@@ -74,15 +75,15 @@ type store_type =
 let genStoreTypeFull (debug: string) (env: dusk_env) (tau: g_type): store_type = match tau with
 	PrimTy "Unit" -> TStore voidType
 	| TupleTy tau_l -> CopyStore (struct_type context (Array.of_list (List.map (genType debug env) tau_l)), None)
-	| NamedTy(_, t) -> (match Hashtbl.find_opt env (DTName t) with
+	| NamedTy t -> (match Hashtbl.find_opt env (DTName (cr t)) with
 		Some (DTDef td) -> (match td with
 			EnumTD_C -> TStore tagType
 			| OpaqueTD_C(i, align) -> CopyStore (array_type i8Type i, Some align)
 			| _ -> TStore ptrType
 		) 
-		| Some v -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^
+		| Some v -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^
 			"\" mapped to unexpected value " ^ (string_of_dval v) ^ " while generating storage type.")
-		| None -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while generating storage type.")
+		| None -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^ "\" encountered while generating storage type.")
 	)
 	| _ -> TStore (genType debug env tau)
 
@@ -104,14 +105,14 @@ let genFunType (debug: string) (env: dusk_env) (tau_pl: g_type list) (tau_r: g_t
 
 let genDerefType (debug: string) (env: dusk_env) (tau: deref_type): lltype = match tau with
 	TypeDeref (TupleTy tau_l) -> struct_type context (Array.of_list (List.map (genType debug env) tau_l))
-	| TypeDeref (NamedTy(_, t)) -> (match Hashtbl.find_opt env (DTName t) with
+	| TypeDeref (NamedTy t) -> (match Hashtbl.find_opt env (DTName (cr t)) with
 		Some (DTDef td) -> (match td with
 			EnumTD_C -> tagType
 			| OpaqueTD_C(_, _) ->
-				failwith ("BUG: gen_type.ml - Ambiguous union type \"" ^ t ^ "\" encountered while dereferencing type. " ^ debug)
+				failwith ("BUG: gen_type.ml - Ambiguous union type \"" ^ (cr t) ^ "\" encountered while dereferencing type. " ^ debug)
 			| StructTD_C(tl', _) -> struct_type context (Array.of_list tl') 
 		) 
-		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while dereferencing type." ^ debug)
+		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^ "\" encountered while dereferencing type." ^ debug)
 	)
 	| CtorDeref t -> (match Hashtbl.find_opt env (DCtor t) with
 		Some (DEnum(_, tau_l)) -> struct_type context (Array.of_list tau_l)
@@ -136,13 +137,13 @@ let offsetChildList (childList: gc_child list) (offset: int): gc_child list =
 	) childList
 
 let rec gcElemType (cont: llvm_cont) (env: dusk_env) (tau: g_type): gc_child list = match tau with
-	NamedTy(_, t) -> (match Hashtbl.find_opt env (DTName t) with
+	NamedTy t -> (match Hashtbl.find_opt env (DTName (cr t)) with
 		Some (DTDef td) -> (match td with
 			StructTD_C(_, _) -> [DirectChild]
 			| OpaqueTD_C(_, _) -> []
 			| _ -> []
 		) 
-		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ t ^ "\" encountered while constructing GC layout for type.")
+		| _ -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^ "\" encountered while constructing GC layout for type.")
 	)
 	| PrimTy "String" -> [DirectChild]
 	| ArrayTy(_, _) -> [DirectChild]

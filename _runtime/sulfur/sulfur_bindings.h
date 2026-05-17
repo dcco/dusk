@@ -56,11 +56,11 @@ extern void _Float_Sys_Sulfur_drawQuadZ(float x, float y, float z, sprite_t* spr
 	#endif
 }
 
-extern void _Float_Sys_Sulfur_drawSprite(float x, float y, float z, sprite_t* spritePtr, int32_t frame)
+extern void _Float_Sys_Sulfur_drawSprite(float x, float y, float z, sprite_t* spritePtr, int32_t frame, int8_t facing)
 {
 	#ifdef PIPELINE_DEF
 		renderTable_t* rt = &sulfur->back_buffer->table3d;
-		addSprite3dRTable(sulfur->r3d, rt, x, y, z, spritePtr, frame);
+		addSprite3dRTable(sulfur->r3d, rt, x, y, z, spritePtr, frame, facing);
 	#endif
 }
 

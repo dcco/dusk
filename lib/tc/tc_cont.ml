@@ -13,7 +13,7 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 	None -> "none"
 	| Some (PrimTy x) -> x
 	| Some (BuiltinTy x) -> x
-	| Some (NamedTy(_, x)) -> x
+	| Some (NamedTy x) -> cr x
 	| Some (TupleTy tau_l) -> let n = List.length tau_l in
 		if n = 2 then "pair"
 		else if n = 3 then "triple"
@@ -23,6 +23,8 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 	| Some (TagOfTy _) -> "tag"
 	| Some (FunTy _) -> "fn"
 	| Some BotTy -> "bot"
+
+let aug_cn (tag: string) (CN(x, xl): canon_name): canon_name = CN(tag ^ x, xl)
 
 	(*
 		overloaded (polymorphic) function types
@@ -46,20 +48,20 @@ let disambig_ptype (rho: 'a poly_type) (tag: string): 'a option =
 		typed environment
 	*)
 
-type sym_fun_type = sym * canon_tag fun_type
+type sym_fun_type = sym * canon_name fun_type
 
 type poly_dec = sym_fun_type poly_type
 
 type tc_tval =
 	TcTDef of g_tdef
-	| TcCtorE of string
-	| TcCtorU of string
+	| TcCtorE of canon_name
+	| TcCtorU of canon_name
 
 type type_env = {
 	curDir: string option;
-	globalFIds: (string, poly_dec) Hashtbl.t;
-	globalTIds: (string, tc_tval) Hashtbl.t;
-	globalIds: (string, g_type) Hashtbl.t;
+	globalFIds: (string, canon_name * poly_dec) Hashtbl.t;
+	globalTIds: (string, canon_name * tc_tval) Hashtbl.t;
+	globalIds: (string, canon_name * g_type) Hashtbl.t;
 	localIds: g_type StringMap.t;
 	boxCount: int ref
 }
@@ -68,44 +70,44 @@ type type_env = {
 
 let dump_tenv (env: type_env): unit =
 	print_string "#TYPE_ENV {\n";
-	Hashtbl.iter (fun x rho ->
+	Hashtbl.iter (fun x (_, rho) ->
 		print_string (" " ^ x ^ ": ");
-		if List.length rho = 1 then	print_string (string_of_fun_type (snd (snd (List.hd rho))))
+		if List.length rho = 1 then	print_string (string_of_fun_type cr (snd (snd (List.hd rho))))
 		else (print_string " [\n";
-			List.iter (fun (_, (_, tau_f)) -> print_string ("  - " ^ (string_of_fun_type tau_f) ^ "\n")) rho;
+			List.iter (fun (_, (_, tau_f)) -> print_string ("  - " ^ (string_of_fun_type cr tau_f) ^ "\n")) rho;
 			print_string " ]"
 		); print_string "\n"
 	) env.globalFIds;
 	print_string "} {\n";
-	Hashtbl.iter (fun x td ->
+	Hashtbl.iter (fun x (_, td) ->
 		print_string (" " ^ x ^ ": "); (match td with
 			TcTDef (StructTD _) -> print_string "struct"
 			| TcTDef (EnumTD _) -> print_string "enum"
 			| TcTDef (UnionTD _) -> print_string "union"
-			| TcCtorE f -> print_string ("ctor (e): " ^ f)
-			| TcCtorU f -> print_string ("ctor (u): " ^ f)
+			| TcCtorE f -> print_string ("ctor (e): " ^ (cr f))
+			| TcCtorU f -> print_string ("ctor (u): " ^ (cr f))
 		); print_string "\n"
 	) env.globalTIds;
-	Hashtbl.iter (fun x tau ->
-		print_string (" " ^ x ^ ": " ^ (string_of_type tau) ^ "\n")
+	Hashtbl.iter (fun x (_, tau) ->
+		print_string (" " ^ x ^ ": " ^ (string_of_type cr tau) ^ "\n")
 	) env.globalIds;
 	print_string "}\n";;
 
-let add_fun_tenv (env: type_env) (f: string) (v: sym_fun_type): unit =
+let add_fun_tenv (env: type_env) (f: canon_name) (v: sym_fun_type): unit =
 	let (_, (tau_pl, _)) = v in
-	let tag = tag_of_type (hd_opt tau_pl) in match Hashtbl.find_opt env.globalFIds f with
-		None -> Hashtbl.add env.globalFIds f [(tag, v)]
-		| Some rho -> Hashtbl.replace env.globalFIds f (add_ptype rho tag v ("for function " ^ f)) 
+	let tag = tag_of_type (hd_opt tau_pl) in match Hashtbl.find_opt env.globalFIds (cr f) with
+		None -> Hashtbl.add env.globalFIds (cr f) (f, [(tag, v)])
+		| Some (_f, rho) -> Hashtbl.replace env.globalFIds (cr f) (_f, add_ptype rho tag v ("for function " ^ (cr f))) 
 
-let add_tdef_tenv (env: type_env) (f: string) (td: g_tdef): unit = match td with
+let add_tdef_tenv (env: type_env) (f: canon_name) (td: g_tdef): unit = match td with
 	| StructTD fl ->
-		Hashtbl.add env.globalTIds f (TcTDef (StructTD fl))
+		Hashtbl.add env.globalTIds (cr f) (f, TcTDef (StructTD fl))
 	| EnumTD(extFlag, cl) ->
-		Hashtbl.add env.globalTIds f (TcTDef (EnumTD(extFlag, cl)));
-		List.iter (fun (c, _) -> Hashtbl.add env.globalTIds c (TcCtorE f)) cl
+		Hashtbl.add env.globalTIds (cr f) (f, TcTDef (EnumTD(extFlag, cl)));
+		List.iter (fun (c, _) -> Hashtbl.add env.globalTIds (cr c) (c, TcCtorE f)) cl
 	| UnionTD cl ->
-		Hashtbl.add env.globalTIds f (TcTDef (UnionTD cl));
-		List.iter (fun (c, _, _) -> Hashtbl.add env.globalTIds c (TcCtorU f)) cl
+		Hashtbl.add env.globalTIds (cr f) (f, TcTDef (UnionTD cl));
+		List.iter (fun (c, _, _) -> Hashtbl.add env.globalTIds (cr c) (c, TcCtorU f)) cl
 
 let builtin_tenv (dl: g_virt_bind list): type_env =
 	let env = {
@@ -115,9 +117,9 @@ let builtin_tenv (dl: g_virt_bind list): type_env =
 		globalIds = Hashtbl.create 50;
 		localIds = StringMap.empty;
 		boxCount = ref 0
-	} in List.iter (fun (_, f, vd) -> match vd with
+	} in List.iter (fun (f, vd) -> match vd with
 		SymVD(s, tau_f) -> add_fun_tenv env f (s, tau_f)
-		| ResVD(_, tau) -> Hashtbl.add env.globalIds f tau
+		| ResVD(_, tau) -> Hashtbl.add env.globalIds (cr f) (f, tau)
 		| TDefVD td -> add_tdef_tenv env f td
 	) dl; env
 
@@ -126,12 +128,12 @@ let with_dir_tenv (env: type_env) (dir: string): type_env = { env with curDir = 
 let get_box_id_tenv (env: type_env): int =
 	let i = !(env.boxCount) in env.boxCount := i + 1; i
 
-let lookup_fun_tenv (env: type_env) (f: string) (tau_o: g_type option): (string * sym_fun_type) option = match Hashtbl.find_opt env.globalFIds f with
+let lookup_fun_tenv (env: type_env) (f: canon_name) (tau_o: g_type option): (canon_name * sym_fun_type) option = match Hashtbl.find_opt env.globalFIds (cr f) with
 	None -> None (* this case should theoretically never come up *)
-	| Some rho ->
+	| Some (_f, rho) ->
 		let tag = tag_of_type tau_o in (match disambig_ptype rho tag with
 			None -> None
-			| Some res -> Some ("_" ^ tag ^ f, res)
+			| Some res -> Some (aug_cn ("_" ^ tag) _f, res)
 		)
 
 	(*
@@ -140,12 +142,12 @@ let lookup_fun_tenv (env: type_env) (f: string) (tau_o: g_type option): (string 
 
 let sym_list_tenv (env: type_env): g_virt_bind list =
 	let rho_l = List.of_seq (Hashtbl.to_seq env.globalFIds) in
-	List.concat (List.map (fun (f, rho) ->
-		List.map (fun (tag, (s, tau_f)) -> (CT, "_" ^ tag ^ f, SymVD(s, tau_f))) rho
+	List.concat (List.map (fun (_, (f, rho)) ->
+		List.map (fun (tag, (s, tau_f)) -> (aug_cn ("_" ^ tag) f, SymVD(s, tau_f))) rho
 	) rho_l)
 
 let tc_complete_builtins (env: type_env) (symList: g_virt_bind list): g_virt_bind list =
-	(List.filter (fun (_, _, vd) -> match vd with SymVD(_, _) -> false | _ -> true) symList) @ sym_list_tenv env
+	(List.filter (fun (_, vd) -> match vd with SymVD(_, _) -> false | _ -> true) symList) @ sym_list_tenv env
 
 	(*
 		function context:

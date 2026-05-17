@@ -15,7 +15,7 @@ let loadTokenList (fname: string): (Lex_token.token list) try_log_res =
 		let tkList = lex_iter [] in
 		(close_in fc; validLog tkList);;
 
-let parseFile (fname: string): n_section try_log_res =
+let parseFile (fname: string): m_section try_log_res =
 	let*! tkList = loadTokenList fname in
 	tryWithErrLog string_of_parse_err (parseMain tkList)
 

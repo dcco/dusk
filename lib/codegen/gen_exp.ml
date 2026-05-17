@@ -554,7 +554,7 @@ let genStructTD (cont: llvm_cont) (env: dusk_env) (f: string) (fl: (string * g_t
 		Hashtbl.add env (DTName f) (DTDef (StructTD_C(tau_l, tc_global)))
 	)*)
 
-let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag union_case) list): unit = match cl with
+let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_name union_case) list): unit = match cl with
 	[] -> ()
 	| (name, tau_l, ext_o) :: ct ->
 			(* - ignores alignment, value must be copied out *)
@@ -564,10 +564,10 @@ let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_tag uni
 			| IntEB j -> (DEnum (IntEV j, tl'), j + 1)
 			| GlobalEB ext -> (DEnum (GlobalEV (declare_global tagType ext cont.llmod, tagType), tl'), i + 1)
 		) in
-		Hashtbl.add env (DCtor name) v;
+		Hashtbl.add env (DCtor (cr name)) v;
 		genEnumTD cont env i' ct
 
-let genUnionTD (cont: llvm_cont) (env: dusk_env) (f: string) (cl: (canon_tag union_case) list): unit =
+let genUnionTD (cont: llvm_cont) (env: dusk_env) (f: string) (cl: (canon_name union_case) list): unit =
 	let zero_size = size_of_type cont tagType in
 	let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
 		size_of_type cont (genTagTupleType env tau_l)
@@ -656,15 +656,15 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			generate external enum/function handles,
 			collect resource handles
 		*)
-	List.iter (fun (_, f, vd) -> match vd with
+	List.iter (fun (f, vd) -> match vd with
 		SymVD (ExternalSym _, (tau_pl, tau_r)) ->
 			(*
 				-- currently not using "external sym"
 			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType env tau_p) tau_pl in
 			let fType = genFunType function_type (genType env tau_r) (Array.of_list tau_plx) in*)
 			let fType = genFunType "(External Function Dec)" env tau_pl tau_r in
-			let v = declare_function f fType cont.llmod in
-			Hashtbl.add env (DVar f) (DFunVal(v, fType))
+			let v = declare_function (cr f) fType cont.llmod in
+			Hashtbl.add env (DVar (cr f)) (DFunVal(v, fType))
 		| SymVD _ -> ()
 			(*let zero_size = size_of_type cont i8Type in
 			let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
@@ -676,15 +676,15 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 			(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
 			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
 			genEnum cont env 0 cl*)
-		| TDefVD (StructTD fl) -> genStructTD cont env f fl
+		| TDefVD (StructTD fl) -> genStructTD cont env (cr f) fl
 		| TDefVD (EnumTD(_, cl)) ->
-			Hashtbl.add env (DTName f) (DTDef EnumTD_C);
+			Hashtbl.add env (DTName (cr f)) (DTDef EnumTD_C);
 			(* - filler datatypes for data-less enums *)
 			genEnumTD cont env 0 (List.map (fun (x, ext) -> (x, [], ext)) cl)
-		| TDefVD (UnionTD cl) -> genUnionTD cont env f cl
+		| TDefVD (UnionTD cl) -> genUnionTD cont env (cr f) cl
 		| ResVD(r, _) ->
-			let ptr = define_global f (const_null ptrType) cont.llmod in
-			Hashtbl.add env (DVar f) (DVal((ptr, ptrType), None)); (match r with
+			let ptr = define_global (cr f) (const_null ptrType) cont.llmod in
+			Hashtbl.add env (DVar (cr f)) (DVal((ptr, ptrType), None)); (match r with
 				SimpRes(ext, x, url) ->
 					simpResList := (ext, url, ptr) :: !simpResList;
 					Hashtbl.add simpPtrMap x ptr

@@ -5,7 +5,7 @@ open Parser.Dusk_ast
 open Parser.Parse_commons
 open Parser.Parse_exp
 open Resolve
-open Resolve.Res_type
+open Resolve.Res_cont
 open Resolve.Res_exp
 open Tc
 open Tc.Tc_err
@@ -94,7 +94,7 @@ let rec pre_compile_lib (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 			let*! res_f = pre_compile_file resEnv' typeEnv' main_dir lfc
 			in validLog (List.concat res_f)
 		) xl in
-		Res_cont.save_local_dec_env resEnv' [libName; m]; validLog res_m
+		save_local_dec_renv resEnv' [libName; m]; validLog res_m
 	) ml in validLog ((List.concat res_pre_ll) @ (List.concat res_l))
 		(* codegen for an individual file *)
 and pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
@@ -117,11 +117,9 @@ and pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 			let Section(rl, _) = rawAst in
 			let missingLibList = pre_check_req_list resEnv rl in
 			let*! res_pre_ll = mapLogRes (pre_compile_lib resEnv typeEnv main_dir None) missingLibList in
-				(* - resolve requirements (freeze imports) *)
-			let resEnv' = Res_cont.freeze_env resEnv [] in
-			let*! _ = tryWithErrLog string_of_rs_err (resolve_req_list resEnv' rl) in
 				(* - file resolution *)
 			print_string "Compiling top-level\n";
+			let resEnv' = Res_cont.freeze_env resEnv [] in
 			let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' true rawAst) in
 			validLog (List.concat res_pre_ll, canonAst)
 		| _ ->
@@ -140,7 +138,7 @@ and ext_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 	(main_dir: string) (path: string list) (dir: string) (f: string): (pre_comp_res list) try_log_res =
 	let resEnv' = Res_cont.freeze_env resEnv path in
 	let*! res_f = pre_compile_file resEnv' typeEnv main_dir (PreludeFC(path, dir, f)) in
-	Res_cont.save_ext_dec_env resEnv' path; validLog res_f
+	save_ext_dec_renv resEnv' path; validLog res_f
 
 (*
 let pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
@@ -197,8 +195,9 @@ let program _ =
 			List.map (fun vd -> (path, vd)) vdl
 		) (flatten_tree virtTree)) in
 			(* build environments from virtual bindings *)
-		let resEnv = Res_cont.builtin_env virtTree in
-		let canonBindings = resolve_virt_bindings resEnv virtBindings in
+		let resEnv = builtin_env virtTree in
+		let*! canonBindings = tryWithErrLog string_of_rs_err
+			(Res_type.resolve_virt_bindings resEnv Lexing.dummy_pos virtBindings) in
 		let typeEnv = Tc_cont.builtin_tenv canonBindings in
 		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv canonBindings in
 			(* compile shader/pipeline *)

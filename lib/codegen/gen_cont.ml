@@ -118,7 +118,7 @@ let string_of_dkey (k: dusk_key): string = match k with
 	| DKeyLit k -> "KLIT " ^ k
 	| DBox i -> "BOX " ^ (string_of_int i)
 	| DTName t -> "TNAME " ^ t
-	| DTAnon t -> "TANON " ^ (string_of_type t)
+	| DTAnon t -> "TANON " ^ (string_of_type (fun (CN(x, _)) -> x) t)
 	| DCtor c -> "CTOR " ^ c
 
 let string_of_dval (v: dusk_fval): string = match v with

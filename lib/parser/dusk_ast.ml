@@ -33,17 +33,19 @@ type x_op =
 type ('m, 'ann) exp =
 	ConstExp of const * 'ann
 		(* selectors *)
-	| VarExp of 'm * string * 'ann
+	| VarExp of 'm * 'ann
 	| OpExp of x_op * 'ann
 		(* ctors *)
-	| AtCtorExp of string * 'ann
-	| TupleExp of ('m * string) option * ('m, 'ann) exp list * 'ann
+	| AtCtorExp of 'm * 'ann
+	| TupleExp of 'm option * ('m, 'ann) exp list * 'ann
 	| ValueArrayExp of ('m, 'ann) exp list * 'ann
+		(* - arity, type annotation, static dimensions, data *)
 	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
+		(* - arity, dynamic dimensions, initializer *)
 	| FormatArrayExp of int * ('m, 'ann) exp list * ('m, 'ann) exp * 'ann
-	| NewStructExp of 'm * string * ('m, 'ann) field_init * 'ann
+	| NewStructExp of 'm * ('m, 'ann) field_init * 'ann
 		(* selectors *)
-	| IsExp of string * string * 'ann
+	| IsExp of 'm * 'm * 'ann
 		(* function call *)
 	| AppExp of ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
 and ('m, 'ann) field_init = (string * ('m, 'ann) exp) list
@@ -56,7 +58,7 @@ type range_type = LtRange | LeqRange | ListRange
 
 type ('m, 'ann) stmt =
 	EvalStmt of ('m, 'ann) exp * 'ann
-	| AssignStmt of string * ('m, 'ann) exp * 'ann
+	| AssignStmt of 'm * ('m, 'ann) exp * 'ann
 	| ReturnStmt of ('m, 'ann) exp option * 'ann
 	| PatStmt of pat * ('m, 'ann) exp * 'ann
 	| IfStmt of ('m, 'ann) exp * ('m, 'ann) stmt list * ('m, 'ann) stmt list * 'ann
@@ -70,22 +72,22 @@ type ('m, 'ann) stmt =
 		######################
 	*)
 
-type n_field_init = (qual_tag, l_pos) field_init
-type n_exp = (qual_tag, l_pos) exp
-type n_stmt = (qual_tag, l_pos) stmt
+type m_field_init = (qual_name, l_pos) field_init
+type m_exp = (qual_name, l_pos) exp
+type m_stmt = (qual_name, l_pos) stmt
 
 	(* annotation reader *)
 
 let ann_exp e = match e with
 	ConstExp(_, a) -> a
 	| OpExp(_, a) -> a
-	| VarExp(_, _, a) -> a
+	| VarExp(_, a) -> a
 	| AtCtorExp(_, a) -> a
 	| TupleExp(_, _, a) -> a
 	| ValueArrayExp(_, a) -> a
 	| DataArrayExp(_, _, _, _, a) -> a
 	| FormatArrayExp(_, _, _, a) -> a
-	| NewStructExp(_, _, _, a) -> a
+	| NewStructExp(_, _, a) -> a
 	| IsExp(_, _, a) -> a
 	| AppExp(_, _, a) -> a
 
@@ -108,16 +110,16 @@ let ann_stmt s = match s with
 type lin_flag = Fn | Lin
 
 type ('m, 'ann) met =
-	Method of lin_flag * string * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
+	Method of lin_flag * 'm * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
 
-type ('m, 'ann) attr_case = enum_case * ('m, 'ann) field_init
+type ('m, 'ann) attr_case = 'm enum_case * ('m, 'ann) field_init
 
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann
-	| TDefDec of string * 'm raw_tdef * 'ann
-	| ExtendsDec of string * 'm field_list * ('m, 'ann) attr_case list * 'ann
-	| ConstDec of string * ('m, 'ann) exp * 'ann
-	| GlobalsDec of string * string option * (string * ('m, 'ann) exp) list * 'ann
+	| TDefDec of 'm * 'm raw_tdef * 'ann
+	| ExtendsDec of 'm * 'm field_list * ('m, 'ann) attr_case list * 'ann
+	| ConstDec of 'm * ('m, 'ann) exp * 'ann
+	| GlobalsDec of 'm * 'm option * ('m * ('m, 'ann) exp) list * 'ann
 
 type 'ann req =
 	ShortRefReq of string list * 'ann
@@ -138,11 +140,11 @@ type 'ann _mod =
 type 'ann toc =
 	Toc of 'ann _mod list
 
-type n_met = (qual_tag, l_pos) met
-type n_attr_case = (qual_tag, l_pos) attr_case
-type n_dec = (qual_tag, l_pos) dec
-type n_req = l_pos req
-type n_section = (qual_tag, l_pos) section
+type m_met = (qual_name, l_pos) met
+type m_attr_case = (qual_name, l_pos) attr_case
+type m_dec = (qual_name, l_pos) dec
+type m_req = l_pos req
+type m_section = (qual_name, l_pos) section
 
-type n_mod = l_pos _mod
-type n_toc = l_pos toc
+type m_mod = l_pos _mod
+type m_toc = l_pos toc

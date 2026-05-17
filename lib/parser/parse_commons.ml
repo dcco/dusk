@@ -1,5 +1,6 @@
 open Commons.Try_log
 open Lex_token
+open Dusk_type
 
 	(* parse results *)
 
@@ -103,21 +104,78 @@ let parseTkMulti (f: raw_token -> 'a option) (x: string): ('a * l_pos) parser = 
 		| Some v -> Valid ((v, pos), tkRem)
 	)
 	| _ -> Error (EOF_Err x)
-
-let parseId: string parser = fun tkList -> match tkList with
+(*
+let parseId (debug: string): string parser = fun tkList -> match tkList with
 	(ID x, _) :: tkRem -> Valid (x, tkRem)
-	| tk :: _ -> Error (BadToken_Err(tk, "Id"))
-	| _ -> Error (EOF_Err "Id")
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
 
-let parseTId: string parser = fun tkList -> match tkList with
+let parseTId (debug: string): string parser = fun tkList -> match tkList with
 	(TID x, _) :: tkRem -> Valid (x, tkRem)
-	| tk :: _ -> Error (BadToken_Err(tk, "Type Id"))
-	| _ -> Error (EOF_Err "Type Id")
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
 
-let parseCId: string parser = fun tkList -> match tkList with
+let parseCId (debug: string): string parser = fun tkList -> match tkList with
 	(CID x, _) :: tkRem -> Valid (x, tkRem)
-	| tk :: _ -> Error (BadToken_Err(tk, "Constant Id"))
-	| _ -> Error (EOF_Err "Constant Id")
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
+*)
+
+let parseBaseId (debug: string): string parser = fun tkList -> match tkList with
+	(ID x, _) :: tkRem -> Valid (x, tkRem)
+	| (CID x, _) :: tkRem -> Valid (x, tkRem)
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
+
+let parseDeclTId (debug: string): string parser = fun tkList -> match tkList with
+	(TID x, _) :: tkRem -> Valid (x, tkRem)
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
+
+let parseBaseTId = parseDeclTId
+
+let parseDerefId (debug: string): qual_name parser = fun tkList -> match tkList with
+	(ID x, _) :: tkRem -> Valid (qn x, tkRem)
+	| (CID x, _) :: tkRem -> Valid (qn x, tkRem)
+	| (TID q, _) :: tkRem ->
+		let* (_, tkRem2) = parseTk DOT debug tkRem in 
+		let* (x, tkRem3) = parseBaseId debug tkRem2 in Valid (QN(Some q, x), tkRem3)
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
+
+let parseDerefTId (debug: string): qual_name parser = fun tkList ->
+	let* (q, tkRem) = parseBaseTId debug tkList in (match tkRem with
+		(DOT, _) :: tkRem2 ->
+			let* (x, tkRem3) = parseBaseTId debug tkRem2 in Valid (QN(Some q, x), tkRem3)
+		| _ -> Valid (qn q, tkRem)
+	)
+
+type any_id = ParseId of qual_name * l_pos | ParseTId of qual_name * l_pos
+
+let parseDerefXId (debug: string): any_id parser = fun tkList -> match tkList with
+	(ID x, p) :: tkRem -> Valid (ParseId(qn x, p), tkRem)
+	| (CID x, p) :: tkRem -> Valid (ParseId(qn x, p), tkRem)
+	| (TID q, p) :: tkRem -> (match tkRem with
+		(DOT, _) :: tkRem2 -> (match tkRem2 with
+			(ID y, _) :: tkRem3 -> Valid (ParseId(QN(Some q, y), p), tkRem3)
+			| (TID y, _) :: tkRem3 -> Valid (ParseTId(QN(Some q, y), p), tkRem3)
+			| tk :: _ -> Error (BadToken_Err(tk, debug))
+			| _ -> Error (EOF_Err debug)
+		)
+		| _ -> Valid (ParseTId(qn q, p), tkRem)
+	)
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
+
+let parseDeclId (debug: string): string parser = fun tkList -> match tkList with
+	(ID x, _) :: tkRem -> Valid (x, tkRem)
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug)
+
+let parseDeclCId (debug: string): string parser = fun tkList -> match tkList with
+	(CID x, _) :: tkRem -> Valid (x, tkRem)
+	| tk :: _ -> Error (BadToken_Err(tk, debug))
+	| _ -> Error (EOF_Err debug) 
 
 	(*
 		bracket parse functions

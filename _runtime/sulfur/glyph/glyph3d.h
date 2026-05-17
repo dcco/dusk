@@ -77,7 +77,7 @@ void addQuad3dRTable(r3d_t* cont, renderTable_t* rt, int axis, float x, float y,
 	dat->aTexUVSize[1] = spritePtr->fh;
 }
 
-void addSprite3dRTable(r3d_t* cont, renderTable_t* rt, float x, float y, float z, sprite_t* spritePtr, int32_t frame) {
+void addSprite3dRTable(r3d_t* cont, renderTable_t* rt, float x, float y, float z, sprite_t* spritePtr, int32_t frame, int8_t facing) {
 	if (spritePtr == NULL) return;
 	if (spritePtr->image == NULL) return;
 	tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
@@ -89,9 +89,15 @@ void addSprite3dRTable(r3d_t* cont, renderTable_t* rt, float x, float y, float z
 	dat->aPos[1] = y - spritePtr->offY;
 	dat->aPos[2] = z;
 	dat->aTexId = imagePtr->index;
-	dat->aTexUVPos[0] = spritePtr->fx + ((frame % spritePtr->spanWidth) * spritePtr->fw);
+	float offX = (frame % spritePtr->spanWidth) * spritePtr->fw;
+	if (!facing) {
+		dat->aTexUVPos[0] = spritePtr->fx + offX;
+		dat->aTexUVSize[0] = spritePtr->fw;
+	} else {
+		dat->aTexUVPos[0] = spritePtr->fx + offX + spritePtr->fw;
+		dat->aTexUVSize[0] = -spritePtr->fw;
+	}
 	dat->aTexUVPos[1] = spritePtr->fy + ((frame / spritePtr->spanWidth) * spritePtr->fh);
-	dat->aTexUVSize[0] = spritePtr->fw;
 	dat->aTexUVSize[1] = spritePtr->fh;
 }
 

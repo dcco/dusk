@@ -1,6 +1,5 @@
 open Yojson.Safe
 
-open Parser.Dusk_type
 open Builtin
 
 let read_subdir_layout (subName: string) (subPath: string): m_virt_bind list =
@@ -9,16 +8,16 @@ let read_subdir_layout (subName: string) (subPath: string): m_virt_bind list =
 		if Filename.extension name = ".png" then
 			let x = Filename.remove_extension name in
 			let r = SimpRes("png", x, subName ^ "/" ^ name) in
-			[(QT None, x, ResVD(r, imageTy))]
+			[(rb x, ResVD(r, imageTy))]
 		else []
 	)
 	|> List.concat
 
 let read_sprite_def (json: Yojson.Safe.t): m_virt_bind = match json with
 	`List [`String "TSET"; `String src; `String name; `List [`Int x; `Int y]; `Int sw] ->
-		let r = CompRes("sprite", [src], [x; y; sw; 1; 1]) in (QT None, name, ResVD(r, spriteTy))
+		let r = CompRes("sprite", [src], [x; y; sw; 1; 1]) in (rb name, ResVD(r, spriteTy))
 	| `List [`String "SPRITE"; `String src; `String name; `List [`Int x; `Int y]; `List [`Int fx; `Int fy]; `Int sw] ->
-		let r = CompRes("sprite", [src], [x; y; sw; fx; fy]) in (QT None, name, ResVD(r, spriteTy))
+		let r = CompRes("sprite", [src], [x; y; sw; fx; fy]) in (rb name, ResVD(r, spriteTy))
 	| _ -> failwith "TOERR: bad json sprite definition"
 
 let read_rom_layout (path: string): m_virt_bind list =

@@ -17,23 +17,23 @@ extern float _Float_builtin_abs(float f) {
 	return fabsf(f);
 }
 
-extern float _Float_builtin_floor(float f) {
-	return floorf(f);
+extern int32_t _Float_builtin_floor(float f) {
+	return (int32_t) floorf(f);
 }
 
-extern float _Float_builtin_ceil(float f) {
-	return ceilf(f);
+extern int32_t _Float_builtin_ceil(float f) {
+	return (int32_t) ceilf(f);
 }
 
 extern float _Int_builtin_toRadians(int32_t i) {
 	return ((float) i) * M_PI / 180.0f;
 }
 
-extern uint32_t _Uint8_builtin_color(uint8_t r, uint8_t g, uint8_t b) {
+extern uint32_t _U8_builtin_color(uint8_t r, uint8_t g, uint8_t b) {
 	return ((uint32_t) r) << 16 | ((uint32_t) g) << 8 | ((uint32_t) b);
 }
 
-extern uint32_t _Uint32_builtin_rgb(uint32_t c) {
+extern uint32_t _U32_builtin_rgb(uint32_t c) {
 	return c >> 8;
 }
 
