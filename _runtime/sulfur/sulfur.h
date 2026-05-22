@@ -10,6 +10,7 @@
 #include "mesh.h"
 #include "texArray.h"
 #include "texImage.h"
+#include "texSingleImage.h"
 #include "sprite.h"
 
 	// shader code
@@ -64,8 +65,16 @@ void orthoMat(GLfloat* m, float l, float r, float b, float t, float n, float f) 
 		external bindings required for pipeline rendering
 	*/
 
-extern void init_pipeline_Pipeline();
-extern void _RenderData_pipeline_runShader(renderData_t* rd);
+#ifdef PIPELINE_DEF
+	extern void _none_pipeline_initAttrVars();
+	extern void init_pipeline_Pipeline();
+	extern void _RenderData_pipeline_runShader(renderData_t* rd);
+#endif
+
+	/* initialization phase required variables */
+
+gl_var_list_t* _attrVarList = NULL;
+size_t _size3d = 0;
 
 	/* main sulfur runtime */
 
@@ -82,6 +91,7 @@ typedef struct sulfur {
 	renderData_t* back_buffer;
 	renderData_t* swap_buffer;
 	renderData_t* front_buffer;
+	gl_var_list_t* attrVarList;
 		/* media rom */
 	sf_rom_t* rom;
 	mesh_t* screenQuad;
@@ -100,10 +110,14 @@ sulfur_t* initSulfur(int width, int height) {
 
 	// initialize 2d + 3d render buffers
 	#ifdef PIPELINE_DEF
-		size_t size3d = sizeof(draw_dat3d_t);
+		self->attrVarList = newRenderVarList(1);
+		_attrVarList = self->attrVarList;
+		_none_pipeline_initAttrVars();
+		size_t size3d = sizeof(draw_dat3d_t) + sizeofRVarList(_attrVarList);
 	#else
 		size_t size3d = 0;
 	#endif
+	_size3d = size3d;
 	self->r3d = initR3d();
 	self->back_buffer = newRData(sizeof(draw_dat2d_t), size3d);
 	self->swap_buffer = newRData(sizeof(draw_dat2d_t), size3d);

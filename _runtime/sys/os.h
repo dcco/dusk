@@ -13,6 +13,10 @@ extern float _Float_builtin_sqrt(float f) {
 	return sqrtf(f);
 }
 
+extern uint32_t _Int_builtin_abs(uint32_t f) {
+	return abs(f);
+}
+
 extern float _Float_builtin_abs(float f) {
 	return fabsf(f);
 }
@@ -106,6 +110,12 @@ extern float _PRNG_Sys_Os_randomFloat(xoshiro_state_t* prng) {
 	*/
 
 extern uint64_t _none_Sys_Os_time() {
+	return time_ns() / 1000000;
+	//return 0;
+	
+}
+
+extern uint64_t _none_Sys_Os_timeNS() {
 	return time_ns();
 }
 

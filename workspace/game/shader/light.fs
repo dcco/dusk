@@ -8,6 +8,7 @@ uniform sampler2D gPos;
 uniform sampler2D gNorm;
 uniform sampler2D gColor;
 uniform sampler2D gSpec;
+uniform sampler2D occlusion;
 
 out vec4 finalColor;
 
@@ -50,6 +51,9 @@ void main()
 	vec3 vNorm = texture(gNorm, xTex).rgb;
 	vec4 vColor = texture(gColor, xTex);
 	vec4 vSpec = texture(gSpec, xTex);
+	float vOcc = texture(occlusion, xTex).r;
+
+	if (vColor.a <= 0.0) vOcc = 1.0;
 
 	float distance = length(centerPos - vPos);
 	float attenuation = 1.0 / (1.0 + 0.3 * pow(distance, 1.7));
@@ -81,7 +85,7 @@ void main()
 		float shadowP = texture(gSpec, vec2(zx, zy)).g;
 		shadow = shadow + shadowP;
 	}
-	shadow = (shadow * 0.4) / 8.0;
+	shadow = (shadow * 0.5) / 8.0;
 
 	// calculate the specular reflection
 	vec3 lightDir = normalize(cLightPos - vPos);
@@ -99,7 +103,7 @@ void main()
 	// -- coloring given used as ambient light value
 	float alpha = vColor.a;
 	vec4 texColor = vColor * cDarkColor;
-	texColor = vec4((1.0 - shadow) * texColor.rgb, texColor.a);
+	texColor = vec4(vOcc * (1.0 - shadow) * texColor.rgb, texColor.a);
 	// -- lambert multiplier makes things lighter
 	vec4 lightColor = vec4((lambert * 0.3 * cDiffColor) + (spec * 0.5 * cSpecColor), alpha);
 	vec4 baseColor = texColor + (lightColor * 0.7);

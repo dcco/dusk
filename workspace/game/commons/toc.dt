@@ -1,6 +1,8 @@
 
 module Core
 	references Sys.Os
+	chapter Box3D
 	chapter NewMath
+	chapter Units
 	chapter Clock
 end

@@ -36,7 +36,7 @@ extern void _Float_Sys_Sulfur_drawQuadX(float x, float y, float z, sprite_t* spr
 {
 	#ifdef PIPELINE_DEF
 		renderTable_t* rt = &sulfur->back_buffer->table3d;
-		addQuad3dRTable(sulfur->r3d, rt, 0, x, y, z, spritePtr, frame);
+		addQuad3dRTable(sulfur->r3d, rt, _attrVarList, 0, x, y, z, spritePtr, frame);
 	#endif
 }
 
@@ -44,7 +44,7 @@ extern void _Float_Sys_Sulfur_drawQuadY(float x, float y, float z, sprite_t* spr
 {
 	#ifdef PIPELINE_DEF
 		renderTable_t* rt = &sulfur->back_buffer->table3d;
-		addQuad3dRTable(sulfur->r3d, rt, 1, x, y, z, spritePtr, frame);
+		addQuad3dRTable(sulfur->r3d, rt, _attrVarList, 1, x, y, z, spritePtr, frame);
 	#endif
 }
 
@@ -52,7 +52,7 @@ extern void _Float_Sys_Sulfur_drawQuadZ(float x, float y, float z, sprite_t* spr
 {
 	#ifdef PIPELINE_DEF
 		renderTable_t* rt = &sulfur->back_buffer->table3d;
-		addQuad3dRTable(sulfur->r3d, rt, 2, x, y, z, spritePtr, frame);
+		addQuad3dRTable(sulfur->r3d, rt, _attrVarList, 2, x, y, z, spritePtr, frame);
 	#endif
 }
 
@@ -60,7 +60,7 @@ extern void _Float_Sys_Sulfur_drawSprite(float x, float y, float z, sprite_t* sp
 {
 	#ifdef PIPELINE_DEF
 		renderTable_t* rt = &sulfur->back_buffer->table3d;
-		addSprite3dRTable(sulfur->r3d, rt, x, y, z, spritePtr, frame, facing);
+		addSprite3dRTable(sulfur->r3d, rt, _attrVarList, x, y, z, spritePtr, frame, facing);
 	#endif
 }
 
@@ -82,6 +82,14 @@ extern uint32_t _Image_Sys_Sulfur_pixel(tex_image_t* imagePtr, int32_t x, int32_
 	/* special pipeline bindings */
 
 #ifdef PIPELINE_DEF
+
+extern tex_simage_t* _Int_Sys_Sulfur_fixedTexImageFloat(int32_t w, int32_t h, gc_array_t* arr)
+{
+	tex_simage_t* img = (tex_simage_t*) malloc(sizeof(tex_simage_t));
+	initTexImageFloat(img, w, h, arr->data);
+	return img;
+}
+
 /*
 shader_uniform_def_t* convert_uniforms(gc_array_t* uniforms)
 {
@@ -100,9 +108,24 @@ shader_uniform_def_t* convert_uniforms(gc_array_t* uniforms)
 	return uniformList;
 }*/
 
+
+
 extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t* _fs,
 	gc_array_t* attrs, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)
 {
+	// convert attribute list into usable data structure
+	int32_t exAttrTotal = attrs->size;
+	shader_attr_def_t* newAttrList = copyBaseAttrList(exAttrTotal);
+	partial_map_gc_array(newAttrList + BASE3_ATTR_TOTAL, attrs,
+		sizeof(raw_attr_def_t*), sizeof(shader_attr_def_t), &read_attr);
+
+	// - add attribute offsets
+	size_t offset = sizeof(draw_dat3d_t);
+	for (int i = 0; i < exAttrTotal; i++) {
+		newAttrList[BASE3_ATTR_TOTAL + i].offset = (GLvoid*) offset;
+		offset = offset + sizeofRenderVar(&_attrVarList->list[i]);
+	}
+
 	// convert uniform list into usable data structure
 	int32_t uniformTotal = uniforms->size;
 	shader_uniform_def_t* uniformList = map_gc_array(uniforms,
@@ -124,7 +147,7 @@ extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t*
 
 	// build shader definition
 	const struct shader_def BASE3_DEF = {
-		BASE3_ATTR_TOTAL, sizeof(draw_dat3d_t), BASE3_ATTR_LIST,
+		BASE3_ATTR_TOTAL + exAttrTotal, _size3d, newAttrList,
 		uniformTotal, uniformList, uSampler, NULL, uPMat,
 		uTexTotal, uniformTexList
 	};
@@ -135,8 +158,9 @@ extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t*
 	shader_t* shader = initShader(vs, fs, &BASE3_DEF);
 
 	// cleanup
-	if (uniformList != NULL) free(uniformList);
-	if (uniformTexList != NULL) free(uniformTexList);
+	free(newAttrList);
+	free(uniformList);
+	free(uniformTexList);
 	return shader;
 }
 /*
@@ -156,10 +180,10 @@ fbo_layer_def_t* convert_layers(gc_array_t* layers)
 }*/
 
 extern frameBuffer_t* _String_Sys_Sulfur_newFrameBuffer(dusk_string_t* _vs, dusk_string_t* _fs, int32_t w, int32_t h,
-	gc_array_t* layers, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)
+	gc_array_t* layers, gc_array_t* attrs, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)
 {
 	// initialize shader + fbo
-	shader_t* shader = _String_Sys_Sulfur_newShader(_vs, _fs, NULL, _uPMat, uniforms, uniformTexs);
+	shader_t* shader = _String_Sys_Sulfur_newShader(_vs, _fs, attrs, _uPMat, uniforms, uniformTexs);
 	fbo_layer_def_t* layerList = map_gc_array(layers, sizeof(tag_type), sizeof(fbo_layer_def_t), &read_layer);
 	frameBuffer_t* buffer = newFrameBuffer(shader, w, h, layers->size, layerList);
 
@@ -198,6 +222,18 @@ extern void _Shader_Sys_Sulfur_loadTexture(void* _shader, int32_t i, void* _fbo,
 extern void _FrameBuffer_Sys_Sulfur_loadTexture(void* _dst, int32_t i, void* _src, int32_t j)
 {
 	_Shader_Sys_Sulfur_loadTexture(((frameBuffer_t*) _dst)->shader, i, _src, j);
+}
+
+extern void _Shader_Sys_Sulfur_loadTextureLit(void* _shader, int32_t i, void* img)
+{
+	shader_t* shader = (shader_t*) _shader;
+	glActiveTexture(GL_TEXTURE0 + i);
+	glBindTexture(GL_TEXTURE_2D, ((tex_simage_t*) img)->texId);
+}
+
+extern void _FrameBuffer_Sys_Sulfur_loadTextureLit(void* _dst, int32_t i, void* img)
+{
+	_Shader_Sys_Sulfur_loadTextureLit(((frameBuffer_t*) _dst)->shader, i, img);
 }
 
 void shader_render(shader_t* shader, renderData_t* rd)
@@ -289,15 +325,19 @@ extern renderData_t* _none_Sys_Sulfur_renderData() {
 }
 
 extern void _RenderData_Sys_Sulfur_get(gl_val_t* ret, renderData_t* rd, int32_t i) {
-	if (i >= rd->varTotal) {
+	if (i >= rd->varList->total) {
 		ret->type = G_GL_NULL;
 		return;
 	}
-	*ret = rd->varList[i];
+	*ret = rd->varList->list[i];
 }
 
 extern void _RenderData_Sys_Sulfur_set(renderData_t* rd, int32_t i, gl_val_t* v) {
-	return addVarRData(rd, i, v);
+	return addRenderVar(rd->varList, i, v);
+}
+
+extern void _Int_Sys_Sulfur_setAttr(int32_t i, gl_val_t* v) {
+	addRenderVar(_attrVarList, i, v);
 }
 
 #endif /* PIPELINE_DEF */

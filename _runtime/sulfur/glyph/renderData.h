@@ -9,8 +9,7 @@ typedef struct renderData {
 	int8_t active3d;
 	renderList_t list2d;
 	renderTable_t table3d;
-	int32_t varTotal;
-	gl_val_t* varList;
+	gl_var_list_t* varList;
 } renderData_t;
 
 renderData_t* newRData(size_t unitSize2d, size_t unitSize3d) {
@@ -21,11 +20,12 @@ renderData_t* newRData(size_t unitSize2d, size_t unitSize3d) {
 		initRTable(&rd->table3d, unitSize3d);
 		rd->active3d = 1;
 	}
-	rd->varTotal = 10;
+	rd->varList = newRenderVarList(0);
+	/*rd->varTotal = 10;
 	rd->varList = malloc(sizeof(gl_val_t) * 10);
 	for (int i = 0; i < 10; i++) {
 		rd->varList[i].type = G_GL_NULL;
-	}
+	}*/
 	return rd;
 }
 
@@ -34,7 +34,7 @@ void clearRData(renderData_t* rd) {
 	if (rd->active3d) clearRTable(&rd->table3d);
 }
 
-void addVarRData(renderData_t* rd, int32_t i, gl_val_t* v) {
+/*void addVarRData(renderData_t* rd, int32_t i, gl_val_t* v) {
 	if (i >= rd->varTotal) {
 		rd->varList = realloc(rd->varList, sizeof(gl_val_t) * (i + 1));
 		for (int k = rd->varTotal; k <= i; k++) {
@@ -43,6 +43,6 @@ void addVarRData(renderData_t* rd, int32_t i, gl_val_t* v) {
 		rd->varTotal = i + 1;
 	}
 	copyRenderVar(&rd->varList[i], v);
-}
+}*/
 
 #endif

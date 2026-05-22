@@ -31,8 +31,8 @@ fn noise(Simplex s, Float fx, Float fy) Float
 	-- (sqrt(3) - 1) / 2
 	var _skew = 0.366025
 	var fSkew = (fx + fy) * _skew
-	var i = floor(fx + fSkew)
-	var j = floor(fy + fSkew)
+	var i = toFloat(floor(fx + fSkew))
+	var j = toFloat(floor(fy + fSkew))
 	-- unskew
 	var _unskew = 0.21132
 	var fRev = (i + j) * _unskew

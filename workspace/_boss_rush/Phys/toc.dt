@@ -1,0 +1,9 @@
+
+module Main
+	references Sys modules Sulfur, Rom
+	references Commons.Core
+	chapter WallTrack
+	chapter MoveObj
+	chapter GameTile
+	chapter GameRoom
+end

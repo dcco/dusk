@@ -8,6 +8,8 @@ layout (location = 4) in float iTexId;
 layout (location = 5) in vec2 iUVPos;
 layout (location = 6) in vec2 iUVSize;
 
+layout (location = 7) in vec4 aSkew;
+
 uniform mat4 uPMat;
 uniform mat4 uMVMat;
 uniform mat4 uLightMat;
@@ -19,10 +21,14 @@ out vec2 vTex;
 
 void main()
 {
-	// adjustment for sprites
 	vec4 vPos = vec4(aPos + iPos, 1.0);
+	float s1 = aPos.z < 0.5 ? aSkew.x : aSkew.z;
+	float s2 = aPos.z < 0.5 ? aSkew.y : aSkew.w;
+	vPos.y = vPos.y + (aPos.x < 0.5 ? s1 : s2);
+	// adjustment for sprites
 	//if (spFlag > 0.5) vPos.z = vPos.z - 0.1;
 	// calculate position
 	gl_Position = uPMat * uLightMat * uMVMat * vPos; 
-	vTex = aTex;
+	vTexId = iTexId;
+	vTex = (aTex * iUVSize) + iUVPos;
 }

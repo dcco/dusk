@@ -13,6 +13,29 @@ typedef struct vec3 {
 	float z;
 } vec3_t;
 
+extern float _triple_Sys_Sulfur_measure(vec3_t* v) {
+	return sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+}
+
+extern void _triple_Sys_Sulfur_normalize(vec3_t* v) {
+	float m = _triple_Sys_Sulfur_measure(v);
+	if (m < M4_EPSILON) {
+		v->x = 0.0;
+		v->y = 0.0;
+		v->z = 1.0;
+	} else {
+		v->x = v->x / m;
+		v->y = v->y / m;
+		v->z = v->z / m;
+	}
+}
+
+extern void _triple_Sys_Sulfur_scale(vec3_t* v, float f) {
+	v->x = v->x * f;
+	v->y = v->y * f;
+	v->z = v->z * f;
+}
+
 	/*
 		MAT 4
 	*/
@@ -31,10 +54,8 @@ extern void* _none_Sys_Sulfur_newMat4() {
 	return (void*) m;
 }
 
-float* rawCopyMat4(float* m) {
-	float* f = (float*) malloc(sizeof(float) * 16);
-	memcpy(f, m, sizeof(float) * 16);
-	return f;
+float* rawNewMat4() {
+	return (float*) malloc(sizeof(float) * 16);
 }
 
 extern void _Mat4_Sys_Sulfur_translate(float* m, float x, float y, float z) {

@@ -155,6 +155,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "ui64sub" -> (build_sub v1 v2 "_subT" bx, i64Type)
 			| "ui64mul" -> (build_mul v1 v2 "_mulT" bx, i64Type)
 			| "ui64div" -> (build_udiv v1 v2 "_divT" bx, i64Type)
+			| "ui64mod" -> (build_urem v1 v2 "_modT" bx, i64Type)
 			| "tag_eq" -> (build_icmp Icmp.Eq v1 v2 "_isT" bx, tagType)
 			| "ifdiv" ->
 				let v1' = build_sitofp v1 fType "_castAT" bx in
@@ -623,7 +624,8 @@ let genInitFun (cont: llvm_cont) (env: dusk_env) (dl: (string * gen_dec) list): 
 			genPreAlloc cont env b;
 			genBody cont env blockInfo b
 		| _ -> blockInfo
-	) (1, fVal) dl)
+	) (1, fVal) dl);
+	ignore (build_ret_void cont.builder)
 
 	(*
 		external generation

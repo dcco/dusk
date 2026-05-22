@@ -1,0 +1,3 @@
+
+extends enum ObjClass =
+	Player

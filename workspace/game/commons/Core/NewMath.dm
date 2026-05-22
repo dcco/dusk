@@ -13,3 +13,13 @@ fn distPt(Float x1, Float y1, Float x2, Float y2) Float
 	var yy = abs(y1 - y2)
 	return sqrt(xx * xx + yy * yy)
 end
+
+fn max(Float f1, Float f2) Float
+	if f1 > f2 then return f1 end
+	return f2
+end
+
+fn min(Float f1, Float f2) Float
+	if f1 < f2 then return f1 end
+	return f2
+end

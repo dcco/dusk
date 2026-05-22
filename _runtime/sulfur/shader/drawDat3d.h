@@ -24,3 +24,9 @@ const struct shader_attr_def BASE3_ATTR_LIST[7] = {
 };
 
 const int BASE3_ATTR_TOTAL = 7;
+
+shader_attr_def_t* copyBaseAttrList(int ex) {
+	shader_attr_def_t* attrList = (shader_attr_def_t*) malloc(sizeof(shader_attr_def_t) * (BASE3_ATTR_TOTAL + ex));
+	memcpy(attrList, BASE3_ATTR_LIST, sizeof(shader_attr_def_t) * BASE3_ATTR_TOTAL);
+	return attrList;
+}

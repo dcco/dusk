@@ -97,6 +97,7 @@ let builtinList = [
 	("sub", BinaryASMSym "ui64sub", [uint64Ty; uint64Ty], uint64Ty);
 	("mul", BinaryASMSym "ui64mul", [uint64Ty; uint64Ty], uint64Ty);
 	("div", BinaryASMSym "ui64div", [uint64Ty; uint64Ty], uint64Ty);
+	("mod", BinaryASMSym "ui64mod", [uint64Ty; uint64Ty], uint64Ty);
 
 	("eq", BinaryASMSym "ieq", [uint32Ty; uint32Ty], boolTy);
 	("neq", BinaryASMSym "ineq", [uint32Ty; uint32Ty], boolTy);
@@ -117,6 +118,7 @@ let builtinList = [
 
 	("expo", ExternalSym [], [floatTy; floatTy], floatTy);
 	("sqrt", ExternalSym [], [floatTy], floatTy);
+	("abs", ExternalSym [], [intTy], intTy);
 	("abs", ExternalSym [], [floatTy], floatTy);
 
 	("toRadians", ExternalSym [], [intTy], floatTy);
@@ -144,6 +146,7 @@ let osList = [
 	("randomFloat", ExternalSym [], [prngTy], floatTy);
 	
 	("time", ExternalSym [], [], uint64Ty);
+	("timeNS", ExternalSym [], [], uint64Ty);
 ]
 
 let inputList = [
@@ -158,6 +161,7 @@ let shaderTy = builtinTy "Shader"
 let fboTy = builtinTy "FrameBuffer"
 let renderDataTy = builtinTy "RenderData"
 let imageTy = builtinTy "Image"
+let fixImageTy = builtinTy "FixImage"
 let spriteTy = builtinTy "Sprite"
 
 let sulfurList = [
@@ -174,12 +178,14 @@ let sulfurList = [
 	("pixel", ExternalSym [], [imageTy; intTy; intTy], uint32Ty);
 
 		(* shader / fbo setup *)
-	("newShader", ExternalSym [], [stringTy; stringTy; ValArrayTy intTy;
+	("newShader", ExternalSym [], [stringTy; stringTy; 
+		ValArrayTy (TupleTy [TagOfTy (namedTy "GLVal"); intTy]);
 		stringTy; ValArrayTy (TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
 		ValArrayTy stringTy
 	], shaderTy);
 	("newFrameBuffer", ExternalSym [], [stringTy; stringTy; intTy; intTy;
 		ValArrayTy (namedTy "BufferType");
+		ValArrayTy (TupleTy [TagOfTy (namedTy "GLVal"); intTy]);
 		stringTy; ValArrayTy (TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
 		ValArrayTy stringTy
 	], fboTy);
@@ -187,18 +193,27 @@ let sulfurList = [
 	("setUniform", ExternalSym [], [fboTy; intTy; namedTy "GLVal"], unitTy);
 	("loadTexture", ExternalSym [], [shaderTy; intTy; fboTy; intTy], unitTy);
 	("loadTexture", ExternalSym [], [fboTy; intTy; fboTy; intTy], unitTy);
+	("loadTextureLit", ExternalSym [], [shaderTy; intTy; fixImageTy], unitTy);
+	("loadTextureLit", ExternalSym [], [fboTy; intTy; fixImageTy], unitTy);
 	("render", ExternalSym [], [shaderTy; renderDataTy], unitTy);
 	("render", ExternalSym [], [fboTy; renderDataTy], unitTy);
 	("renderQuad", ExternalSym [], [shaderTy], unitTy);
 	("renderQuad", ExternalSym [], [fboTy], unitTy);
+
+	("fixedTexImageFloat", ExternalSym [], [intTy; intTy; ArrayTy(1, floatTy)], fixImageTy);
 
 		(* render data *)
 	("renderData", ExternalSym [], [], renderDataTy);
 	("alloc", ExternalSym [], [renderDataTy; intTy], unitTy);
 	("get", ExternalSym [], [renderDataTy; intTy], namedTy "GLVal");
 	("set", ExternalSym [], [renderDataTy; intTy; namedTy "GLVal"], unitTy);
+	("setAttr", ExternalSym [], [intTy; namedTy "GLVal"], unitTy);
 
 		(* vec3 *)
+	("measure", ExternalSym [], [vec3Ty], floatTy);
+	("normalize", ExternalSym [], [vec3Ty], unitTy);
+	("scale", ExternalSym [], [vec3Ty; floatTy], unitTy);
+
 		(* mat4 *)
 	("newMat4", ExternalSym [], [], mat4Ty);
 	("idMat4", ExternalSym [], [mat4Ty], unitTy);
@@ -222,6 +237,9 @@ let sulfurTypes = [
 	]));*)
 	(pb "GLVal", TDefVD (UnionTD [
 		(qn "GLFloat", [floatTy], GlobalEB "C_GL_FLOAT");
+		(qn "GLFloat3", [floatTy; floatTy; floatTy], GlobalEB "C_GL_FLOAT3");
+		(qn "GLFloat4", [floatTy; floatTy; floatTy; floatTy], GlobalEB "C_GL_FLOAT4");
+		(qn "GLFloatVec3", [ArrayTy(1, floatTy)], GlobalEB "C_GL_FLOAT_V3");
 		(qn "GLMat4", [mat4Ty], GlobalEB "C_GL_MAT4");
 	]));
 	(*(QT None, "GLType", TDefVD (UnionTD [

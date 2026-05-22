@@ -162,6 +162,20 @@ void* gc_free(gc_obj_t* obj) {
 	gc_obj_total = gc_obj_total - 1;
 }
 
+void* raw_alloc_1d_array(int32_t elemSize, int32_t arrSize) {
+	gc_array_t* array = (gc_array_t*) malloc(sizeof(gc_array_t));
+	array->data = malloc(elemSize * arrSize);
+	array->elemSize = elemSize;
+	array->capacity = arrSize;
+	array->size = arrSize;
+	return (void*) array;
+}
+
+void raw_free_array(gc_array_t* arr) {
+	free(arr->data);
+	free(arr);
+}
+
 extern void gc_new_root(void* ptr) {
 	if (gc_root_total >= MAX_ROOTS) {
 		exit_log("Root stack overflow.", "");

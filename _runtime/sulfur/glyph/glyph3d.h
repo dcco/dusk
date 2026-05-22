@@ -60,7 +60,9 @@ void addGlyph3dRTable(r3d_t* cont, renderTable_t* rt, glyph3d_t* g) {
 	}
 }*/
 
-void addQuad3dRTable(r3d_t* cont, renderTable_t* rt, int axis, float x, float y, float z, sprite_t* spritePtr, int32_t frame) {
+void addQuad3dRTable(r3d_t* cont, renderTable_t* rt, gl_var_list_t* attrList,
+	int axis, float x, float y, float z, sprite_t* spritePtr, int32_t frame)
+{
 	if (spritePtr == NULL) return;
 	if (spritePtr->image == NULL) return;
 	tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
@@ -75,9 +77,13 @@ void addQuad3dRTable(r3d_t* cont, renderTable_t* rt, int axis, float x, float y,
 	dat->aTexUVPos[1] = spritePtr->fy + ((frame / spritePtr->spanWidth) * spritePtr->fh);
 	dat->aTexUVSize[0] = spritePtr->fw;
 	dat->aTexUVSize[1] = spritePtr->fh;
+	// write attributes
+	writeRVarList((int8_t*) (dat + 1), attrList);
 }
 
-void addSprite3dRTable(r3d_t* cont, renderTable_t* rt, float x, float y, float z, sprite_t* spritePtr, int32_t frame, int8_t facing) {
+void addSprite3dRTable(r3d_t* cont, renderTable_t* rt,  gl_var_list_t* attrList,
+	float x, float y, float z, sprite_t* spritePtr, int32_t frame, int8_t facing)
+{
 	if (spritePtr == NULL) return;
 	if (spritePtr->image == NULL) return;
 	tex_image_t* imagePtr = (tex_image_t*) spritePtr->image;
@@ -99,6 +105,8 @@ void addSprite3dRTable(r3d_t* cont, renderTable_t* rt, float x, float y, float z
 	}
 	dat->aTexUVPos[1] = spritePtr->fy + ((frame / spritePtr->spanWidth) * spritePtr->fh);
 	dat->aTexUVSize[1] = spritePtr->fh;
+	// write attributes
+	writeRVarList((int8_t*) (dat + 1), attrList);
 }
 
 #endif

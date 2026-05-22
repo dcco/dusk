@@ -230,6 +230,11 @@ void setUniformsShader(shader_t* shader) {
 		if (v == NULL) continue;
 		if (uniform->uDef.glType == GL_FLOAT_MAT4) {
 			glUniformMatrix4fv(uniform->loc, 1, GL_FALSE, ((gl_mat4_val_t*) v)->mat);
+		} else if (uniform->uDef.glType == GL_FLOAT_VEC3) {
+			gc_array_t* arr = ((gl_fv3_val_t*) v)->arr;
+			glUniform3fv(uniform->loc, arr->size / 3, arr->data);
+		} else {
+			exit_log("Encountered unknown render variable type during uniform set.", "");
 		}
 	}
 }
@@ -262,6 +267,6 @@ void drawDataShader(shader_t* shader, mesh_t* mesh, tex_array_t* texArr, int tot
 	if (shader->uTotal != -1) glUniform1i(shader->uTotal, total);
 
 	glDrawArraysInstanced(GL_TRIANGLES, 0, mesh->vertexTotal, total);
-}	
+}
 
 #endif /* SULF_SHADER_H */

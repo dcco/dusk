@@ -21,6 +21,37 @@ void* map_gc_array(gc_array_t* list, size_t oldSize, size_t newSize, void (*f)(v
 	return (void*) newList;
 }
 
+void partial_map_gc_array(void* dst, gc_array_t* list,
+	size_t oldSize, size_t newSize, void (*f)(void* dst, void* src))
+{
+	if (list->size <= 0) return;
+	int32_t total = list->size;
+	int8_t* srcPtr = (int8_t*) list->data;
+	int8_t* dstPtr = (int8_t*) dst;
+	for (int i = 0; i < total; i++) {
+		f(dstPtr, srcPtr);
+		srcPtr = srcPtr + oldSize;
+		dstPtr = dstPtr + newSize;
+	}
+}
+
+	/* attributes */
+
+typedef struct raw_attr_def {
+	tag_type g;
+	int32_t arity;
+} raw_attr_def_t;
+
+void read_attr(void* dst, void* src)
+{
+	shader_attr_def_t* attr = (shader_attr_def_t*) dst;
+	raw_attr_def_t* rawAttr = *((raw_attr_def_t**) src);
+	attr->vertAttrFlag = 0;
+	attr->glType = readGLType(rawAttr->g);
+	attr->arity = rawAttr->arity;
+	// -- relies on filling in the offset later
+}
+
 	/* uniforms */
 
 typedef struct raw_uniform_def {

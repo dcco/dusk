@@ -409,13 +409,15 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			Hashtbl.add env.globalIds (cr f) (f, tau);
 			Valid (cr f, e', tau)
 		) fl in
-		let sl = (List.map (fun (x, e', tau) ->
+		let sl = List.map (fun (x, e', tau) ->
 			let e_gc = if is_heap_type env tau then GCNewRootExpC e' else e' in
 			AssignStmtC(x, e_gc)
-		) fl') @ [ReturnStmtC(None, unitTy)] in
+		) fl' in
 		let iDec =
 			if c = None then [("", InitDecC sl)]
-			else [("init" ^ (cr x), FunDecC (MethodC([], unitTy, sl)))]
+			else
+				let m = MethodC([], unitTy, sl @ [ReturnStmtC(None, unitTy)]) in
+				[("init" ^ (cr x), FunDecC m)]
 		in Valid ((List.map (fun (x, _, tau) -> (x, GlobalDecC tau)) fl') @ iDec)
 
 let tc_section (env: type_env) (SectionR dl: r_section): ((string * gen_dec) list) tc_res =

@@ -9,6 +9,8 @@ layout (location = 4) in float iTexId;
 layout (location = 5) in vec2 iUVPos;
 layout (location = 6) in vec2 iUVSize;
 
+layout (location = 7) in vec4 aSkew;
+
 uniform mat4 uPMat;
 uniform mat4 uMVMat;
 // uniform mat3 uLightPMat;
@@ -23,6 +25,9 @@ out vec4 fragLightPos;
 void main(void) {
 	// calculate position + send to fragment shader
 	vec4 xPos = vec4(aPos + iPos, 1.0);
+	float s1 = aPos.z < 0.5 ? aSkew.x : aSkew.z;
+	float s2 = aPos.z < 0.5 ? aSkew.y : aSkew.w;
+	xPos.y = xPos.y + (aPos.x < 0.5 ? s1 : s2);
 	// -- assumes shadow uses same perspective matrix
 	vec4 vPos4 = uMVMat * xPos;
 	fragLightPos = uPMat * uLightMat * vPos4;

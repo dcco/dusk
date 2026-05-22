@@ -1,8 +1,23 @@
 
-module World
+module Obj
 	references Sys modules Os, Sulfur, Rom
+	references Commons.Core
+	references Phys.Main
+	chapter GameObj
+end
+
+module AI
+	references Main modules Obj
+	chapter StateC
+end
+
+module World
+	references Sys modules Os, Sulfur, Input
+	references Commons.Core
+	references Phys.Main
 	references ProcGen modules Layer, Noise
-	chapter GameTile
-	chapter GameRoom
+	references Main modules Obj
+	chapter ExtObjClass
 	chapter Generate
+	chapter GameWorld
 end

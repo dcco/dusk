@@ -1,11 +1,11 @@
 
 struct FPSClock{
-	Long nsPerFrame,
-	Long prevTime
+	U64 nsPerFrame,
+	U64 prevTime
 }
 
 fn newClock(Int fps) FPSClock
-	var nspf = 1000000000L / toLong(fps)
+	var nspf = 1000L / toU64(fps)
 	var clock = new FPSClock{
 		nsPerFrame = nspf,
 		prevTime = Os.time()
@@ -16,6 +16,6 @@ end
 fn tick(FPSClock clock) Int
 	var curTime = Os.time()
 	var framesPassed = toInt((curTime - clock.prevTime) / clock.nsPerFrame)
-	clock.prevTime = clock.prevTime + (toLong(framesPassed) * clock.nsPerFrame)
+	clock.prevTime = clock.prevTime + (toU64(framesPassed) * clock.nsPerFrame)
 	return framesPassed
 end
