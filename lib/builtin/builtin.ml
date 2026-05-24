@@ -120,7 +120,9 @@ let builtinList = [
 	("sqrt", ExternalSym [], [floatTy], floatTy);
 	("abs", ExternalSym [], [intTy], intTy);
 	("abs", ExternalSym [], [floatTy], floatTy);
-
+	
+	("sin", ExternalSym [], [floatTy], floatTy);
+	("cos", ExternalSym [], [floatTy], floatTy);
 	("toRadians", ExternalSym [], [intTy], floatTy);
 
 	("measure", ExternalSym [], [stringTy], intTy);

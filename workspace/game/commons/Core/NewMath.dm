@@ -14,6 +14,16 @@ fn distPt(Float x1, Float y1, Float x2, Float y2) Float
 	return sqrt(xx * xx + yy * yy)
 end
 
+fn max(Int i1, Int i2) Int
+	if i1 > i2 then return i1 end
+	return i2
+end
+
+fn min(Int i1, Int i2) Int
+	if i1 < i2 then return i1 end
+	return i2
+end
+
 fn max(Float f1, Float f2) Float
 	if f1 > f2 then return f1 end
 	return f2

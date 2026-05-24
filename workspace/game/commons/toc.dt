@@ -1,8 +1,10 @@
 
 module Core
 	references Sys.Os
+	chapter Range
 	chapter Box3D
 	chapter NewMath
+	chapter IntQueue
 	chapter Units
 	chapter Clock
 end

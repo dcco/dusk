@@ -1,15 +1,31 @@
 
-fn generateRoom() GameRoom
+fn generateRoom() (GameRoom, Int, Int)
 	var _size = 600
 	--var prng = newPRNG(30461)
-	var prng = newPRNG(7889)
-	var simplex = newSimplex(prng)
+	--var prng = newPRNG(7889)
+	var prng = newPRNG(toInt((Os.time() / 300L) % 10000L))
+	
+	var aCont = new GenAuxInfo{
+		prng = prng,
+		size = _size,
+		holeFX = 0,
+		holeFY = 0,
+		colorTotals = new 1d[0],
+		mainColor = 1
+	}
 
+	(*
+		PHASE 1: initial elevation / humidity calcs
+	*)
+
+	var simplex = newSimplex(prng)
 	var data = newDataLayer(_size, _size)
 	var humid = newDataLayer(_size, _size)
 	-- random second circle
 	var cx = (prng.randomFloat() * 0.5) + 0.25
 	var cy = (prng.randomFloat() * 0.5) + 0.25
+	aCont.holeFX = floor(toFloat(_size) * cx)
+	aCont.holeFY = floor(toFloat(_size) * cy) 
 	-- elevation calc
 	var _frac = 0.333
 	data.addSimplex(simplex, 0.7, 0.03 * _frac, 0.03 * _frac, 0.0)
@@ -50,12 +66,8 @@ fn generateRoom() GameRoom
 			e1 = 0.0,
 			e2 = 0.0,
 			e3 = 0.0,
-			e4 = 0.0
-			(*elevType = 0,
-			e1 = 0.0,
-			e2 = 0.0,
-			e3 = 0.0,
-			e4 = 0.0*)
+			e4 = 0.0,
+			brickList = new 1d[~GameBrick]
 		}
 	]
 	var room = new GameRoom{
@@ -64,6 +76,11 @@ fn generateRoom() GameRoom
 		grid = grid,
 		objList = new 1d[~MoveObj]
 	}
+
+	(*
+		PHASE 2: initial terrain type selection
+	*)
+
 	for i < _size, j < _size do
 		var h = floor(data.data[i, j] * 255.0)
 		var hm = humid.data[i, j]
@@ -87,6 +104,11 @@ fn generateRoom() GameRoom
 		--grid[i, j].elevation = toFloat(h) /. 16.0
 	end
 
+	(*
+		PHASE 3: elevation accentuation
+			(flattens beaches, creates mountain ridges, etc)
+	*)
+
 	-- elevation normalizing
 	for i < _size, j < _size do
 		var landType = grid[i, j].baseType
@@ -100,6 +122,20 @@ fn generateRoom() GameRoom
 			--grid[i, j].elevType = 1
 		end
 	end
+
+	(*
+		PHASE 3b: seeds starting location, buildings, etc
+	*)
+
+	var aux = genAuxMap(aCont, grid)
+	var startPos = rawRandomLoc(aCont, aux, grid)
+	var shelterLoc = rawProximaLoc(aCont, aux, grid, startPos.1, startPos.2, 8)
+	placeBuilding(aCont, aux, grid, shelterLoc.1, shelterLoc.2, 6, 3)
+
+	(*
+		PHASE 4: reification
+			(calculates auxiliary data: connects corners of hilly terrain, etc)
+	*)
 
 	-- final elevation reification
 	for i < _size, j < _size do
@@ -163,6 +199,6 @@ fn generateRoom() GameRoom
 		end
 	end
 
-	return room
+	return (room, startPos.1, startPos.2)
 end
 

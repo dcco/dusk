@@ -37,6 +37,15 @@ const int32_t K_up = GLFW_KEY_UP;
 const int32_t K_down = GLFW_KEY_DOWN;
 const int32_t K_z = GLFW_KEY_Z;
 const int32_t K_x = GLFW_KEY_X;
+const int32_t K_c = GLFW_KEY_C;
+const int32_t K_w = GLFW_KEY_W;
+const int32_t K_a = GLFW_KEY_A;
+const int32_t K_s = GLFW_KEY_S;
+const int32_t K_d = GLFW_KEY_D;
+const int32_t K_q = GLFW_KEY_Q;
+const int32_t K_e = GLFW_KEY_E;
+const int32_t K_n = GLFW_KEY_N;
+const int32_t K_m = GLFW_KEY_M;
 
 kbm_input_t* mainInput = NULL;
 

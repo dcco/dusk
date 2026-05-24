@@ -18,6 +18,7 @@ module World
 	references ProcGen modules Layer, Noise
 	references Main modules Obj
 	chapter ExtObjClass
+	chapter GenAux
 	chapter Generate
 	chapter GameWorld
 end

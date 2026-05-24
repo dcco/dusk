@@ -15,7 +15,7 @@ lin main()
 		end
 		if framesPassed >= 1 then
 			world.draw()
-			Sulfur.draw(GText(sfont, 16, 16, 4, "HELLO WORLD!"))
+			world.drawMini()
 			Sulfur.passRenderVars()
 			Sulfur.refresh()
 			gc_collect

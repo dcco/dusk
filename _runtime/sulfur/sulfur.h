@@ -182,6 +182,9 @@ void swapBackBuffer(sulfur_t* sulfur) {
 void _clear(sulfur_t* sulfur) {
 	shader_t* shader = sulfur->sf2d->shader;
 	glViewport(0, 0, sulfur->width, sulfur->height);
+	#ifdef PIPELINE_DEF
+		glClearColor(0.1f, 0.15f, 0.15f, 0.0f);
+	#endif
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shader->prog);
 	glUniformMatrix4fv(shader->uPers, 1, 0, sulfur->pMat); 
@@ -215,16 +218,26 @@ int8_t render(sulfur_t* sulfur) {
 	
 	// copy to capture card for future
 	copyCC(sulfur->cc);
+	#ifdef PIPELINE_DEF
+		glClearColor(0.1f, 0.15f, 0.15f, 1.0f);
+	#endif
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	// pipeline render call
 	#ifdef PIPELINE_DEF
 		_RenderData_pipeline_runShader(sulfur->front_buffer);
-		//glUseProgram(sulfur->sf2d->shader->prog);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glUseProgram(sulfur->sf2d->shader->prog);
+		glDisable(GL_DEPTH_TEST);
 	#endif
 
 	// 2d re-render
-	//drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->cc->capArr, 1, (void*) sulfur->cc->data);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, sulfur->cc->capArr->id);
+	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->cc->capArr, 1, (void*) sulfur->cc->data);
+	#ifdef PIPELINE_DEF
+		glEnable(GL_DEPTH_TEST);
+	#endif
 
 	return 1;
 }

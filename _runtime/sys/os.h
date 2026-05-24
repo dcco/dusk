@@ -29,6 +29,14 @@ extern int32_t _Float_builtin_ceil(float f) {
 	return (int32_t) ceilf(f);
 }
 
+extern float _Float_builtin_sin(float f) {
+	return sin(f);
+}
+
+extern float _Float_builtin_cos(float f) {
+	return cos(f);
+}
+
 extern float _Int_builtin_toRadians(int32_t i) {
 	return ((float) i) * M_PI / 180.0f;
 }

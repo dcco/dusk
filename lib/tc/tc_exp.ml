@@ -263,7 +263,7 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 	| OpExp(ArrayRemoveOp, _) -> (match tau_a with
 		None -> failwith "BUG: tc_exp.ml - No argument for array removal operation."
 		| Some (ArrayTy(1, tau_v)) ->
-			Valid ("_builtin_remove", CallGF [], ([ArrayTy(1, tau_v); intTy], unitTy))
+			Valid ("_a1_builtin_remove", CallGF [], ([ArrayTy(1, tau_v); intTy], unitTy))
 		| Some _ -> failwith "UNIMPLEMENTED: tc_exp.ml - No default function name for array removal operation."
 	)
 	| OpExp(TupleTagOp, p) -> (match tau_a with

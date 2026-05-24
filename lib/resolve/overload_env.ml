@@ -95,5 +95,5 @@ let add_oenv (env: overload_env) (cf: canon_fun) (ox: import_origin) (QN(_, x): 
 		if List.length rl > 0 then None
 		else
 			let x' = cf ox x in
-			(Hashtbl.replace env x ((ox, x') :: rl); Some x')
+			(Hashtbl.replace env x ((ox, x') :: ol); Some x')
 

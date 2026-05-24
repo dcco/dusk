@@ -12,9 +12,14 @@ typedef struct vertex {
 	float normal[3];
 } vertex_t;
 
-const float SQUARE_TEX_COORDS[] = {
+/*const float SQUARE_TEX_COORDS[] = {
 	0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f
+};*/
+
+const float SQUARE_TEX_COORDS[] = {
+	0.0001f, 0.0001f, 0.9999f, 0.9999f, 0.9999f, 0.0001f,
+	0.0001f, 0.0001f, 0.0001f, 0.9999f, 0.9999f, 0.9999f
 };
 
 	/* common coordinate/vertex lists */

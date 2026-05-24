@@ -112,8 +112,10 @@ void main()
 	float LOG2 = 1.442695;
 	float fogCoord = vSpec.z - 3.0;
 
-	float fogDensity = 0.07;
-	float fogFactor = exp2(-fogDensity * fogDensity * fogCoord * fogCoord * LOG2);
+	//float fogDensity = 0.07;
+	float fogDensity = 0.05;
+	//float fogFactor = exp2(-fogDensity * fogDensity * fogCoord * fogCoord * LOG2);
+	float fogFactor = exp2(-fogDensity * fogDensity * pow(fogCoord, 1.4) * LOG2);
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
 	vec4 fogColor = mix(vec4(cFogColor, 1.0), baseColor, fogFactor);
 

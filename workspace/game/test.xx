@@ -750,6 +750,140 @@ _none_Sys_Sulfur_passRenderVars:
 	retq
 	.seh_endproc
 
+	.def	_pair_Commons_Core_extend;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_pair_Commons_Core_extend
+	.p2align	4, 0x90
+_pair_Commons_Core_extend:
+.seh_proc _pair_Commons_Core_extend
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movq	%rcx, (%rsp)
+	movq	%rdx, 32(%rsp)
+	movl	%r8d, 28(%rsp)
+	cmpl	$0, 28(%rsp)
+	jge	.LBB9_2
+	movq	(%rsp), %rax
+	movq	32(%rsp), %rcx
+	movl	(%rcx), %edx
+	movl	28(%rsp), %r8d
+	movl	%edx, %ecx
+	addl	%r8d, %ecx
+	movl	%edx, 20(%rsp)
+	movl	%ecx, 16(%rsp)
+	movl	16(%rsp), %ecx
+	movl	20(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$40, %rsp
+	retq
+.LBB9_2:
+	jmp	.LBB9_3
+.LBB9_3:
+	movq	(%rsp), %rax
+	movq	32(%rsp), %rcx
+	movl	4(%rcx), %edx
+	movl	28(%rsp), %r8d
+	movl	%edx, %ecx
+	addl	%r8d, %ecx
+	movl	%edx, 8(%rsp)
+	movl	%ecx, 12(%rsp)
+	movl	8(%rsp), %ecx
+	movl	12(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	_pair_Commons_Core_diff;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_pair_Commons_Core_diff
+	.p2align	4, 0x90
+_pair_Commons_Core_diff:
+.seh_proc _pair_Commons_Core_diff
+	subq	$56, %rsp
+	.seh_stackalloc 56
+	.seh_endprologue
+	movq	%rcx, (%rsp)
+	movq	%rdx, 48(%rsp)
+	movq	%r8, 40(%rsp)
+	movl	%r9d, 36(%rsp)
+	cmpl	$0, 36(%rsp)
+	setl	%al
+	movq	48(%rsp), %rcx
+	movl	(%rcx), %ecx
+	movq	40(%rsp), %rdx
+	cmpl	4(%rdx), %ecx
+	setl	%cl
+	andb	%cl, %al
+	testb	$1, %al
+	jne	.LBB10_1
+	jmp	.LBB10_2
+.LBB10_1:
+	movq	(%rsp), %rax
+	movq	40(%rsp), %rcx
+	movl	4(%rcx), %ecx
+	movq	48(%rsp), %rdx
+	movl	4(%rdx), %edx
+	movl	%edx, 28(%rsp)
+	movl	%ecx, 24(%rsp)
+	movl	24(%rsp), %ecx
+	movl	28(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$56, %rsp
+	retq
+.LBB10_2:
+	cmpl	$0, 36(%rsp)
+	setg	%al
+	movq	48(%rsp), %rcx
+	movl	4(%rcx), %ecx
+	movq	40(%rsp), %rdx
+	cmpl	(%rdx), %ecx
+	setg	%cl
+	andb	%cl, %al
+	testb	$1, %al
+	jne	.LBB10_4
+	jmp	.LBB10_5
+.LBB10_3:
+	movq	(%rsp), %rax
+	movq	48(%rsp), %rdx
+	movl	(%rdx), %ecx
+	movl	4(%rdx), %edx
+	movl	%edx, 12(%rsp)
+	movl	%ecx, 8(%rsp)
+	movl	8(%rsp), %ecx
+	movl	12(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$56, %rsp
+	retq
+.LBB10_4:
+	movq	(%rsp), %rax
+	movq	48(%rsp), %rcx
+	movl	(%rcx), %ecx
+	movq	40(%rsp), %rdx
+	movl	(%rdx), %edx
+	movl	%edx, 20(%rsp)
+	movl	%ecx, 16(%rsp)
+	movl	16(%rsp), %ecx
+	movl	20(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$56, %rsp
+	retq
+.LBB10_5:
+	jmp	.LBB10_6
+.LBB10_6:
+	jmp	.LBB10_3
+	.seh_endproc
+
 	.def	_Int_Commons_Core_newBox3D;
 	.scl	2;
 	.type	32;
@@ -784,6 +918,26 @@ _Int_Commons_Core_newBox3D:
 	movl	%edx, 16(%rax)
 	movl	%ecx, 20(%rax)
 	addq	$56, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Commons_Core_Box3D_Commons_Core_bottom;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Commons_Core_Box3D_Commons_Core_bottom
+	.p2align	4, 0x90
+__Commons_Core_Box3D_Commons_Core_bottom:
+.seh_proc __Commons_Core_Box3D_Commons_Core_bottom
+	pushq	%rax
+	.seh_stackalloc 8
+	.seh_endprologue
+	movq	%rcx, (%rsp)
+	movq	(%rsp), %rax
+	movl	4(%rax), %eax
+	movq	(%rsp), %rcx
+	addl	16(%rcx), %eax
+	popq	%rcx
 	retq
 	.seh_endproc
 
@@ -841,13 +995,145 @@ __Commons_Core_Box3D_Commons_Core_centerZ:
 	retq
 	.seh_endproc
 
+	.def	__Commons_Core_Box3D_Commons_Core_rangeI;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Commons_Core_Box3D_Commons_Core_rangeI
+	.p2align	4, 0x90
+__Commons_Core_Box3D_Commons_Core_rangeI:
+.seh_proc __Commons_Core_Box3D_Commons_Core_rangeI
+	subq	$48, %rsp
+	.seh_stackalloc 48
+	.seh_endprologue
+	movq	%rcx, (%rsp)
+	movq	%rdx, 40(%rsp)
+	movl	%r8d, 36(%rsp)
+	cmpl	$0, 36(%rsp)
+	jne	.LBB15_2
+	movq	(%rsp), %rax
+	movq	40(%rsp), %rcx
+	movl	(%rcx), %edx
+	movl	12(%rcx), %r8d
+	movl	%edx, %ecx
+	addl	%r8d, %ecx
+	movl	%edx, 24(%rsp)
+	movl	%ecx, 28(%rsp)
+	movl	24(%rsp), %ecx
+	movl	28(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$48, %rsp
+	retq
+.LBB15_2:
+	cmpl	$1, 36(%rsp)
+	jne	.LBB15_4
+	movq	(%rsp), %rax
+	movq	40(%rsp), %rcx
+	movl	4(%rcx), %edx
+	movl	16(%rcx), %r8d
+	movl	%edx, %ecx
+	addl	%r8d, %ecx
+	movl	%edx, 16(%rsp)
+	movl	%ecx, 20(%rsp)
+	movl	16(%rsp), %ecx
+	movl	20(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$48, %rsp
+	retq
+.LBB15_4:
+	movq	(%rsp), %rax
+	movq	40(%rsp), %rcx
+	movl	8(%rcx), %edx
+	movl	20(%rcx), %r8d
+	movl	%edx, %ecx
+	addl	%r8d, %ecx
+	movl	%edx, 8(%rsp)
+	movl	%ecx, 12(%rsp)
+	movl	8(%rsp), %ecx
+	movl	12(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$48, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Commons_Core_Box3D_Commons_Core_chxRangeH;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Commons_Core_Box3D_Commons_Core_chxRangeH
+	.p2align	4, 0x90
+__Commons_Core_Box3D_Commons_Core_chxRangeH:
+.seh_proc __Commons_Core_Box3D_Commons_Core_chxRangeH
+	subq	$64, %rsp
+	.seh_stackalloc 64
+	.seh_endprologue
+	movq	%rcx, (%rsp)
+	movq	%rdx, 56(%rsp)
+	movl	%r8d, 52(%rsp)
+	movq	%r9, 40(%rsp)
+	cmpl	$0, 52(%rsp)
+	jne	.LBB16_2
+	movq	(%rsp), %rax
+	movq	40(%rsp), %rcx
+	movl	(%rcx), %edx
+	movl	4(%rcx), %r8d
+	movq	56(%rsp), %rcx
+	movl	8(%rcx), %r9d
+	movl	20(%rcx), %r10d
+	movl	%r9d, %ecx
+	addl	%r10d, %ecx
+	movl	%r9d, 32(%rsp)
+	movl	%r8d, 28(%rsp)
+	movl	%edx, 24(%rsp)
+	movl	%ecx, 36(%rsp)
+	movl	24(%rsp), %ecx
+	movl	28(%rsp), %edx
+	movl	32(%rsp), %r8d
+	movl	36(%rsp), %r9d
+	movl	%r9d, 12(%rax)
+	movl	%r8d, 8(%rax)
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$64, %rsp
+	retq
+.LBB16_2:
+	jmp	.LBB16_3
+.LBB16_3:
+	movq	(%rsp), %rax
+	movq	56(%rsp), %rcx
+	movl	(%rcx), %edx
+	movl	12(%rcx), %r8d
+	movl	%edx, %ecx
+	addl	%r8d, %ecx
+	movq	40(%rsp), %r9
+	movl	(%r9), %r8d
+	movl	4(%r9), %r9d
+	movl	%r9d, 20(%rsp)
+	movl	%r8d, 16(%rsp)
+	movl	%edx, 8(%rsp)
+	movl	%ecx, 12(%rsp)
+	movl	8(%rsp), %ecx
+	movl	12(%rsp), %edx
+	movl	16(%rsp), %r8d
+	movl	20(%rsp), %r9d
+	movl	%r9d, 12(%rax)
+	movl	%r8d, 8(%rax)
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$64, %rsp
+	retq
+	.seh_endproc
+
 	.def	_Float_Commons_Core_asRatio;
 	.scl	2;
 	.type	32;
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI12_0:
+.LCPI17_0:
 	.long	0x3f800000
 	.text
 	.globl	_Float_Commons_Core_asRatio
@@ -860,16 +1146,16 @@ _Float_Commons_Core_asRatio:
 	movss	%xmm0, 36(%rsp)
 	movss	%xmm1, 32(%rsp)
 	movss	36(%rsp), %xmm0
-	movss	.LCPI12_0(%rip), %xmm1
+	movss	.LCPI17_0(%rip), %xmm1
 	ucomiss	%xmm1, %xmm0
-	jbe	.LBB12_2
-	movss	.LCPI12_0(%rip), %xmm0
+	jbe	.LBB17_2
+	movss	.LCPI17_0(%rip), %xmm0
 	movss	%xmm0, 36(%rsp)
-	jmp	.LBB12_3
-.LBB12_2:
-	jmp	.LBB12_3
-.LBB12_3:
-	movss	.LCPI12_0(%rip), %xmm0
+	jmp	.LBB17_3
+.LBB17_2:
+	jmp	.LBB17_3
+.LBB17_3:
+	movss	.LCPI17_0(%rip), %xmm0
 	subss	36(%rsp), %xmm0
 	movss	32(%rsp), %xmm1
 	callq	_Float_builtin_expo
@@ -936,6 +1222,60 @@ _Float_Commons_Core_distPt:
 	retq
 	.seh_endproc
 
+	.def	_Int_Commons_Core_max;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_Int_Commons_Core_max
+	.p2align	4, 0x90
+_Int_Commons_Core_max:
+.seh_proc _Int_Commons_Core_max
+	pushq	%rax
+	.seh_stackalloc 8
+	.seh_endprologue
+	movl	%ecx, 4(%rsp)
+	movl	%edx, (%rsp)
+	movl	4(%rsp), %eax
+	cmpl	(%rsp), %eax
+	jle	.LBB20_2
+	movl	4(%rsp), %eax
+	popq	%rcx
+	retq
+.LBB20_2:
+	jmp	.LBB20_3
+.LBB20_3:
+	movl	(%rsp), %eax
+	popq	%rcx
+	retq
+	.seh_endproc
+
+	.def	_Int_Commons_Core_min;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_Int_Commons_Core_min
+	.p2align	4, 0x90
+_Int_Commons_Core_min:
+.seh_proc _Int_Commons_Core_min
+	pushq	%rax
+	.seh_stackalloc 8
+	.seh_endprologue
+	movl	%ecx, 4(%rsp)
+	movl	%edx, (%rsp)
+	movl	4(%rsp), %eax
+	cmpl	(%rsp), %eax
+	jge	.LBB21_2
+	movl	4(%rsp), %eax
+	popq	%rcx
+	retq
+.LBB21_2:
+	jmp	.LBB21_3
+.LBB21_3:
+	movl	(%rsp), %eax
+	popq	%rcx
+	retq
+	.seh_endproc
+
 	.def	_Float_Commons_Core_max;
 	.scl	2;
 	.type	32;
@@ -951,13 +1291,13 @@ _Float_Commons_Core_max:
 	movss	%xmm1, (%rsp)
 	movss	4(%rsp), %xmm0
 	ucomiss	(%rsp), %xmm0
-	jbe	.LBB15_2
+	jbe	.LBB22_2
 	movss	4(%rsp), %xmm0
 	popq	%rax
 	retq
-.LBB15_2:
-	jmp	.LBB15_3
-.LBB15_3:
+.LBB22_2:
+	jmp	.LBB22_3
+.LBB22_3:
 	movss	(%rsp), %xmm0
 	popq	%rax
 	retq
@@ -979,16 +1319,199 @@ _Float_Commons_Core_min:
 	movss	4(%rsp), %xmm1
 	movss	(%rsp), %xmm0
 	ucomiss	%xmm1, %xmm0
-	jbe	.LBB16_2
+	jbe	.LBB23_2
 	movss	4(%rsp), %xmm0
 	popq	%rax
 	retq
-.LBB16_2:
-	jmp	.LBB16_3
-.LBB16_3:
+.LBB23_2:
+	jmp	.LBB23_3
+.LBB23_3:
 	movss	(%rsp), %xmm0
 	popq	%rax
 	retq
+	.seh_endproc
+
+	.def	_none_Commons_Core_newIntQueue;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_none_Commons_Core_newIntQueue
+	.p2align	4, 0x90
+_none_Commons_Core_newIntQueue:
+.seh_proc _none_Commons_Core_newIntQueue
+	subq	$56, %rsp
+	.seh_stackalloc 56
+	.seh_endprologue
+	movl	$4, %ecx
+	xorl	%r9d, %r9d
+	xorl	%eax, %eax
+	movl	%r9d, %edx
+	movl	%r9d, %r8d
+	movq	$0, 32(%rsp)
+	callq	gc_alloc_array
+	movq	%rax, 40(%rsp)
+	movl	$4, %ecx
+	xorl	%r9d, %r9d
+	xorl	%eax, %eax
+	movl	%r9d, %edx
+	movl	%r9d, %r8d
+	movq	$0, 32(%rsp)
+	callq	gc_alloc_array
+	movq	%rax, 48(%rsp)
+	movl	$16, %ecx
+	leaq	tc__Commons_Core_IntQueue(%rip), %rdx
+	callq	gc_alloc
+	movq	40(%rsp), %rdx
+	movq	48(%rsp), %rcx
+	movq	%rdx, (%rax)
+	movq	%rcx, 8(%rax)
+	addq	$56, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Commons_Core_IntQueue_Commons_Core_empty;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Commons_Core_IntQueue_Commons_Core_empty
+	.p2align	4, 0x90
+__Commons_Core_IntQueue_Commons_Core_empty:
+.seh_proc __Commons_Core_IntQueue_Commons_Core_empty
+	pushq	%rax
+	.seh_stackalloc 8
+	.seh_endprologue
+	movq	%rcx, (%rsp)
+	movq	(%rsp), %rcx
+	movq	(%rcx), %rax
+	movq	8(%rcx), %rcx
+	movl	8(%rax), %eax
+	movl	8(%rcx), %ecx
+	orl	%ecx, %eax
+	sete	%al
+	popq	%rcx
+	retq
+	.seh_endproc
+
+	.def	__Commons_Core_IntQueue_builtin_add;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Commons_Core_IntQueue_builtin_add
+	.p2align	4, 0x90
+__Commons_Core_IntQueue_builtin_add:
+.seh_proc __Commons_Core_IntQueue_builtin_add
+	subq	$72, %rsp
+	.seh_stackalloc 72
+	.seh_endprologue
+	movq	%rcx, 64(%rsp)
+	movl	%edx, 60(%rsp)
+	movq	64(%rsp), %rax
+	movq	(%rax), %rcx
+	movq	%rcx, 48(%rsp)
+	movl	8(%rcx), %eax
+	movl	%eax, 44(%rsp)
+	callq	array_grow
+	movl	44(%rsp), %ecx
+	movq	48(%rsp), %rax
+	movq	16(%rax), %rax
+	movl	60(%rsp), %edx
+	movslq	%ecx, %rcx
+	movl	%edx, (%rax,%rcx,4)
+	addq	$72, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Commons_Core_IntQueue_builtin_remove;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Commons_Core_IntQueue_builtin_remove
+	.p2align	4, 0x90
+__Commons_Core_IntQueue_builtin_remove:
+.seh_proc __Commons_Core_IntQueue_builtin_remove
+	subq	$72, %rsp
+	.seh_stackalloc 72
+	.seh_endprologue
+	movq	%rcx, 64(%rsp)
+	movq	64(%rsp), %rax
+	movq	8(%rax), %rax
+	cmpl	$0, 8(%rax)
+	jne	.LBB27_2
+	movq	64(%rsp), %rax
+	movq	(%rax), %rax
+	cmpl	$0, 8(%rax)
+	je	.LBB27_4
+	jmp	.LBB27_5
+.LBB27_2:
+	jmp	.LBB27_3
+.LBB27_3:
+	movq	64(%rsp), %rax
+	movq	8(%rax), %rax
+	movq	64(%rsp), %rcx
+	movq	8(%rcx), %rcx
+	movl	8(%rcx), %ecx
+	subl	$1, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movl	(%rax,%rdx,4), %eax
+	movslq	%ecx, %rcx
+	movl	%eax, 56(%rsp)
+	movq	64(%rsp), %rax
+	movq	8(%rax), %rcx
+	movq	64(%rsp), %rax
+	movq	8(%rax), %rax
+	movl	8(%rax), %edx
+	subl	$1, %edx
+	callq	_a1_builtin_remove
+	movl	56(%rsp), %eax
+	addq	$72, %rsp
+	retq
+.LBB27_4:
+	movl	$4294967295, %eax
+	addq	$72, %rsp
+	retq
+.LBB27_5:
+	jmp	.LBB27_6
+.LBB27_6:
+	jmp	.LBB27_7
+.LBB27_7:
+	movq	64(%rsp), %rax
+	movq	(%rax), %rax
+	cmpl	$0, 8(%rax)
+	jle	.LBB27_9
+	movq	64(%rsp), %rax
+	movq	(%rax), %rax
+	movq	64(%rsp), %rcx
+	movq	(%rcx), %rcx
+	movl	8(%rcx), %ecx
+	subl	$1, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movl	(%rax,%rdx,4), %eax
+	movslq	%ecx, %rcx
+	movl	%eax, 60(%rsp)
+	movq	64(%rsp), %rax
+	movq	(%rax), %rcx
+	movq	64(%rsp), %rax
+	movq	(%rax), %rax
+	movl	8(%rax), %edx
+	subl	$1, %edx
+	callq	_a1_builtin_remove
+	movq	64(%rsp), %rax
+	movq	8(%rax), %rcx
+	movq	%rcx, 48(%rsp)
+	movl	8(%rcx), %eax
+	movl	%eax, 44(%rsp)
+	callq	array_grow
+	movl	44(%rsp), %ecx
+	movq	48(%rsp), %rax
+	movq	16(%rax), %rax
+	movl	60(%rsp), %edx
+	movslq	%ecx, %rcx
+	movl	%edx, (%rax,%rcx,4)
+	jmp	.LBB27_7
+.LBB27_9:
+	jmp	.LBB27_3
 	.seh_endproc
 
 	.def	_Int_Commons_Core_toTile;
@@ -1004,7 +1527,7 @@ _Int_Commons_Core_toTile:
 	.seh_endprologue
 	movl	%ecx, 4(%rsp)
 	cmpl	$0, 4(%rsp)
-	jge	.LBB17_2
+	jge	.LBB28_2
 	movl	4(%rsp), %eax
 	addl	$1, %eax
 	movl	$4096, %ecx
@@ -1013,9 +1536,9 @@ _Int_Commons_Core_toTile:
 	subl	$1, %eax
 	popq	%rcx
 	retq
-.LBB17_2:
-	jmp	.LBB17_3
-.LBB17_3:
+.LBB28_2:
+	jmp	.LBB28_3
+.LBB28_3:
 	movl	4(%rsp), %eax
 	movl	$4096, %ecx
 	cltd
@@ -1055,7 +1578,7 @@ _Int_Commons_Core_toPixel:
 	.seh_endprologue
 	movl	%ecx, 4(%rsp)
 	cmpl	$0, 4(%rsp)
-	jge	.LBB19_2
+	jge	.LBB30_2
 	movl	4(%rsp), %eax
 	addl	$1, %eax
 	movl	$512, %ecx
@@ -1064,9 +1587,9 @@ _Int_Commons_Core_toPixel:
 	subl	$1, %eax
 	popq	%rcx
 	retq
-.LBB19_2:
-	jmp	.LBB19_3
-.LBB19_3:
+.LBB30_2:
+	jmp	.LBB30_3
+.LBB30_3:
 	movl	4(%rsp), %eax
 	movl	$512, %ecx
 	cltd
@@ -1106,7 +1629,7 @@ _Int_Commons_Core_pixelTile:
 	.seh_endprologue
 	movl	%ecx, 4(%rsp)
 	cmpl	$0, 4(%rsp)
-	jge	.LBB21_2
+	jge	.LBB32_2
 	movl	4(%rsp), %eax
 	addl	$1, %eax
 	movl	$8, %ecx
@@ -1115,9 +1638,9 @@ _Int_Commons_Core_pixelTile:
 	subl	$1, %eax
 	popq	%rcx
 	retq
-.LBB21_2:
-	jmp	.LBB21_3
-.LBB21_3:
+.LBB32_2:
+	jmp	.LBB32_3
+.LBB32_3:
 	movl	4(%rsp), %eax
 	movl	$8, %ecx
 	cltd
@@ -1150,7 +1673,7 @@ _Int_Commons_Core_tilePixel:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI23_0:
+.LCPI34_0:
 	.long	0x45800000
 	.text
 	.globl	_Int_Commons_Core_toFP
@@ -1162,7 +1685,7 @@ _Int_Commons_Core_toFP:
 	.seh_endprologue
 	movl	%ecx, 4(%rsp)
 	cvtsi2ssl	4(%rsp), %xmm0
-	movss	.LCPI23_0(%rip), %xmm1
+	movss	.LCPI34_0(%rip), %xmm1
 	divss	%xmm1, %xmm0
 	popq	%rax
 	retq
@@ -1174,7 +1697,7 @@ _Int_Commons_Core_toFP:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI24_0:
+.LCPI35_0:
 	.long	0x45800000
 	.text
 	.globl	_Float_Commons_Core_fromFP
@@ -1185,7 +1708,7 @@ _Float_Commons_Core_fromFP:
 	.seh_stackalloc 40
 	.seh_endprologue
 	movss	%xmm0, 36(%rsp)
-	movss	.LCPI24_0(%rip), %xmm0
+	movss	.LCPI35_0(%rip), %xmm0
 	mulss	36(%rsp), %xmm0
 	callq	_Float_builtin_floor
 	nop
@@ -1296,10 +1819,87 @@ _Int_Phys_Main_newMoveObj:
 	movq	48(%rsp), %rcx
 	movq	%rcx, (%rax)
 	movb	$1, 8(%rax)
+	movb	$0, 9(%rax)
 	movl	$0, 12(%rax)
 	movl	$0, 16(%rax)
 	movl	$0, 20(%rax)
 	addq	$72, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Phys_Main_MoveObj_Phys_Main_updateSpd;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_MoveObj_Phys_Main_updateSpd
+	.p2align	4, 0x90
+__Phys_Main_MoveObj_Phys_Main_updateSpd:
+.seh_proc __Phys_Main_MoveObj_Phys_Main_updateSpd
+	subq	$56, %rsp
+	.seh_stackalloc 56
+	.seh_endprologue
+	movq	%rcx, 48(%rsp)
+	movq	48(%rsp), %rax
+	movb	8(%rax), %al
+	xorb	$-1, %al
+	testb	$1, %al
+	jne	.LBB39_1
+	jmp	.LBB39_2
+.LBB39_1:
+	addq	$56, %rsp
+	retq
+.LBB39_2:
+	jmp	.LBB39_3
+.LBB39_3:
+	movq	48(%rsp), %rax
+	movq	%rax, 40(%rsp)
+	movq	48(%rsp), %rax
+	movl	20(%rax), %ecx
+	addl	$160, %ecx
+	movl	$2048, %edx
+	callq	_Int_Commons_Core_min
+	movl	%eax, %ecx
+	movq	40(%rsp), %rax
+	movl	%ecx, 20(%rax)
+	addq	$56, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Phys_Main_GameTile_Phys_Main_canWalk;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameTile_Phys_Main_canWalk
+	.p2align	4, 0x90
+__Phys_Main_GameTile_Phys_Main_canWalk:
+.seh_proc __Phys_Main_GameTile_Phys_Main_canWalk
+	subq	$16, %rsp
+	.seh_stackalloc 16
+	.seh_endprologue
+	movq	%rcx, 8(%rsp)
+	movq	8(%rsp), %rax
+	movw	(%rax), %ax
+	movw	%ax, 6(%rsp)
+	cmpw	$0, 6(%rsp)
+	sete	%al
+	cmpw	$1, 6(%rsp)
+	sete	%cl
+	orb	%cl, %al
+	cmpw	$7, 6(%rsp)
+	sete	%cl
+	orb	%cl, %al
+	testb	$1, %al
+	jne	.LBB40_1
+	jmp	.LBB40_2
+.LBB40_1:
+	xorl	%eax, %eax
+	addq	$16, %rsp
+	retq
+.LBB40_2:
+	jmp	.LBB40_3
+.LBB40_3:
+	movb	$1, %al
+	addq	$16, %rsp
 	retq
 	.seh_endproc
 
@@ -1309,12 +1909,12 @@ _Int_Phys_Main_newMoveObj:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	4, 0x0
-.LCPI28_0:
+.LCPI41_0:
 	.long	0x80000000
 	.long	0x80000000
 	.long	0x80000000
 	.long	0x80000000
-.LCPI28_1:
+.LCPI41_1:
 	.long	0x3f800000
 	.text
 	.globl	__Phys_Main_GameTile_Sys_Sulfur_draw
@@ -1332,16 +1932,16 @@ __Phys_Main_GameTile_Sys_Sulfur_draw:
 	movw	16(%rax), %ax
 	movw	%ax, 98(%rsp)
 	cmpw	$0, 98(%rsp)
-	jne	.LBB28_2
+	jne	.LBB41_2
 	movq	.refptr.C_GL_FLOAT4(%rip), %rax
 	movw	(%rax), %ax
-	movw	%ax, 72(%rsp)
-	movl	$0, 88(%rsp)
-	movl	$0, 84(%rsp)
+	movw	%ax, 64(%rsp)
 	movl	$0, 80(%rsp)
 	movl	$0, 76(%rsp)
+	movl	$0, 72(%rsp)
+	movl	$0, 68(%rsp)
 	xorl	%ecx, %ecx
-	leaq	72(%rsp), %rdx
+	leaq	64(%rsp), %rdx
 	callq	_Int_Sys_Sulfur_setAttr
 	movss	108(%rsp), %xmm0
 	movss	104(%rsp), %xmm1
@@ -1356,13 +1956,13 @@ __Phys_Main_GameTile_Sys_Sulfur_draw:
 	callq	_Float_Sys_Sulfur_drawQuadY
 	movq	112(%rsp), %rax
 	cmpl	$0, 4(%rax)
-	jg	.LBB28_4
-	jmp	.LBB28_5
-.LBB28_2:
+	jg	.LBB41_4
+	jmp	.LBB41_5
+.LBB41_2:
 	movq	.refptr.C_GL_FLOAT4(%rip), %rax
 	movw	(%rax), %ax
 	movq	112(%rsp), %rcx
-	movaps	.LCPI28_0(%rip), %xmm4
+	movaps	.LCPI41_0(%rip), %xmm4
 	movss	24(%rcx), %xmm0
 	movss	28(%rcx), %xmm1
 	movss	32(%rcx), %xmm2
@@ -1371,13 +1971,13 @@ __Phys_Main_GameTile_Sys_Sulfur_draw:
 	pxor	%xmm4, %xmm1
 	pxor	%xmm4, %xmm2
 	pxor	%xmm4, %xmm3
-	movw	%ax, 48(%rsp)
-	movss	%xmm3, 64(%rsp)
-	movss	%xmm2, 60(%rsp)
-	movss	%xmm1, 56(%rsp)
-	movss	%xmm0, 52(%rsp)
+	movw	%ax, 40(%rsp)
+	movss	%xmm3, 56(%rsp)
+	movss	%xmm2, 52(%rsp)
+	movss	%xmm1, 48(%rsp)
+	movss	%xmm0, 44(%rsp)
 	xorl	%ecx, %ecx
-	leaq	48(%rsp), %rdx
+	leaq	40(%rsp), %rdx
 	callq	_Int_Sys_Sulfur_setAttr
 	movss	108(%rsp), %xmm0
 	movss	104(%rsp), %xmm1
@@ -1388,28 +1988,30 @@ __Phys_Main_GameTile_Sys_Sulfur_draw:
 	addl	$1, %eax
 	movl	%eax, 32(%rsp)
 	callq	_Float_Sys_Sulfur_drawQuadY
-.LBB28_3:
-	nop
-	addq	$120, %rsp
-	retq
-.LBB28_4:
+.LBB41_3:
+	movq	112(%rsp), %rax
+	movq	40(%rax), %rax
+	cmpl	$0, 8(%rax)
+	jg	.LBB41_13
+	jmp	.LBB41_14
+.LBB41_4:
 	movss	108(%rsp), %xmm0
 	movss	104(%rsp), %xmm1
 	movq	112(%rsp), %rax
 	subss	20(%rax), %xmm1
-	movss	.LCPI28_1(%rip), %xmm2
+	movss	.LCPI41_1(%rip), %xmm2
 	addss	100(%rsp), %xmm2
 	movq	_Sys_Rom_tset(%rip), %r9
 	xorl	%eax, %eax
 	movl	$0, 32(%rsp)
 	callq	_Float_Sys_Sulfur_drawQuadZ
-	jmp	.LBB28_6
-.LBB28_5:
-	jmp	.LBB28_6
-.LBB28_6:
+	jmp	.LBB41_6
+.LBB41_5:
+	jmp	.LBB41_6
+.LBB41_6:
 	movq	112(%rsp), %rax
 	cmpl	$0, 8(%rax)
-	jle	.LBB28_8
+	jle	.LBB41_8
 	movss	108(%rsp), %xmm0
 	movss	104(%rsp), %xmm1
 	movq	112(%rsp), %rax
@@ -1419,14 +2021,14 @@ __Phys_Main_GameTile_Sys_Sulfur_draw:
 	xorl	%eax, %eax
 	movl	$0, 32(%rsp)
 	callq	_Float_Sys_Sulfur_drawQuadX
-	jmp	.LBB28_9
-.LBB28_8:
-	jmp	.LBB28_9
-.LBB28_9:
+	jmp	.LBB41_9
+.LBB41_8:
+	jmp	.LBB41_9
+.LBB41_9:
 	movq	112(%rsp), %rax
 	cmpl	$0, 12(%rax)
-	jle	.LBB28_11
-	movss	.LCPI28_1(%rip), %xmm0
+	jle	.LBB41_11
+	movss	.LCPI41_1(%rip), %xmm0
 	addss	108(%rsp), %xmm0
 	movss	104(%rsp), %xmm1
 	movq	112(%rsp), %rax
@@ -1436,11 +2038,215 @@ __Phys_Main_GameTile_Sys_Sulfur_draw:
 	xorl	%eax, %eax
 	movl	$0, 32(%rsp)
 	callq	_Float_Sys_Sulfur_drawQuadX
-	jmp	.LBB28_12
-.LBB28_11:
-	jmp	.LBB28_12
-.LBB28_12:
-	jmp	.LBB28_3
+	jmp	.LBB41_12
+.LBB41_11:
+	jmp	.LBB41_12
+.LBB41_12:
+	jmp	.LBB41_3
+.LBB41_13:
+	movl	$0, 92(%rsp)
+	jmp	.LBB41_16
+.LBB41_14:
+	jmp	.LBB41_15
+.LBB41_15:
+	addq	$120, %rsp
+	retq
+.LBB41_16:
+	movl	92(%rsp), %eax
+	movq	112(%rsp), %rcx
+	movq	40(%rcx), %rcx
+	cmpl	8(%rcx), %eax
+	jge	.LBB41_18
+	movss	104(%rsp), %xmm0
+	movq	112(%rsp), %rax
+	subss	20(%rax), %xmm0
+	movl	92(%rsp), %eax
+	addl	$1, %eax
+	cvtsi2ss	%eax, %xmm1
+	subss	%xmm1, %xmm0
+	movss	%xmm0, 88(%rsp)
+	movq	112(%rsp), %rax
+	movq	40(%rax), %rax
+	movl	92(%rsp), %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movw	(%rax), %ax
+	movw	%ax, 86(%rsp)
+	cmpw	$1, 86(%rsp)
+	je	.LBB41_19
+	jmp	.LBB41_20
+.LBB41_18:
+	jmp	.LBB41_15
+.LBB41_19:
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	.LCPI41_1(%rip), %xmm2
+	addss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$23, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadZ
+	jmp	.LBB41_21
+.LBB41_20:
+	cmpw	$2, 86(%rsp)
+	je	.LBB41_22
+	jmp	.LBB41_23
+.LBB41_21:
+	movl	92(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 92(%rsp)
+	jmp	.LBB41_16
+.LBB41_22:
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	.LCPI41_1(%rip), %xmm2
+	addss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$24, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadZ
+	jmp	.LBB41_24
+.LBB41_23:
+	cmpw	$3, 86(%rsp)
+	je	.LBB41_25
+	jmp	.LBB41_26
+.LBB41_24:
+	jmp	.LBB41_21
+.LBB41_25:
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	.LCPI41_1(%rip), %xmm2
+	addss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$25, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadZ
+	jmp	.LBB41_27
+.LBB41_26:
+	movl	92(%rsp), %eax
+	movq	112(%rsp), %rcx
+	movq	40(%rcx), %rcx
+	movl	8(%rcx), %ecx
+	subl	$1, %ecx
+	cmpl	%ecx, %eax
+	je	.LBB41_28
+	jmp	.LBB41_29
+.LBB41_27:
+	jmp	.LBB41_24
+.LBB41_28:
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$21, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadX
+	movss	.LCPI41_1(%rip), %xmm0
+	addss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$21, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadX
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	.LCPI41_1(%rip), %xmm2
+	addss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$21, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadZ
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$22, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadY
+	jmp	.LBB41_30
+.LBB41_29:
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$20, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadX
+	movss	.LCPI41_1(%rip), %xmm0
+	addss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$20, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadX
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	.LCPI41_1(%rip), %xmm2
+	addss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$20, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadZ
+	movss	108(%rsp), %xmm0
+	movss	88(%rsp), %xmm1
+	movss	100(%rsp), %xmm2
+	movq	_Sys_Rom_tset(%rip), %r9
+	movl	$20, 32(%rsp)
+	callq	_Float_Sys_Sulfur_drawQuadY
+.LBB41_30:
+	jmp	.LBB41_27
+	.seh_endproc
+
+	.def	__Phys_Main_GameTile_Phys_Main_drawMini;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameTile_Phys_Main_drawMini
+	.p2align	4, 0x90
+__Phys_Main_GameTile_Phys_Main_drawMini:
+.seh_proc __Phys_Main_GameTile_Phys_Main_drawMini
+	subq	$120, %rsp
+	.seh_stackalloc 120
+	.seh_endprologue
+	movq	%rcx, 112(%rsp)
+	movl	%edx, 108(%rsp)
+	movl	%r8d, 104(%rsp)
+	movq	112(%rsp), %rax
+	movswl	(%rax), %eax
+	movl	%eax, 100(%rsp)
+	movl	100(%rsp), %eax
+	movq	_Phys_Main__COLORS(%rip), %rcx
+	cmpl	8(%rcx), %eax
+	jle	.LBB42_2
+	movq	.refptr.C_BOX(%rip), %rax
+	movw	(%rax), %ax
+	movl	108(%rsp), %ecx
+	movl	104(%rsp), %edx
+	movl	%edx, 76(%rsp)
+	movl	%ecx, 72(%rsp)
+	movw	%ax, 64(%rsp)
+	movl	$1, 84(%rsp)
+	movl	$1, 80(%rsp)
+	movl	$2105392, 68(%rsp)
+	leaq	64(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
+	jmp	.LBB42_3
+.LBB42_2:
+	movq	.refptr.C_BOX(%rip), %rax
+	movw	(%rax), %ax
+	movq	_Phys_Main__COLORS(%rip), %rcx
+	movq	112(%rsp), %rdx
+	movswq	(%rdx), %rdx
+	movq	16(%rcx), %rcx
+	movl	(%rcx,%rdx,4), %ecx
+	movl	108(%rsp), %edx
+	movl	104(%rsp), %r8d
+	movl	%r8d, 44(%rsp)
+	movl	%edx, 40(%rsp)
+	movl	%ecx, 36(%rsp)
+	movw	%ax, 32(%rsp)
+	movl	$1, 52(%rsp)
+	movl	$1, 48(%rsp)
+	leaq	32(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
+.LBB42_3:
+	nop
+	addq	$120, %rsp
+	retq
 	.seh_endproc
 
 	.def	__Phys_Main_GameRoom_Phys_Main_elevation;
@@ -1473,15 +2279,15 @@ __Phys_Main_GameRoom_Phys_Main_elevation:
 	setge	%cl
 	orb	%cl, %al
 	testb	$1, %al
-	jne	.LBB29_1
-	jmp	.LBB29_2
-.LBB29_1:
+	jne	.LBB43_1
+	jmp	.LBB43_2
+.LBB43_1:
 	xorps	%xmm0, %xmm0
 	addq	$16, %rsp
 	retq
-.LBB29_2:
-	jmp	.LBB29_3
-.LBB29_3:
+.LBB43_2:
+	jmp	.LBB43_3
+.LBB43_3:
 	movq	8(%rsp), %rax
 	movq	8(%rax), %rax
 	movl	4(%rsp), %ecx
@@ -1493,6 +2299,19 @@ __Phys_Main_GameRoom_Phys_Main_elevation:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	20(%rax), %xmm0
+	movq	8(%rsp), %rax
+	movq	8(%rax), %rax
+	movl	4(%rsp), %ecx
+	movl	(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movq	40(%rax), %rax
+	cvtsi2ssl	8(%rax), %xmm1
+	addss	%xmm1, %xmm0
 	addq	$16, %rsp
 	retq
 	.seh_endproc
@@ -1572,6 +2391,265 @@ __Phys_Main_GameRoom_Phys_Main_addObj:
 	retq
 	.seh_endproc
 
+	.def	__Phys_Main_GameRoom_Phys_Main_pushTile;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameRoom_Phys_Main_pushTile
+	.p2align	4, 0x90
+__Phys_Main_GameRoom_Phys_Main_pushTile:
+.seh_proc __Phys_Main_GameRoom_Phys_Main_pushTile
+	subq	$120, %rsp
+	.seh_stackalloc 120
+	.seh_endprologue
+	movq	%rcx, 40(%rsp)
+	movl	176(%rsp), %eax
+	movl	168(%rsp), %eax
+	movl	160(%rsp), %eax
+	movq	%rdx, 112(%rsp)
+	movq	%r8, 104(%rsp)
+	movl	%r9d, 100(%rsp)
+	cmpl	$0, 100(%rsp)
+	jne	.LBB45_2
+	movl	168(%rsp), %ecx
+	callq	_Int_Commons_Core_fromTile
+	movl	%eax, 36(%rsp)
+	movl	168(%rsp), %ecx
+	incl	%ecx
+	callq	_Int_Commons_Core_fromTile
+	movl	%eax, %ecx
+	movl	36(%rsp), %eax
+	movl	%ecx, 76(%rsp)
+	movl	%eax, 72(%rsp)
+	leaq	72(%rsp), %rax
+	movq	%rax, 80(%rsp)
+	movq	104(%rsp), %rdx
+	movq	80(%rsp), %r8
+	movl	160(%rsp), %r9d
+	leaq	64(%rsp), %rcx
+	callq	_pair_Commons_Core_diff
+	movq	40(%rsp), %rax
+	movl	64(%rsp), %ecx
+	movl	68(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$120, %rsp
+	retq
+.LBB45_2:
+	movl	176(%rsp), %ecx
+	callq	_Int_Commons_Core_fromTile
+	movl	%eax, 32(%rsp)
+	movl	176(%rsp), %ecx
+	incl	%ecx
+	callq	_Int_Commons_Core_fromTile
+	movl	%eax, %ecx
+	movl	32(%rsp), %eax
+	movl	%ecx, 60(%rsp)
+	movl	%eax, 56(%rsp)
+	leaq	56(%rsp), %rax
+	movq	%rax, 80(%rsp)
+	movq	104(%rsp), %rdx
+	movq	80(%rsp), %r8
+	movl	160(%rsp), %r9d
+	leaq	48(%rsp), %rcx
+	callq	_pair_Commons_Core_diff
+	movq	40(%rsp), %rax
+	movl	48(%rsp), %ecx
+	movl	52(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$120, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Phys_Main_GameRoom_Phys_Main_precalcObj;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameRoom_Phys_Main_precalcObj
+	.p2align	4, 0x90
+__Phys_Main_GameRoom_Phys_Main_precalcObj:
+.seh_proc __Phys_Main_GameRoom_Phys_Main_precalcObj
+	subq	$200, %rsp
+	.seh_stackalloc 200
+	.seh_endprologue
+	movq	%rcx, 192(%rsp)
+	movq	%rdx, 184(%rsp)
+	movl	%r8d, 180(%rsp)
+	movl	%r9d, 176(%rsp)
+	movq	184(%rsp), %rax
+	movq	(%rax), %rax
+	movq	%rax, 168(%rsp)
+	movq	168(%rsp), %rdx
+	movl	180(%rsp), %r8d
+	leaq	96(%rsp), %rcx
+	callq	__Commons_Core_Box3D_Commons_Core_rangeI
+	movl	176(%rsp), %r8d
+	leaq	104(%rsp), %rcx
+	leaq	96(%rsp), %rdx
+	callq	_pair_Commons_Core_extend
+	leaq	104(%rsp), %rax
+	movq	%rax, 160(%rsp)
+	movq	168(%rsp), %rdx
+	movl	180(%rsp), %r8d
+	movq	160(%rsp), %r9
+	leaq	80(%rsp), %rcx
+	callq	__Commons_Core_Box3D_Commons_Core_chxRangeH
+	leaq	80(%rsp), %rax
+	movq	%rax, 144(%rsp)
+	movq	144(%rsp), %rax
+	movl	(%rax), %ecx
+	callq	_Int_Commons_Core_toTile
+	movl	%eax, 140(%rsp)
+	movq	144(%rsp), %rax
+	movl	4(%rax), %ecx
+	subl	$1, %ecx
+	callq	_Int_Commons_Core_toTile
+	movl	%eax, 136(%rsp)
+	movq	144(%rsp), %rax
+	movl	8(%rax), %ecx
+	callq	_Int_Commons_Core_toTile
+	movl	%eax, 132(%rsp)
+	movq	144(%rsp), %rax
+	movl	12(%rax), %ecx
+	subl	$1, %ecx
+	callq	_Int_Commons_Core_toTile
+	movl	%eax, 128(%rsp)
+	movl	$0, 124(%rsp)
+.LBB46_1:
+	movl	124(%rsp), %eax
+	movl	128(%rsp), %ecx
+	subl	132(%rsp), %ecx
+	cmpl	%ecx, %eax
+	jg	.LBB46_3
+	movl	$0, 120(%rsp)
+	jmp	.LBB46_4
+.LBB46_3:
+	cmpl	$0, 176(%rsp)
+	jg	.LBB46_10
+	jmp	.LBB46_11
+.LBB46_4:
+	movl	120(%rsp), %eax
+	movl	136(%rsp), %ecx
+	subl	140(%rsp), %ecx
+	cmpl	%ecx, %eax
+	jg	.LBB46_6
+	movl	140(%rsp), %eax
+	addl	120(%rsp), %eax
+	movl	%eax, 116(%rsp)
+	movl	132(%rsp), %eax
+	addl	124(%rsp), %eax
+	movl	%eax, 112(%rsp)
+	movq	192(%rsp), %rcx
+	movl	116(%rsp), %edx
+	movl	112(%rsp), %r8d
+	callq	__Phys_Main_GameRoom_Phys_Main_elevation
+	callq	_Float_Commons_Core_fromFP
+	movl	%eax, %ecx
+	xorl	%eax, %eax
+	subl	%ecx, %eax
+	movl	%eax, 68(%rsp)
+	movq	184(%rsp), %rax
+	movq	(%rax), %rcx
+	callq	__Commons_Core_Box3D_Commons_Core_bottom
+	movl	%eax, 64(%rsp)
+	movl	$3, %ecx
+	callq	_Int_Commons_Core_fromPixel
+	movl	64(%rsp), %ecx
+	movl	%eax, %edx
+	movl	68(%rsp), %eax
+	subl	%edx, %ecx
+	cmpl	%ecx, %eax
+	jl	.LBB46_7
+	jmp	.LBB46_8
+.LBB46_6:
+	movl	124(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 124(%rsp)
+	jmp	.LBB46_1
+.LBB46_7:
+	movq	192(%rsp), %rdx
+	movq	160(%rsp), %r8
+	movl	180(%rsp), %r9d
+	movl	176(%rsp), %r11d
+	movl	116(%rsp), %r10d
+	movl	112(%rsp), %eax
+	leaq	72(%rsp), %rcx
+	movl	%r11d, 32(%rsp)
+	movl	%r10d, 40(%rsp)
+	movl	%eax, 48(%rsp)
+	callq	__Phys_Main_GameRoom_Phys_Main_pushTile
+	leaq	72(%rsp), %rax
+	movq	%rax, 160(%rsp)
+	jmp	.LBB46_9
+.LBB46_8:
+	jmp	.LBB46_9
+.LBB46_9:
+	movl	120(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 120(%rsp)
+	jmp	.LBB46_4
+.LBB46_10:
+	movq	160(%rsp), %rax
+	movl	4(%rax), %eax
+	movq	160(%rsp), %rcx
+	subl	(%rcx), %eax
+	addq	$200, %rsp
+	retq
+.LBB46_11:
+	movq	160(%rsp), %rax
+	movl	(%rax), %eax
+	movq	160(%rsp), %rcx
+	subl	4(%rcx), %eax
+	addq	$200, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Phys_Main_GameRoom_Phys_Main_moveObjH;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameRoom_Phys_Main_moveObjH
+	.p2align	4, 0x90
+__Phys_Main_GameRoom_Phys_Main_moveObjH:
+.seh_proc __Phys_Main_GameRoom_Phys_Main_moveObjH
+	subq	$72, %rsp
+	.seh_stackalloc 72
+	.seh_endprologue
+	movq	%rcx, 64(%rsp)
+	movq	%rdx, 56(%rsp)
+	movl	%r8d, 52(%rsp)
+	movl	%r9d, 48(%rsp)
+	movq	64(%rsp), %rcx
+	movq	56(%rsp), %rdx
+	movl	52(%rsp), %r8d
+	movl	48(%rsp), %r9d
+	callq	__Phys_Main_GameRoom_Phys_Main_precalcObj
+	movl	%eax, 44(%rsp)
+	cmpl	$0, 52(%rsp)
+	jne	.LBB47_2
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movq	56(%rsp), %rcx
+	movq	(%rcx), %rcx
+	movl	(%rcx), %ecx
+	addl	44(%rsp), %ecx
+	movl	%ecx, (%rax)
+	jmp	.LBB47_3
+.LBB47_2:
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movq	56(%rsp), %rcx
+	movq	(%rcx), %rcx
+	movl	8(%rcx), %ecx
+	addl	44(%rsp), %ecx
+	movl	%ecx, 8(%rax)
+.LBB47_3:
+	movl	44(%rsp), %eax
+	addq	$72, %rsp
+	retq
+	.seh_endproc
+
 	.def	__Phys_Main_GameRoom_Phys_Main_updateObj;
 	.scl	2;
 	.type	32;
@@ -1585,22 +2663,22 @@ __Phys_Main_GameRoom_Phys_Main_updateObj:
 	.seh_endprologue
 	movq	%rcx, 64(%rsp)
 	movq	%rdx, 56(%rsp)
-	movq	56(%rsp), %rax
-	movq	(%rax), %rax
 	movq	56(%rsp), %rcx
-	movq	(%rcx), %rcx
-	movl	(%rcx), %ecx
-	movq	56(%rsp), %rdx
-	addl	12(%rdx), %ecx
-	movl	%ecx, (%rax)
+	callq	__Phys_Main_MoveObj_Phys_Main_updateSpd
 	movq	56(%rsp), %rax
-	movq	(%rax), %rax
-	movq	56(%rsp), %rcx
-	movq	(%rcx), %rcx
-	movl	8(%rcx), %ecx
+	movb	$0, 9(%rax)
+	movq	64(%rsp), %rcx
 	movq	56(%rsp), %rdx
-	addl	16(%rdx), %ecx
-	movl	%ecx, 8(%rax)
+	movq	56(%rsp), %rax
+	movl	12(%rax), %r9d
+	xorl	%r8d, %r8d
+	callq	__Phys_Main_GameRoom_Phys_Main_moveObjH
+	movq	64(%rsp), %rcx
+	movq	56(%rsp), %rdx
+	movq	56(%rsp), %rax
+	movl	16(%rax), %r9d
+	movl	$2, %r8d
+	callq	__Phys_Main_GameRoom_Phys_Main_moveObjH
 	movq	56(%rsp), %rax
 	movq	(%rax), %rcx
 	callq	__Commons_Core_Box3D_Commons_Core_centerX
@@ -1613,22 +2691,82 @@ __Phys_Main_GameRoom_Phys_Main_updateObj:
 	movl	%eax, %ecx
 	callq	_Int_Commons_Core_toTile
 	movl	%eax, 48(%rsp)
-	movq	56(%rsp), %rax
-	movq	(%rax), %rax
-	movq	%rax, 40(%rsp)
 	movq	64(%rsp), %rcx
 	movl	52(%rsp), %edx
 	movl	48(%rsp), %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
 	callq	_Float_Commons_Core_fromFP
-	movl	%eax, %edx
-	movq	40(%rsp), %rax
-	xorl	%ecx, %ecx
-	subl	%edx, %ecx
+	movl	%eax, %ecx
+	xorl	%eax, %eax
+	subl	%ecx, %eax
+	movq	56(%rsp), %rcx
+	movq	(%rcx), %rcx
+	subl	16(%rcx), %eax
+	movl	%eax, 44(%rsp)
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movq	56(%rsp), %rcx
+	movq	(%rcx), %rcx
+	movl	4(%rcx), %ecx
 	movq	56(%rsp), %rdx
-	movq	(%rdx), %rdx
-	subl	16(%rdx), %ecx
+	addl	20(%rdx), %ecx
 	movl	%ecx, 4(%rax)
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movl	4(%rax), %eax
+	cmpl	44(%rsp), %eax
+	jle	.LBB48_2
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movl	4(%rax), %eax
+	subl	44(%rsp), %eax
+	movl	$3, %ecx
+	cltd
+	idivl	%ecx
+	movl	%eax, 40(%rsp)
+	movl	40(%rsp), %eax
+	movl	%eax, 36(%rsp)
+	movl	$1, %ecx
+	callq	_Int_Commons_Core_fromPixel
+	movl	%eax, %ecx
+	movl	36(%rsp), %eax
+	cmpl	%ecx, %eax
+	jl	.LBB48_4
+	jmp	.LBB48_5
+.LBB48_2:
+	jmp	.LBB48_3
+.LBB48_3:
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movl	4(%rax), %eax
+	cmpl	44(%rsp), %eax
+	jge	.LBB48_7
+	jmp	.LBB48_8
+.LBB48_4:
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movl	44(%rsp), %ecx
+	movl	%ecx, 4(%rax)
+	jmp	.LBB48_6
+.LBB48_5:
+	movq	56(%rsp), %rax
+	movq	(%rax), %rax
+	movq	56(%rsp), %rcx
+	movq	(%rcx), %rcx
+	movl	4(%rcx), %ecx
+	subl	40(%rsp), %ecx
+	movl	%ecx, 4(%rax)
+.LBB48_6:
+	movq	56(%rsp), %rax
+	movl	$0, 20(%rax)
+	jmp	.LBB48_3
+.LBB48_7:
+	movq	56(%rsp), %rax
+	movb	$1, 9(%rax)
+	jmp	.LBB48_9
+.LBB48_8:
+	jmp	.LBB48_9
+.LBB48_9:
 	addq	$72, %rsp
 	retq
 	.seh_endproc
@@ -1646,12 +2784,12 @@ __Phys_Main_GameRoom_Phys_Main_update:
 	.seh_endprologue
 	movq	%rcx, 48(%rsp)
 	movl	$0, 44(%rsp)
-.LBB32_1:
+.LBB49_1:
 	movl	44(%rsp), %eax
 	movq	48(%rsp), %rcx
 	movq	16(%rcx), %rcx
 	cmpl	8(%rcx), %eax
-	jge	.LBB32_3
+	jge	.LBB49_3
 	movq	48(%rsp), %rcx
 	movq	48(%rsp), %rax
 	movq	16(%rax), %rdx
@@ -1664,8 +2802,8 @@ __Phys_Main_GameRoom_Phys_Main_update:
 	movl	44(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 44(%rsp)
-	jmp	.LBB32_1
-.LBB32_3:
+	jmp	.LBB49_1
+.LBB49_3:
 	addq	$56, %rsp
 	retq
 	.seh_endproc
@@ -1685,12 +2823,12 @@ __Phys_Main_GameRoom_Sys_Sulfur_draw:
 	movl	%edx, 76(%rsp)
 	movl	%r8d, 72(%rsp)
 	movl	$0, 68(%rsp)
-.LBB33_1:
+.LBB50_1:
 	cmpl	$30, 68(%rsp)
-	jge	.LBB33_3
+	jge	.LBB50_3
 	movl	$0, 64(%rsp)
-	jmp	.LBB33_4
-.LBB33_3:
+	jmp	.LBB50_4
+.LBB50_3:
 	movq	.refptr.C_GL_FLOAT4(%rip), %rax
 	movw	(%rax), %ax
 	movw	%ax, 32(%rsp)
@@ -1704,9 +2842,9 @@ __Phys_Main_GameRoom_Sys_Sulfur_draw:
 	nop
 	addq	$88, %rsp
 	retq
-.LBB33_4:
+.LBB50_4:
 	cmpl	$30, 64(%rsp)
-	jge	.LBB33_6
+	jge	.LBB50_6
 	movl	76(%rsp), %eax
 	addl	64(%rsp), %eax
 	subl	$15, %eax
@@ -1731,14 +2869,14 @@ __Phys_Main_GameRoom_Sys_Sulfur_draw:
 	setl	%cl
 	andb	%cl, %al
 	testb	$1, %al
-	jne	.LBB33_7
-	jmp	.LBB33_8
-.LBB33_6:
+	jne	.LBB50_7
+	jmp	.LBB50_8
+.LBB50_6:
 	movl	68(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 68(%rsp)
-	jmp	.LBB33_1
-.LBB33_7:
+	jmp	.LBB50_1
+.LBB50_7:
 	movq	80(%rsp), %rax
 	movq	8(%rax), %rax
 	movl	60(%rsp), %ecx
@@ -1752,14 +2890,213 @@ __Phys_Main_GameRoom_Sys_Sulfur_draw:
 	cvtsi2ssl	56(%rsp), %xmm3
 	xorps	%xmm2, %xmm2
 	callq	__Phys_Main_GameTile_Sys_Sulfur_draw
-	jmp	.LBB33_9
-.LBB33_8:
-	jmp	.LBB33_9
-.LBB33_9:
+	jmp	.LBB50_9
+.LBB50_8:
+	jmp	.LBB50_9
+.LBB50_9:
 	movl	64(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 64(%rsp)
-	jmp	.LBB33_4
+	jmp	.LBB50_4
+	.seh_endproc
+
+	.def	__Phys_Main_GameRoom_Phys_Main_drawMini1;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameRoom_Phys_Main_drawMini1
+	.p2align	4, 0x90
+__Phys_Main_GameRoom_Phys_Main_drawMini1:
+.seh_proc __Phys_Main_GameRoom_Phys_Main_drawMini1
+	subq	$104, %rsp
+	.seh_stackalloc 104
+	.seh_endprologue
+	movq	%rcx, 96(%rsp)
+	movl	%edx, 92(%rsp)
+	movl	%r8d, 88(%rsp)
+	movl	$0, 84(%rsp)
+.LBB51_1:
+	cmpl	$120, 84(%rsp)
+	jge	.LBB51_3
+	movl	$0, 80(%rsp)
+	jmp	.LBB51_4
+.LBB51_3:
+	addq	$104, %rsp
+	retq
+.LBB51_4:
+	cmpl	$120, 80(%rsp)
+	jge	.LBB51_6
+	movl	92(%rsp), %eax
+	addl	80(%rsp), %eax
+	subl	$60, %eax
+	movl	%eax, 76(%rsp)
+	movl	88(%rsp), %eax
+	addl	84(%rsp), %eax
+	subl	$60, %eax
+	movl	%eax, 72(%rsp)
+	cmpl	$0, 76(%rsp)
+	setl	%al
+	movl	76(%rsp), %ecx
+	movq	96(%rsp), %rdx
+	cmpl	(%rdx), %ecx
+	setge	%cl
+	orb	%cl, %al
+	cmpl	$0, 72(%rsp)
+	setl	%cl
+	orb	%cl, %al
+	movl	72(%rsp), %ecx
+	movq	96(%rsp), %rdx
+	cmpl	4(%rdx), %ecx
+	setge	%cl
+	orb	%cl, %al
+	testb	$1, %al
+	jne	.LBB51_7
+	jmp	.LBB51_8
+.LBB51_6:
+	movl	84(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 84(%rsp)
+	jmp	.LBB51_1
+.LBB51_7:
+	movq	.refptr.C_BOX(%rip), %rax
+	movw	(%rax), %ax
+	movq	_Phys_Main__COLORS(%rip), %rcx
+	movq	16(%rcx), %rcx
+	movl	(%rcx), %ecx
+	movl	80(%rsp), %edx
+	movl	84(%rsp), %r8d
+	movl	%r8d, 52(%rsp)
+	movl	%edx, 48(%rsp)
+	movl	%ecx, 44(%rsp)
+	movw	%ax, 40(%rsp)
+	movl	$1, 60(%rsp)
+	movl	$1, 56(%rsp)
+	leaq	40(%rsp), %rcx
+	callq	_Glyph_Sys_Sulfur_draw
+	jmp	.LBB51_9
+.LBB51_8:
+	movq	96(%rsp), %rax
+	movq	8(%rax), %rax
+	movl	76(%rsp), %ecx
+	movl	72(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movq	(%rax,%rcx,8), %rcx
+	movl	80(%rsp), %edx
+	movl	84(%rsp), %r8d
+	callq	__Phys_Main_GameTile_Phys_Main_drawMini
+.LBB51_9:
+	movl	80(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 80(%rsp)
+	jmp	.LBB51_4
+	.seh_endproc
+
+	.def	__Phys_Main_GameRoom_Phys_Main_drawMini2;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameRoom_Phys_Main_drawMini2
+	.p2align	4, 0x90
+__Phys_Main_GameRoom_Phys_Main_drawMini2:
+.seh_proc __Phys_Main_GameRoom_Phys_Main_drawMini2
+	subq	$72, %rsp
+	.seh_stackalloc 72
+	.seh_endprologue
+	movq	%rcx, 64(%rsp)
+	movl	$0, 60(%rsp)
+.LBB52_1:
+	movl	60(%rsp), %eax
+	movl	%eax, 44(%rsp)
+	movq	64(%rsp), %rax
+	movl	4(%rax), %eax
+	movl	$5, %ecx
+	cltd
+	idivl	%ecx
+	movl	%eax, %ecx
+	movl	44(%rsp), %eax
+	cmpl	%ecx, %eax
+	jge	.LBB52_3
+	movl	$0, 56(%rsp)
+	jmp	.LBB52_4
+.LBB52_3:
+	addq	$72, %rsp
+	retq
+.LBB52_4:
+	movl	56(%rsp), %eax
+	movl	%eax, 40(%rsp)
+	movq	64(%rsp), %rax
+	movl	(%rax), %eax
+	movl	$5, %ecx
+	cltd
+	idivl	%ecx
+	movl	%eax, %ecx
+	movl	40(%rsp), %eax
+	cmpl	%ecx, %eax
+	jge	.LBB52_6
+	imull	$5, 56(%rsp), %eax
+	movl	%eax, 52(%rsp)
+	imull	$5, 60(%rsp), %eax
+	movl	%eax, 48(%rsp)
+	movq	64(%rsp), %rax
+	movq	8(%rax), %rax
+	movl	52(%rsp), %ecx
+	movl	48(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movq	(%rax,%rcx,8), %rcx
+	movl	56(%rsp), %edx
+	movl	60(%rsp), %r8d
+	callq	__Phys_Main_GameTile_Phys_Main_drawMini
+	movl	56(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 56(%rsp)
+	jmp	.LBB52_4
+.LBB52_6:
+	movl	60(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 60(%rsp)
+	jmp	.LBB52_1
+	.seh_endproc
+
+	.def	__Phys_Main_GameRoom_Phys_Main_drawMini;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Phys_Main_GameRoom_Phys_Main_drawMini
+	.p2align	4, 0x90
+__Phys_Main_GameRoom_Phys_Main_drawMini:
+.seh_proc __Phys_Main_GameRoom_Phys_Main_drawMini
+	subq	$56, %rsp
+	.seh_stackalloc 56
+	.seh_endprologue
+	movq	%rcx, 48(%rsp)
+	andb	$1, %dl
+	movb	%dl, 47(%rsp)
+	movl	%r8d, 40(%rsp)
+	movl	%r9d, 36(%rsp)
+	movb	47(%rsp), %al
+	xorb	$-1, %al
+	testb	$1, %al
+	jne	.LBB53_1
+	jmp	.LBB53_2
+.LBB53_1:
+	movq	48(%rsp), %rcx
+	movl	40(%rsp), %edx
+	movl	36(%rsp), %r8d
+	callq	__Phys_Main_GameRoom_Phys_Main_drawMini1
+	jmp	.LBB53_3
+.LBB53_2:
+	movq	48(%rsp), %rcx
+	callq	__Phys_Main_GameRoom_Phys_Main_drawMini2
+.LBB53_3:
+	nop
+	addq	$56, %rsp
+	retq
 	.seh_endproc
 
 	.def	_Int_ProcGen_Layer_newDataLayer;
@@ -1792,11 +3129,11 @@ _Int_ProcGen_Layer_newDataLayer:
 	movl	%ecx, 28(%rax)
 	movq	%rax, 72(%rsp)
 	movl	$0, 68(%rsp)
-.LBB34_1:
+.LBB54_1:
 	movl	68(%rsp), %eax
 	movq	72(%rsp), %rcx
 	cmpl	8(%rcx), %eax
-	jge	.LBB34_3
+	jge	.LBB54_3
 	movq	72(%rsp), %rax
 	movl	68(%rsp), %ecx
 	movq	16(%rax), %rax
@@ -1806,8 +3143,8 @@ _Int_ProcGen_Layer_newDataLayer:
 	movl	68(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 68(%rsp)
-	jmp	.LBB34_1
-.LBB34_3:
+	jmp	.LBB54_1
+.LBB54_3:
 	movl	84(%rsp), %eax
 	movl	%eax, 40(%rsp)
 	movl	80(%rsp), %eax
@@ -1841,21 +3178,21 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMul:
 	movq	%rcx, 16(%rsp)
 	movq	%rdx, 8(%rsp)
 	movl	$0, 4(%rsp)
-.LBB35_1:
+.LBB55_1:
 	movl	4(%rsp), %eax
 	movq	16(%rsp), %rcx
 	cmpl	4(%rcx), %eax
-	jge	.LBB35_3
+	jge	.LBB55_3
 	movl	$0, (%rsp)
-	jmp	.LBB35_4
-.LBB35_3:
+	jmp	.LBB55_4
+.LBB55_3:
 	addq	$24, %rsp
 	retq
-.LBB35_4:
+.LBB55_4:
 	movl	(%rsp), %eax
 	movq	16(%rsp), %rcx
 	cmpl	(%rcx), %eax
-	jge	.LBB35_6
+	jge	.LBB55_6
 	movq	16(%rsp), %rax
 	movq	8(%rax), %rax
 	movl	(%rsp), %ecx
@@ -1886,12 +3223,12 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMul:
 	movl	(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, (%rsp)
-	jmp	.LBB35_4
-.LBB35_6:
+	jmp	.LBB55_4
+.LBB55_6:
 	movl	4(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 4(%rsp)
-	jmp	.LBB35_1
+	jmp	.LBB55_1
 	.seh_endproc
 
 	.def	__ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMin;
@@ -1908,21 +3245,21 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMin:
 	movq	%rcx, 24(%rsp)
 	movq	%rdx, 16(%rsp)
 	movl	$0, 12(%rsp)
-.LBB36_1:
+.LBB56_1:
 	movl	12(%rsp), %eax
 	movq	24(%rsp), %rcx
 	cmpl	4(%rcx), %eax
-	jge	.LBB36_3
+	jge	.LBB56_3
 	movl	$0, 8(%rsp)
-	jmp	.LBB36_4
-.LBB36_3:
+	jmp	.LBB56_4
+.LBB56_3:
 	addq	$32, %rsp
 	retq
-.LBB36_4:
+.LBB56_4:
 	movl	8(%rsp), %eax
 	movq	24(%rsp), %rcx
 	cmpl	(%rcx), %eax
-	jge	.LBB36_6
+	jge	.LBB56_6
 	movq	16(%rsp), %rax
 	movq	8(%rax), %rcx
 	movl	8(%rsp), %eax
@@ -1946,14 +3283,14 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMin:
 	movss	(%rcx,%rdx,4), %xmm0
 	cltq
 	ucomiss	%xmm1, %xmm0
-	ja	.LBB36_7
-	jmp	.LBB36_8
-.LBB36_6:
+	ja	.LBB56_7
+	jmp	.LBB56_8
+.LBB56_6:
 	movl	12(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 12(%rsp)
-	jmp	.LBB36_1
-.LBB36_7:
+	jmp	.LBB56_1
+.LBB56_7:
 	movq	24(%rsp), %rax
 	movq	8(%rax), %rax
 	movl	8(%rsp), %ecx
@@ -1964,14 +3301,14 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMin:
 	movss	4(%rsp), %xmm0
 	movslq	%ecx, %rcx
 	movss	%xmm0, (%rax,%rcx,4)
-	jmp	.LBB36_9
-.LBB36_8:
-	jmp	.LBB36_9
-.LBB36_9:
+	jmp	.LBB56_9
+.LBB56_8:
+	jmp	.LBB56_9
+.LBB56_9:
 	movl	8(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 8(%rsp)
-	jmp	.LBB36_4
+	jmp	.LBB56_4
 	.seh_endproc
 
 	.def	__ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle;
@@ -1980,7 +3317,7 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMin:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI37_0:
+.LCPI57_0:
 	.long	0x3f800000
 	.text
 	.globl	__ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle
@@ -1999,21 +3336,21 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle:
 	andb	$1, %al
 	movb	%al, 67(%rsp)
 	movl	$0, 60(%rsp)
-.LBB37_1:
+.LBB57_1:
 	movl	60(%rsp), %eax
 	movq	80(%rsp), %rcx
 	cmpl	4(%rcx), %eax
-	jge	.LBB37_3
+	jge	.LBB57_3
 	movl	$0, 56(%rsp)
-	jmp	.LBB37_4
-.LBB37_3:
+	jmp	.LBB57_4
+.LBB57_3:
 	addq	$88, %rsp
 	retq
-.LBB37_4:
+.LBB57_4:
 	movl	56(%rsp), %eax
 	movq	80(%rsp), %rcx
 	cmpl	(%rcx), %eax
-	jge	.LBB37_6
+	jge	.LBB57_6
 	movss	76(%rsp), %xmm0
 	movss	72(%rsp), %xmm1
 	cvtsi2ssl	56(%rsp), %xmm2
@@ -2024,33 +3361,33 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle:
 	divss	68(%rsp), %xmm0
 	movss	%xmm0, 48(%rsp)
 	movss	48(%rsp), %xmm0
-	movss	.LCPI37_0(%rip), %xmm1
+	movss	.LCPI57_0(%rip), %xmm1
 	ucomiss	%xmm1, %xmm0
-	ja	.LBB37_7
-	jmp	.LBB37_8
-.LBB37_6:
+	ja	.LBB57_7
+	jmp	.LBB57_8
+.LBB57_6:
 	movl	60(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 60(%rsp)
-	jmp	.LBB37_1
-.LBB37_7:
-	movss	.LCPI37_0(%rip), %xmm0
+	jmp	.LBB57_1
+.LBB57_7:
+	movss	.LCPI57_0(%rip), %xmm0
 	movss	%xmm0, 48(%rsp)
-	jmp	.LBB37_9
-.LBB37_8:
-	jmp	.LBB37_9
-.LBB37_9:
+	jmp	.LBB57_9
+.LBB57_8:
+	jmp	.LBB57_9
+.LBB57_9:
 	testb	$1, 67(%rsp)
-	jne	.LBB37_10
-	jmp	.LBB37_11
-.LBB37_10:
-	movss	.LCPI37_0(%rip), %xmm0
+	jne	.LBB57_10
+	jmp	.LBB57_11
+.LBB57_10:
+	movss	.LCPI57_0(%rip), %xmm0
 	subss	48(%rsp), %xmm0
 	movss	%xmm0, 48(%rsp)
-	jmp	.LBB37_12
-.LBB37_11:
-	jmp	.LBB37_12
-.LBB37_12:
+	jmp	.LBB57_12
+.LBB57_11:
+	jmp	.LBB57_12
+.LBB57_12:
 	movq	80(%rsp), %rax
 	movq	8(%rax), %rax
 	movl	56(%rsp), %ecx
@@ -2070,7 +3407,7 @@ __ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle:
 	movl	56(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 56(%rsp)
-	jmp	.LBB37_4
+	jmp	.LBB57_4
 	.seh_endproc
 
 	.def	_PRNG_ProcGen_Noise_newPermTable;
@@ -2094,11 +3431,11 @@ _PRNG_ProcGen_Noise_newPermTable:
 	callq	gc_alloc_array
 	movq	%rax, 72(%rsp)
 	movl	$0, 68(%rsp)
-.LBB38_1:
+.LBB58_1:
 	movl	68(%rsp), %eax
 	movq	72(%rsp), %rcx
 	cmpl	8(%rcx), %eax
-	jge	.LBB38_3
+	jge	.LBB58_3
 	movq	72(%rsp), %rax
 	movl	68(%rsp), %ecx
 	movq	16(%rax), %rax
@@ -2107,12 +3444,12 @@ _PRNG_ProcGen_Noise_newPermTable:
 	movl	68(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 68(%rsp)
-	jmp	.LBB38_1
-.LBB38_3:
+	jmp	.LBB58_1
+.LBB58_3:
 	movl	$0, 60(%rsp)
-.LBB38_4:
+.LBB58_4:
 	cmpl	$256, 60(%rsp)
-	jge	.LBB38_6
+	jge	.LBB58_6
 	movq	72(%rsp), %rax
 	movl	60(%rsp), %ecx
 	movq	16(%rax), %rax
@@ -2122,12 +3459,12 @@ _PRNG_ProcGen_Noise_newPermTable:
 	movl	60(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 60(%rsp)
-	jmp	.LBB38_4
-.LBB38_6:
+	jmp	.LBB58_4
+.LBB58_6:
 	movl	$0, 60(%rsp)
-.LBB38_7:
+.LBB58_7:
 	cmpl	$256, 60(%rsp)
-	jge	.LBB38_9
+	jge	.LBB58_9
 	movl	60(%rsp), %eax
 	movl	%eax, 48(%rsp)
 	movq	80(%rsp), %rcx
@@ -2165,8 +3502,8 @@ _PRNG_ProcGen_Noise_newPermTable:
 	movl	60(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 60(%rsp)
-	jmp	.LBB38_7
-.LBB38_9:
+	jmp	.LBB58_7
+.LBB58_9:
 	movq	72(%rsp), %rax
 	movq	16(%rax), %rax
 	movq	72(%rsp), %rcx
@@ -2302,17 +3639,17 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_gradY:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI42_0:
+.LCPI62_0:
 	.long	0x40000000
-.LCPI42_1:
+.LCPI62_1:
 	.long	0x3f800000
-.LCPI42_2:
+.LCPI62_2:
 	.long	0x3e586445
-.LCPI42_3:
+.LCPI62_3:
 	.long	0x3ebb67a1
-.LCPI42_4:
+.LCPI62_4:
 	.long	0x3f000000
-.LCPI42_5:
+.LCPI62_5:
 	.long	0x428c0000
 	.text
 	.globl	__ProcGen_Noise_Simplex_ProcGen_Noise_noise
@@ -2325,7 +3662,7 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	movq	%rcx, 176(%rsp)
 	movss	%xmm1, 172(%rsp)
 	movss	%xmm2, 168(%rsp)
-	movss	.LCPI42_3(%rip), %xmm0
+	movss	.LCPI62_3(%rip), %xmm0
 	movss	%xmm0, 164(%rsp)
 	movss	172(%rsp), %xmm0
 	addss	168(%rsp), %xmm0
@@ -2341,7 +3678,7 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	callq	_Float_builtin_floor
 	cvtsi2ss	%eax, %xmm0
 	movss	%xmm0, 152(%rsp)
-	movss	.LCPI42_2(%rip), %xmm0
+	movss	.LCPI62_2(%rip), %xmm0
 	movss	%xmm0, 148(%rsp)
 	movss	156(%rsp), %xmm0
 	addss	152(%rsp), %xmm0
@@ -2358,16 +3695,16 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	subss	%xmm1, %xmm0
 	movss	%xmm0, 136(%rsp)
 	movss	140(%rsp), %xmm0
-	movss	.LCPI42_1(%rip), %xmm1
+	movss	.LCPI62_1(%rip), %xmm1
 	subss	%xmm1, %xmm0
-	movss	.LCPI42_0(%rip), %xmm1
+	movss	.LCPI62_0(%rip), %xmm1
 	mulss	148(%rsp), %xmm1
 	addss	%xmm1, %xmm0
 	movss	%xmm0, 132(%rsp)
 	movss	136(%rsp), %xmm0
-	movss	.LCPI42_1(%rip), %xmm1
+	movss	.LCPI62_1(%rip), %xmm1
 	subss	%xmm1, %xmm0
-	movss	.LCPI42_0(%rip), %xmm1
+	movss	.LCPI62_0(%rip), %xmm1
 	mulss	148(%rsp), %xmm1
 	addss	%xmm1, %xmm0
 	movss	%xmm0, 128(%rsp)
@@ -2376,13 +3713,13 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	movss	140(%rsp), %xmm1
 	movss	136(%rsp), %xmm0
 	ucomiss	%xmm1, %xmm0
-	jbe	.LBB42_2
+	jbe	.LBB62_2
 	movl	$0, 124(%rsp)
 	movl	$1, 120(%rsp)
-	jmp	.LBB42_3
-.LBB42_2:
-	jmp	.LBB42_3
-.LBB42_3:
+	jmp	.LBB62_3
+.LBB62_2:
+	jmp	.LBB62_3
+.LBB62_3:
 	movss	140(%rsp), %xmm0
 	cvtsi2ssl	124(%rsp), %xmm1
 	subss	%xmm1, %xmm0
@@ -2405,7 +3742,7 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	movl	%edx, 104(%rsp)
 	movss	140(%rsp), %xmm1
 	mulss	140(%rsp), %xmm1
-	movss	.LCPI42_4(%rip), %xmm0
+	movss	.LCPI62_4(%rip), %xmm0
 	subss	%xmm1, %xmm0
 	movss	136(%rsp), %xmm1
 	mulss	136(%rsp), %xmm1
@@ -2416,7 +3753,7 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	movss	100(%rsp), %xmm0
 	xorps	%xmm1, %xmm1
 	ucomiss	%xmm1, %xmm0
-	jb	.LBB42_5
+	jb	.LBB62_5
 	movl	108(%rsp), %eax
 	movq	176(%rsp), %rcx
 	movq	(%rcx), %rcx
@@ -2448,13 +3785,13 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	addss	%xmm2, %xmm1
 	mulss	%xmm1, %xmm0
 	movss	%xmm0, 96(%rsp)
-	jmp	.LBB42_6
-.LBB42_5:
-	jmp	.LBB42_6
-.LBB42_6:
+	jmp	.LBB62_6
+.LBB62_5:
+	jmp	.LBB62_6
+.LBB62_6:
 	movss	116(%rsp), %xmm1
 	mulss	116(%rsp), %xmm1
-	movss	.LCPI42_4(%rip), %xmm0
+	movss	.LCPI62_4(%rip), %xmm0
 	subss	%xmm1, %xmm0
 	movss	112(%rsp), %xmm1
 	mulss	112(%rsp), %xmm1
@@ -2465,7 +3802,7 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	movss	84(%rsp), %xmm0
 	xorps	%xmm1, %xmm1
 	ucomiss	%xmm1, %xmm0
-	jb	.LBB42_8
+	jb	.LBB62_8
 	movl	108(%rsp), %eax
 	addl	124(%rsp), %eax
 	movq	176(%rsp), %rcx
@@ -2499,13 +3836,13 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	addss	%xmm2, %xmm1
 	mulss	%xmm1, %xmm0
 	movss	%xmm0, 80(%rsp)
-	jmp	.LBB42_9
-.LBB42_8:
-	jmp	.LBB42_9
-.LBB42_9:
+	jmp	.LBB62_9
+.LBB62_8:
+	jmp	.LBB62_9
+.LBB62_9:
 	movss	132(%rsp), %xmm1
 	mulss	132(%rsp), %xmm1
-	movss	.LCPI42_4(%rip), %xmm0
+	movss	.LCPI62_4(%rip), %xmm0
 	subss	%xmm1, %xmm0
 	movss	128(%rsp), %xmm1
 	mulss	128(%rsp), %xmm1
@@ -2516,7 +3853,7 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	movss	68(%rsp), %xmm0
 	xorps	%xmm1, %xmm1
 	ucomiss	%xmm1, %xmm0
-	jb	.LBB42_11
+	jb	.LBB62_11
 	movl	108(%rsp), %eax
 	addl	$1, %eax
 	movq	176(%rsp), %rcx
@@ -2550,14 +3887,14 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	addss	%xmm2, %xmm1
 	mulss	%xmm1, %xmm0
 	movss	%xmm0, 64(%rsp)
-	jmp	.LBB42_12
-.LBB42_11:
-	jmp	.LBB42_12
-.LBB42_12:
+	jmp	.LBB62_12
+.LBB62_11:
+	jmp	.LBB62_12
+.LBB62_12:
 	movss	96(%rsp), %xmm1
 	addss	80(%rsp), %xmm1
 	addss	64(%rsp), %xmm1
-	movss	.LCPI42_5(%rip), %xmm0
+	movss	.LCPI62_5(%rip), %xmm0
 	mulss	%xmm1, %xmm0
 	addq	$184, %rsp
 	retq
@@ -2569,9 +3906,9 @@ __ProcGen_Noise_Simplex_ProcGen_Noise_noise:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI43_0:
+.LCPI63_0:
 	.long	0x3f000000
-.LCPI43_1:
+.LCPI63_1:
 	.long	0x3f800000
 	.text
 	.globl	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
@@ -2588,21 +3925,21 @@ __ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex:
 	movss	%xmm2, 52(%rsp)
 	movss	%xmm3, 48(%rsp)
 	movl	$0, 44(%rsp)
-.LBB43_1:
+.LBB63_1:
 	movl	44(%rsp), %eax
 	movq	64(%rsp), %rcx
 	cmpl	4(%rcx), %eax
-	jge	.LBB43_3
+	jge	.LBB63_3
 	movl	$0, 40(%rsp)
-	jmp	.LBB43_4
-.LBB43_3:
+	jmp	.LBB63_4
+.LBB63_3:
 	addq	$72, %rsp
 	retq
-.LBB43_4:
+.LBB63_4:
 	movl	40(%rsp), %eax
 	movq	64(%rsp), %rcx
 	cmpl	(%rcx), %eax
-	jge	.LBB43_6
+	jge	.LBB63_6
 	movq	56(%rsp), %rcx
 	movss	120(%rsp), %xmm1
 	cvtsi2ssl	40(%rsp), %xmm0
@@ -2630,9 +3967,9 @@ __ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex:
 	movq	16(%rdx), %rdx
 	movslq	%r8d, %r8
 	movss	(%rdx,%r8,4), %xmm0
-	movss	.LCPI43_1(%rip), %xmm1
+	movss	.LCPI63_1(%rip), %xmm1
 	addss	36(%rsp), %xmm1
-	movss	.LCPI43_0(%rip), %xmm2
+	movss	.LCPI63_0(%rip), %xmm2
 	mulss	%xmm2, %xmm1
 	mulss	52(%rsp), %xmm1
 	addss	%xmm1, %xmm0
@@ -2641,12 +3978,12 @@ __ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex:
 	movl	40(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 40(%rsp)
-	jmp	.LBB43_4
-.LBB43_6:
+	jmp	.LBB63_4
+.LBB63_6:
 	movl	44(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 44(%rsp)
-	jmp	.LBB43_1
+	jmp	.LBB63_1
 	.seh_endproc
 
 	.def	_Int_Main_Obj_newGameObj;
@@ -2705,22 +4042,43 @@ __Main_Obj_GameObj_Sys_Sulfur_draw:
 	movss	%xmm0, 72(%rsp)
 	movq	80(%rsp), %rax
 	movq	(%rax), %rax
-	movq	(%rax), %rax
-	movl	8(%rax), %ecx
+	movq	(%rax), %rcx
+	callq	__Commons_Core_Box3D_Commons_Core_centerZ
+	movl	%eax, %ecx
 	callq	_Int_Commons_Core_toFP
 	movss	%xmm0, 68(%rsp)
 	movl	$1, 64(%rsp)
 	movq	80(%rsp), %rax
 	cmpl	$-1, 12(%rax)
-	jne	.LBB45_2
+	jne	.LBB65_2
 	movl	$7, 64(%rsp)
-	jmp	.LBB45_3
-.LBB45_2:
+	jmp	.LBB65_3
+.LBB65_2:
 	movq	80(%rsp), %rax
 	cmpl	$1, 12(%rax)
-	je	.LBB45_4
-	jmp	.LBB45_5
-.LBB45_3:
+	je	.LBB65_4
+	jmp	.LBB65_5
+.LBB65_3:
+	movq	80(%rsp), %rax
+	movq	(%rax), %rax
+	movb	9(%rax), %al
+	xorb	$-1, %al
+	testb	$1, %al
+	jne	.LBB65_7
+	jmp	.LBB65_8
+.LBB65_4:
+	movl	$4, 64(%rsp)
+	jmp	.LBB65_6
+.LBB65_5:
+	jmp	.LBB65_6
+.LBB65_6:
+	jmp	.LBB65_3
+.LBB65_7:
+	movl	64(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 64(%rsp)
+	jmp	.LBB65_9
+.LBB65_8:
 	movq	80(%rsp), %rax
 	movq	(%rax), %rax
 	movl	12(%rax), %ecx
@@ -2738,28 +4096,9 @@ __Main_Obj_GameObj_Sys_Sulfur_draw:
 	setg	%cl
 	orb	%cl, %al
 	testb	$1, %al
-	jne	.LBB45_7
-	jmp	.LBB45_8
-.LBB45_4:
-	movl	$4, 64(%rsp)
-	jmp	.LBB45_6
-.LBB45_5:
-	jmp	.LBB45_6
-.LBB45_6:
-	jmp	.LBB45_3
-.LBB45_7:
-	callq	_none_Sys_Os_time
-	movl	$200, %ecx
-	xorl	%edx, %edx
-	divq	%rcx
-	andq	$3, %rax
-	movl	%eax, 60(%rsp)
-	cmpl	$1, 60(%rsp)
-	je	.LBB45_10
-	jmp	.LBB45_11
-.LBB45_8:
-	jmp	.LBB45_9
-.LBB45_9:
+	jne	.LBB65_10
+	jmp	.LBB65_11
+.LBB65_9:
 	movss	76(%rsp), %xmm0
 	movss	72(%rsp), %xmm1
 	movss	68(%rsp), %xmm2
@@ -2774,26 +4113,40 @@ __Main_Obj_GameObj_Sys_Sulfur_draw:
 	nop
 	addq	$88, %rsp
 	retq
-.LBB45_10:
+.LBB65_10:
+	callq	_none_Sys_Os_time
+	movl	$200, %ecx
+	xorl	%edx, %edx
+	divq	%rcx
+	andq	$3, %rax
+	movl	%eax, 60(%rsp)
+	cmpl	$1, 60(%rsp)
+	je	.LBB65_13
+	jmp	.LBB65_14
+.LBB65_11:
+	jmp	.LBB65_12
+.LBB65_12:
+	jmp	.LBB65_9
+.LBB65_13:
 	movl	64(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 64(%rsp)
-	jmp	.LBB45_12
-.LBB45_11:
+	jmp	.LBB65_15
+.LBB65_14:
 	cmpl	$3, 60(%rsp)
-	je	.LBB45_13
-	jmp	.LBB45_14
-.LBB45_12:
-	jmp	.LBB45_9
-.LBB45_13:
+	je	.LBB65_16
+	jmp	.LBB65_17
+.LBB65_15:
+	jmp	.LBB65_12
+.LBB65_16:
 	movl	64(%rsp), %eax
 	addl	$2, %eax
 	movl	%eax, 64(%rsp)
-	jmp	.LBB45_15
-.LBB45_14:
-	jmp	.LBB45_15
-.LBB45_15:
-	jmp	.LBB45_12
+	jmp	.LBB65_18
+.LBB65_17:
+	jmp	.LBB65_18
+.LBB65_18:
+	jmp	.LBB65_15
 	.seh_endproc
 
 	.def	__Main_Obj_GameObj_Main_AI_noMotion;
@@ -2830,212 +4183,143 @@ __Main_Obj_GameObj_Main_AI_pcMotion:
 	retq
 	.seh_endproc
 
-	.def	_none_Main_World_generateRoom;
+	.def	_a2_Main_World__colorMap;
 	.scl	2;
 	.type	32;
 	.endef
-	.section	.rdata,"dr"
-	.p2align	2, 0x0
-.LCPI48_0:
-	.long	0x3ecccccd
-.LCPI48_1:
-	.long	0x40000000
-.LCPI48_2:
-	.long	0x3f000000
-.LCPI48_3:
-	.long	0x3f4ccccd
-.LCPI48_4:
-	.long	0x40400000
-.LCPI48_5:
-	.long	0x3d8f5c29
-.LCPI48_6:
-	.long	0x3da3d70a
-.LCPI48_7:
-	.long	0x3e800000
-.LCPI48_8:
-	.long	0x3fc00000
-.LCPI48_9:
-	.long	0x3dcccccd
-.LCPI48_10:
-	.long	0x40800000
-.LCPI48_11:
-	.long	0x3e4ccccd
-.LCPI48_12:
-	.long	0x3f800000
-.LCPI48_13:
-	.long	0x3f333333
-.LCPI48_14:
-	.long	0x3cf5c28f
-.LCPI48_15:
-	.long	0x3eaa7efa
-.LCPI48_16:
-	.long	0x3fa66666
-.LCPI48_17:
-	.long	0x437f0000
-.LCPI48_18:
-	.long	0x3f19999a
-.LCPI48_19:
-	.long	0x3e99999a
-.LCPI48_20:
-	.long	0x3f99999a
-.LCPI48_21:
-	.long	0x41000000
-	.text
-	.globl	_none_Main_World_generateRoom
+	.globl	_a2_Main_World__colorMap
 	.p2align	4, 0x90
-_none_Main_World_generateRoom:
-.seh_proc _none_Main_World_generateRoom
-	subq	$488, %rsp
-	.seh_stackalloc 488
+_a2_Main_World__colorMap:
+.seh_proc _a2_Main_World__colorMap
+	subq	$88, %rsp
+	.seh_stackalloc 88
 	.seh_endprologue
-	movl	$600, 484(%rsp)
-	movl	$7889, %ecx
-	callq	_Int_Sys_Os_newPRNG
-	movq	%rax, 472(%rsp)
-	movq	472(%rsp), %rcx
-	callq	_PRNG_ProcGen_Noise_newSimplex
-	movq	%rax, 464(%rsp)
-	movl	484(%rsp), %ecx
-	movl	484(%rsp), %edx
-	callq	_Int_ProcGen_Layer_newDataLayer
-	movq	%rax, 456(%rsp)
-	movl	484(%rsp), %ecx
-	movl	484(%rsp), %edx
-	callq	_Int_ProcGen_Layer_newDataLayer
-	movq	%rax, 448(%rsp)
-	movq	472(%rsp), %rcx
-	callq	_PRNG_Sys_Os_randomFloat
-	movss	.LCPI48_2(%rip), %xmm1
-	mulss	%xmm1, %xmm0
-	movss	.LCPI48_7(%rip), %xmm1
-	addss	%xmm1, %xmm0
-	movss	%xmm0, 444(%rsp)
-	movq	472(%rsp), %rcx
-	callq	_PRNG_Sys_Os_randomFloat
-	movss	.LCPI48_2(%rip), %xmm1
-	mulss	%xmm1, %xmm0
-	movss	.LCPI48_7(%rip), %xmm1
-	addss	%xmm1, %xmm0
-	movss	%xmm0, 440(%rsp)
-	movss	.LCPI48_15(%rip), %xmm0
-	movss	%xmm0, 436(%rsp)
-	movq	456(%rsp), %rcx
-	movq	464(%rsp), %rdx
-	movss	.LCPI48_14(%rip), %xmm3
-	mulss	436(%rsp), %xmm3
-	movss	.LCPI48_14(%rip), %xmm1
-	mulss	436(%rsp), %xmm1
-	movss	.LCPI48_13(%rip), %xmm2
-	xorps	%xmm0, %xmm0
-	movss	%xmm1, 32(%rsp)
-	movss	%xmm0, 40(%rsp)
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
-	movq	456(%rsp), %rcx
-	movq	464(%rsp), %rdx
-	movss	.LCPI48_6(%rip), %xmm3
-	mulss	436(%rsp), %xmm3
-	movss	.LCPI48_6(%rip), %xmm1
-	mulss	436(%rsp), %xmm1
-	movss	.LCPI48_11(%rip), %xmm2
-	movss	.LCPI48_12(%rip), %xmm0
-	movss	%xmm1, 32(%rsp)
-	movss	%xmm0, 40(%rsp)
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
-	movq	456(%rsp), %rcx
-	movq	464(%rsp), %rdx
-	movss	.LCPI48_11(%rip), %xmm3
-	mulss	436(%rsp), %xmm3
-	movss	.LCPI48_11(%rip), %xmm1
-	mulss	436(%rsp), %xmm1
-	movss	.LCPI48_9(%rip), %xmm2
-	movss	.LCPI48_10(%rip), %xmm0
-	movss	%xmm1, 32(%rsp)
-	movss	%xmm0, 40(%rsp)
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
-	movl	484(%rsp), %ecx
-	movl	484(%rsp), %edx
-	callq	_Int_ProcGen_Layer_newDataLayer
-	movq	%rax, 424(%rsp)
-	movl	484(%rsp), %ecx
-	movl	484(%rsp), %edx
-	callq	_Int_ProcGen_Layer_newDataLayer
-	movq	%rax, 416(%rsp)
-	movq	424(%rsp), %rcx
-	cvtsi2ssl	484(%rsp), %xmm1
-	movss	.LCPI48_2(%rip), %xmm0
-	mulss	%xmm0, %xmm1
-	cvtsi2ssl	484(%rsp), %xmm2
-	movss	.LCPI48_2(%rip), %xmm0
-	mulss	%xmm0, %xmm2
-	cvtsi2ssl	484(%rsp), %xmm3
-	movss	.LCPI48_2(%rip), %xmm0
-	mulss	%xmm0, %xmm3
-	movss	.LCPI48_8(%rip), %xmm0
-	movss	%xmm0, 32(%rsp)
-	movl	$1, 40(%rsp)
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle
-	movq	416(%rsp), %rcx
-	cvtsi2ssl	484(%rsp), %xmm1
-	mulss	444(%rsp), %xmm1
-	cvtsi2ssl	484(%rsp), %xmm2
-	mulss	440(%rsp), %xmm2
-	cvtsi2ssl	484(%rsp), %xmm3
-	movss	.LCPI48_7(%rip), %xmm0
-	mulss	%xmm0, %xmm3
-	movss	.LCPI48_1(%rip), %xmm0
-	xorl	%eax, %eax
-	movss	%xmm0, 32(%rsp)
-	movl	$0, 40(%rsp)
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle
-	movq	424(%rsp), %rcx
-	movq	416(%rsp), %rdx
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMul
-	movq	456(%rsp), %rcx
-	movq	424(%rsp), %rdx
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMul
-	movq	448(%rsp), %rcx
-	movq	464(%rsp), %rdx
-	movss	.LCPI48_6(%rip), %xmm3
-	mulss	436(%rsp), %xmm3
-	movss	.LCPI48_5(%rip), %xmm1
-	mulss	436(%rsp), %xmm1
-	movss	.LCPI48_3(%rip), %xmm2
-	movss	.LCPI48_4(%rip), %xmm0
-	movss	%xmm1, 32(%rsp)
-	movss	%xmm0, 40(%rsp)
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
-	movq	448(%rsp), %rcx
-	movq	464(%rsp), %rdx
-	movss	.LCPI48_2(%rip), %xmm3
-	mulss	436(%rsp), %xmm3
-	movss	.LCPI48_2(%rip), %xmm1
-	mulss	436(%rsp), %xmm1
-	movss	.LCPI48_0(%rip), %xmm2
-	movss	.LCPI48_1(%rip), %xmm0
-	movss	%xmm1, 32(%rsp)
-	movss	%xmm0, 40(%rsp)
-	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
-	xorps	%xmm0, %xmm0
-	movss	%xmm0, 412(%rsp)
-	xorps	%xmm0, %xmm0
-	movss	%xmm0, 408(%rsp)
-	xorps	%xmm0, %xmm0
-	movss	%xmm0, 404(%rsp)
-	movl	$0, 332(%rsp)
-.LBB48_1:
-	movl	332(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_3
-	movl	$0, 328(%rsp)
-	jmp	.LBB48_4
-.LBB48_3:
-	movss	408(%rsp), %xmm0
-	divss	404(%rsp), %xmm0
-	movss	%xmm0, 408(%rsp)
-	movl	484(%rsp), %edx
-	movl	%edx, 284(%rsp)
-	movl	484(%rsp), %eax
-	movl	%eax, 288(%rsp)
+	movl	128(%rsp), %eax
+	movq	%rcx, 80(%rsp)
+	movq	%rdx, 72(%rsp)
+	movl	%r8d, 68(%rsp)
+	movl	%r9d, 64(%rsp)
+	callq	_none_Commons_Core_newIntQueue
+	movq	%rax, 56(%rsp)
+	callq	_none_Commons_Core_newIntQueue
+	movq	%rax, 48(%rsp)
+	movq	56(%rsp), %rcx
+	movl	68(%rsp), %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	48(%rsp), %rcx
+	movl	64(%rsp), %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movl	$0, 44(%rsp)
+.LBB68_1:
+	movq	56(%rsp), %rcx
+	callq	__Commons_Core_IntQueue_Commons_Core_empty
+	xorb	$-1, %al
+	testb	$1, %al
+	jne	.LBB68_2
+	jmp	.LBB68_3
+.LBB68_2:
+	movq	56(%rsp), %rcx
+	callq	__Commons_Core_IntQueue_builtin_remove
+	movl	%eax, 40(%rsp)
+	movq	48(%rsp), %rcx
+	callq	__Commons_Core_IntQueue_builtin_remove
+	movl	%eax, 36(%rsp)
+	movq	80(%rsp), %rcx
+	movl	40(%rsp), %eax
+	movl	36(%rsp), %edx
+	imull	24(%rcx), %edx
+	addl	%edx, %eax
+	movq	16(%rcx), %rcx
+	movslq	%eax, %rdx
+	movq	(%rcx,%rdx,8), %rcx
+	cltq
+	callq	__Phys_Main_GameTile_Phys_Main_canWalk
+	movq	72(%rsp), %rcx
+	movl	40(%rsp), %edx
+	movl	36(%rsp), %r8d
+	imull	24(%rcx), %r8d
+	addl	%r8d, %edx
+	movq	16(%rcx), %rcx
+	movslq	%edx, %rdx
+	movq	(%rcx,%rdx,8), %rcx
+	cmpl	$0, (%rcx)
+	sete	%cl
+	andb	%cl, %al
+	testb	$1, %al
+	jne	.LBB68_4
+	jmp	.LBB68_5
+.LBB68_3:
+	movl	44(%rsp), %eax
+	addq	$88, %rsp
+	retq
+.LBB68_4:
+	movq	72(%rsp), %rax
+	movl	40(%rsp), %ecx
+	movl	36(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movq	(%rax,%rcx,8), %rax
+	movl	128(%rsp), %ecx
+	movl	%ecx, (%rax)
+	movq	56(%rsp), %rcx
+	movl	40(%rsp), %edx
+	subl	$1, %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	48(%rsp), %rcx
+	movl	36(%rsp), %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	56(%rsp), %rcx
+	movl	40(%rsp), %edx
+	addl	$1, %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	48(%rsp), %rcx
+	movl	36(%rsp), %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	56(%rsp), %rcx
+	movl	40(%rsp), %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	48(%rsp), %rcx
+	movl	36(%rsp), %edx
+	subl	$1, %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	56(%rsp), %rcx
+	movl	40(%rsp), %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movq	48(%rsp), %rcx
+	movl	36(%rsp), %edx
+	addl	$1, %edx
+	callq	__Commons_Core_IntQueue_builtin_add
+	movl	44(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 44(%rsp)
+	jmp	.LBB68_6
+.LBB68_5:
+	jmp	.LBB68_6
+.LBB68_6:
+	jmp	.LBB68_1
+	.seh_endproc
+
+	.def	__Main_World_GenAuxInfo_Main_World_genAuxMap;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Main_World_GenAuxInfo_Main_World_genAuxMap
+	.p2align	4, 0x90
+__Main_World_GenAuxInfo_Main_World_genAuxMap:
+.seh_proc __Main_World_GenAuxInfo_Main_World_genAuxMap
+	subq	$136, %rsp
+	.seh_stackalloc 136
+	.seh_endprologue
+	movq	%rcx, 128(%rsp)
+	movq	%rdx, 120(%rsp)
+	movq	128(%rsp), %rax
+	movl	8(%rax), %edx
+	movl	%edx, 76(%rsp)
+	movq	128(%rsp), %rax
+	movl	8(%rax), %eax
+	movl	%eax, 80(%rsp)
 	imull	%eax, %edx
 	movl	$8, %r8d
 	movl	$1, %r9d
@@ -3043,54 +4327,1015 @@ _none_Main_World_generateRoom:
 	movl	%r8d, %ecx
 	movq	$0, 32(%rsp)
 	callq	gc_alloc_array
-	movl	284(%rsp), %edx
-	movl	288(%rsp), %ecx
+	movl	76(%rsp), %edx
+	movl	80(%rsp), %ecx
 	movl	%edx, 24(%rax)
 	movl	%ecx, 28(%rax)
-	movq	%rax, 384(%rsp)
-	movl	$0, 380(%rsp)
-	jmp	.LBB48_13
-.LBB48_4:
-	movl	328(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_6
-	movq	456(%rsp), %rax
+	movq	%rax, 112(%rsp)
+	movl	$0, 108(%rsp)
+.LBB69_1:
+	movl	108(%rsp), %eax
+	movq	112(%rsp), %rcx
+	cmpl	8(%rcx), %eax
+	jge	.LBB69_3
+	movq	112(%rsp), %rax
+	movl	108(%rsp), %ecx
+	movl	%ecx, 60(%rsp)
+	movq	16(%rax), %rax
+	movq	%rax, 64(%rsp)
+	movl	$4, %ecx
+	xorl	%eax, %eax
+	movl	%eax, %edx
+	callq	gc_alloc
+	movl	60(%rsp), %ecx
+	movq	%rax, %rdx
+	movq	64(%rsp), %rax
+	movl	$0, (%rdx)
+	movslq	%ecx, %rcx
+	movq	%rdx, (%rax,%rcx,8)
+	movl	108(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 108(%rsp)
+	jmp	.LBB69_1
+.LBB69_3:
+	movl	$1, 104(%rsp)
+	movl	$0, 100(%rsp)
+.LBB69_4:
+	movl	100(%rsp), %eax
+	movq	128(%rsp), %rcx
+	cmpl	8(%rcx), %eax
+	jge	.LBB69_6
+	movl	$0, 84(%rsp)
+	jmp	.LBB69_7
+.LBB69_6:
+	movl	$1, 88(%rsp)
+	movl	$0, 84(%rsp)
+	jmp	.LBB69_13
+.LBB69_7:
+	movl	84(%rsp), %eax
+	movq	128(%rsp), %rcx
+	cmpl	8(%rcx), %eax
+	jge	.LBB69_9
+	movq	120(%rsp), %rcx
+	movl	84(%rsp), %eax
+	movl	100(%rsp), %edx
+	imull	24(%rcx), %edx
+	addl	%edx, %eax
+	movq	16(%rcx), %rcx
+	movslq	%eax, %rdx
+	movq	(%rcx,%rdx,8), %rcx
+	cltq
+	callq	__Phys_Main_GameTile_Phys_Main_canWalk
+	movq	112(%rsp), %rcx
+	movl	84(%rsp), %edx
+	movl	100(%rsp), %r8d
+	imull	24(%rcx), %r8d
+	addl	%r8d, %edx
+	movq	16(%rcx), %rcx
+	movslq	%edx, %rdx
+	movq	(%rcx,%rdx,8), %rcx
+	cmpl	$0, (%rcx)
+	sete	%cl
+	andb	%cl, %al
+	testb	$1, %al
+	jne	.LBB69_10
+	jmp	.LBB69_11
+.LBB69_9:
+	movl	100(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 100(%rsp)
+	jmp	.LBB69_4
+.LBB69_10:
+	movq	120(%rsp), %rcx
+	movq	112(%rsp), %rdx
+	movl	84(%rsp), %r8d
+	movl	100(%rsp), %r9d
+	movl	104(%rsp), %eax
+	movl	%eax, 32(%rsp)
+	callq	_a2_Main_World__colorMap
+	movl	%eax, 92(%rsp)
+	movq	128(%rsp), %rax
+	movq	24(%rax), %rcx
+	movq	%rcx, 48(%rsp)
+	movl	8(%rcx), %eax
+	movl	%eax, 44(%rsp)
+	callq	array_grow
+	movl	44(%rsp), %ecx
+	movq	48(%rsp), %rax
+	movq	16(%rax), %rax
+	movl	92(%rsp), %edx
+	movslq	%ecx, %rcx
+	movl	%edx, (%rax,%rcx,4)
+	movl	104(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 104(%rsp)
+	jmp	.LBB69_12
+.LBB69_11:
+	jmp	.LBB69_12
+.LBB69_12:
+	movl	84(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 84(%rsp)
+	jmp	.LBB69_7
+.LBB69_13:
+	movl	84(%rsp), %eax
+	movq	128(%rsp), %rcx
+	movq	24(%rcx), %rcx
+	cmpl	8(%rcx), %eax
+	jge	.LBB69_15
+	movq	128(%rsp), %rax
+	movq	24(%rax), %rax
+	movl	84(%rsp), %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movl	(%rax,%rcx,4), %eax
+	movq	128(%rsp), %rcx
+	movq	24(%rcx), %rcx
+	movl	88(%rsp), %edx
+	movq	16(%rcx), %rcx
+	movslq	%edx, %rdx
+	cmpl	(%rcx,%rdx,4), %eax
+	jg	.LBB69_16
+	jmp	.LBB69_17
+.LBB69_15:
+	movq	128(%rsp), %rax
+	movl	88(%rsp), %ecx
+	movl	%ecx, 32(%rax)
+	movq	112(%rsp), %rax
+	addq	$136, %rsp
+	retq
+.LBB69_16:
+	movl	84(%rsp), %eax
+	movl	%eax, 88(%rsp)
+	jmp	.LBB69_18
+.LBB69_17:
+	jmp	.LBB69_18
+.LBB69_18:
+	movl	84(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 84(%rsp)
+	jmp	.LBB69_13
+	.seh_endproc
+
+	.def	_a2_Main_World_avgElevation;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_a2_Main_World_avgElevation
+	.p2align	4, 0x90
+_a2_Main_World_avgElevation:
+.seh_proc _a2_Main_World_avgElevation
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movl	80(%rsp), %eax
+	movq	%rcx, 32(%rsp)
+	movl	%edx, 28(%rsp)
+	movl	%r8d, 24(%rsp)
+	movl	%r9d, 20(%rsp)
+	xorps	%xmm0, %xmm0
+	movss	%xmm0, 16(%rsp)
+	movl	$0, 12(%rsp)
+.LBB70_1:
+	movl	12(%rsp), %eax
+	cmpl	80(%rsp), %eax
+	jge	.LBB70_3
+	movl	$0, 8(%rsp)
+	jmp	.LBB70_4
+.LBB70_3:
+	movss	16(%rsp), %xmm0
+	movl	20(%rsp), %eax
+	imull	80(%rsp), %eax
+	cvtsi2ss	%eax, %xmm1
+	divss	%xmm1, %xmm0
+	addq	$40, %rsp
+	retq
+.LBB70_4:
+	movl	8(%rsp), %eax
+	cmpl	20(%rsp), %eax
+	jge	.LBB70_6
+	movl	28(%rsp), %eax
+	addl	8(%rsp), %eax
+	movl	%eax, 4(%rsp)
+	movl	24(%rsp), %eax
+	addl	12(%rsp), %eax
+	movl	%eax, (%rsp)
+	movss	16(%rsp), %xmm0
+	movq	32(%rsp), %rax
+	movl	4(%rsp), %ecx
+	movl	(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movq	(%rax,%rcx,8), %rax
+	addss	20(%rax), %xmm0
+	movss	%xmm0, 16(%rsp)
+	movl	8(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 8(%rsp)
+	jmp	.LBB70_4
+.LBB70_6:
+	movl	12(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 12(%rsp)
+	jmp	.LBB70_1
+	.seh_endproc
+
+	.def	__Main_World_GenAuxInfo_Main_World_rawRandomLoc;
+	.scl	2;
+	.type	32;
+	.endef
+	.section	.rdata,"dr"
+	.p2align	2, 0x0
+.LCPI71_0:
+	.long	0x3e99999a
+.LCPI71_1:
+	.long	0x3e19999a
+	.text
+	.globl	__Main_World_GenAuxInfo_Main_World_rawRandomLoc
+	.p2align	4, 0x90
+__Main_World_GenAuxInfo_Main_World_rawRandomLoc:
+.seh_proc __Main_World_GenAuxInfo_Main_World_rawRandomLoc
+	subq	$136, %rsp
+	.seh_stackalloc 136
+	.seh_endprologue
+	movq	%rcx, 64(%rsp)
+	movq	%rdx, 128(%rsp)
+	movq	%r8, 120(%rsp)
+	movq	%r9, 112(%rsp)
+	movq	128(%rsp), %rax
+	movq	(%rax), %rax
+	movq	%rax, 104(%rsp)
+.LBB71_1:
+	movb	$1, %al
+	testb	$1, %al
+	jne	.LBB71_2
+	jmp	.LBB71_3
+.LBB71_2:
+	movq	104(%rsp), %rcx
+	movl	$360, %edx
+	callq	_PRNG_Sys_Os_randomInt
+	movl	%eax, 100(%rsp)
+	movq	104(%rsp), %rax
+	movq	%rax, 40(%rsp)
+	movq	128(%rsp), %rax
+	cvtsi2ssl	8(%rax), %xmm0
+	movss	.LCPI71_1(%rip), %xmm1
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	movq	40(%rsp), %rcx
+	movl	%eax, %edx
+	callq	_PRNG_Sys_Os_randomInt
+	movl	%eax, 52(%rsp)
+	movq	128(%rsp), %rax
+	cvtsi2ssl	8(%rax), %xmm0
+	movss	.LCPI71_0(%rip), %xmm1
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, %ecx
+	movl	52(%rsp), %eax
+	addl	%ecx, %eax
+	movl	%eax, 96(%rsp)
+	movl	100(%rsp), %ecx
+	callq	_Int_builtin_toRadians
+	callq	_Float_builtin_cos
+	cvtsi2ssl	96(%rsp), %xmm1
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, 56(%rsp)
+	movq	128(%rsp), %rax
+	movl	8(%rax), %eax
+	movl	$2, %ecx
+	cltd
+	idivl	%ecx
+	movl	%eax, %ecx
+	movl	56(%rsp), %eax
+	addl	%ecx, %eax
+	movl	%eax, 92(%rsp)
+	movl	100(%rsp), %ecx
+	callq	_Int_builtin_toRadians
+	callq	_Float_builtin_sin
+	movd	%xmm0, %eax
+	xorl	$2147483648, %eax
+	movd	%eax, %xmm0
+	cvtsi2ssl	96(%rsp), %xmm1
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, 60(%rsp)
+	movq	128(%rsp), %rax
+	movl	8(%rax), %eax
+	movl	$2, %ecx
+	cltd
+	idivl	%ecx
+	movl	%eax, %ecx
+	movl	60(%rsp), %eax
+	addl	%ecx, %eax
+	movl	%eax, 88(%rsp)
+	movq	120(%rsp), %rax
+	movl	92(%rsp), %ecx
+	movl	88(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movl	(%rax), %eax
+	movq	128(%rsp), %rcx
+	cmpl	32(%rcx), %eax
+	je	.LBB71_4
+	jmp	.LBB71_5
+.LBB71_3:
+	movq	64(%rsp), %rax
+	movl	$0, 76(%rsp)
+	movl	$0, 72(%rsp)
+	movl	72(%rsp), %ecx
+	movl	76(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$136, %rsp
+	retq
+.LBB71_4:
+	movq	64(%rsp), %rax
+	movl	92(%rsp), %ecx
+	movl	88(%rsp), %edx
+	movl	%edx, 84(%rsp)
+	movl	%ecx, 80(%rsp)
+	movl	80(%rsp), %ecx
+	movl	84(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$136, %rsp
+	retq
+.LBB71_5:
+	jmp	.LBB71_6
+.LBB71_6:
+	jmp	.LBB71_1
+	.seh_endproc
+
+	.def	__Main_World_GenAuxInfo_Main_World_rawProximaLoc;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Main_World_GenAuxInfo_Main_World_rawProximaLoc
+	.p2align	4, 0x90
+__Main_World_GenAuxInfo_Main_World_rawProximaLoc:
+.seh_proc __Main_World_GenAuxInfo_Main_World_rawProximaLoc
+	subq	$104, %rsp
+	.seh_stackalloc 104
+	.seh_endprologue
+	movq	%rcx, 32(%rsp)
+	movl	160(%rsp), %eax
+	movl	152(%rsp), %eax
+	movl	144(%rsp), %eax
+	movq	%rdx, 96(%rsp)
+	movq	%r8, 88(%rsp)
+	movq	%r9, 80(%rsp)
+	movq	96(%rsp), %rax
+	movq	(%rax), %rax
+	movq	%rax, 72(%rsp)
+	movl	$0, 68(%rsp)
+.LBB72_1:
+	movb	$1, %al
+	testb	$1, %al
+	jne	.LBB72_2
+	jmp	.LBB72_3
+.LBB72_2:
+	movq	72(%rsp), %rcx
+	movl	$360, %edx
+	callq	_PRNG_Sys_Os_randomInt
+	movl	%eax, 64(%rsp)
+	movl	64(%rsp), %ecx
+	callq	_Int_builtin_toRadians
+	callq	_Float_builtin_cos
+	cvtsi2ssl	160(%rsp), %xmm1
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	addl	144(%rsp), %eax
+	movl	%eax, 60(%rsp)
+	movl	64(%rsp), %ecx
+	callq	_Int_builtin_toRadians
+	callq	_Float_builtin_sin
+	movd	%xmm0, %eax
+	xorl	$2147483648, %eax
+	movd	%eax, %xmm0
+	cvtsi2ssl	160(%rsp), %xmm1
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	addl	152(%rsp), %eax
+	movl	%eax, 56(%rsp)
+	cmpl	$0, 60(%rsp)
+	setge	%al
+	movl	60(%rsp), %ecx
+	movq	96(%rsp), %rdx
+	cmpl	8(%rdx), %ecx
+	setl	%cl
+	andb	%cl, %al
+	cmpl	$0, 56(%rsp)
+	setge	%cl
+	andb	%cl, %al
+	movl	56(%rsp), %ecx
+	movq	96(%rsp), %rdx
+	cmpl	8(%rdx), %ecx
+	setl	%cl
+	andb	%cl, %al
+	movq	88(%rsp), %rcx
+	movl	60(%rsp), %edx
+	movl	56(%rsp), %r8d
+	imull	24(%rcx), %r8d
+	addl	%r8d, %edx
+	movq	16(%rcx), %rcx
+	movslq	%edx, %r8
+	movq	(%rcx,%r8,8), %rcx
+	movslq	%edx, %rdx
+	movl	(%rcx), %ecx
+	movq	96(%rsp), %rdx
+	cmpl	32(%rdx), %ecx
+	sete	%cl
+	andb	%cl, %al
+	testb	$1, %al
+	jne	.LBB72_4
+	jmp	.LBB72_5
+.LBB72_3:
+	movq	32(%rsp), %rax
+	movl	$0, 44(%rsp)
+	movl	$0, 40(%rsp)
+	movl	40(%rsp), %ecx
+	movl	44(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$104, %rsp
+	retq
+.LBB72_4:
+	movq	32(%rsp), %rax
+	movl	60(%rsp), %ecx
+	movl	56(%rsp), %edx
+	movl	%edx, 52(%rsp)
+	movl	%ecx, 48(%rsp)
+	movl	48(%rsp), %ecx
+	movl	52(%rsp), %edx
+	movl	%edx, 4(%rax)
+	movl	%ecx, (%rax)
+	addq	$104, %rsp
+	retq
+.LBB72_5:
+	jmp	.LBB72_6
+.LBB72_6:
+	movl	68(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 68(%rsp)
+	cmpl	$6, 68(%rsp)
+	jne	.LBB72_8
+	movl	$0, 68(%rsp)
+	movl	160(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 160(%rsp)
+	jmp	.LBB72_9
+.LBB72_8:
+	jmp	.LBB72_9
+.LBB72_9:
+	jmp	.LBB72_1
+	.seh_endproc
+
+	.def	__Main_World_GenAuxInfo_Main_World_placeBuilding;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Main_World_GenAuxInfo_Main_World_placeBuilding
+	.p2align	4, 0x90
+__Main_World_GenAuxInfo_Main_World_placeBuilding:
+.seh_proc __Main_World_GenAuxInfo_Main_World_placeBuilding
+	subq	$152, %rsp
+	.seh_stackalloc 152
+	.seh_endprologue
+	movl	208(%rsp), %eax
+	movl	200(%rsp), %eax
+	movl	192(%rsp), %eax
+	movq	%rcx, 144(%rsp)
+	movq	%rdx, 136(%rsp)
+	movq	%r8, 128(%rsp)
+	movl	%r9d, 124(%rsp)
+	movq	144(%rsp), %rax
+	movq	(%rax), %rax
+	movq	%rax, 112(%rsp)
+	movq	128(%rsp), %rcx
+	movl	124(%rsp), %edx
+	movl	192(%rsp), %r8d
+	movl	200(%rsp), %r9d
+	movl	208(%rsp), %eax
+	movl	%eax, 32(%rsp)
+	callq	_a2_Main_World_avgElevation
+	movss	%xmm0, 108(%rsp)
+	movl	$0, 88(%rsp)
+.LBB73_1:
+	movl	88(%rsp), %eax
+	movl	208(%rsp), %ecx
+	addl	$3, %ecx
+	cmpl	%ecx, %eax
+	jge	.LBB73_3
+	movl	$0, 84(%rsp)
+	jmp	.LBB73_4
+.LBB73_3:
+	movl	$0, 88(%rsp)
+	jmp	.LBB73_7
+.LBB73_4:
+	movl	84(%rsp), %eax
+	movl	200(%rsp), %ecx
+	addl	$2, %ecx
+	cmpl	%ecx, %eax
+	jge	.LBB73_6
+	movl	124(%rsp), %eax
+	addl	84(%rsp), %eax
+	subl	$1, %eax
+	movl	%eax, 80(%rsp)
+	movl	192(%rsp), %eax
+	addl	88(%rsp), %eax
+	subl	$1, %eax
+	movl	%eax, 76(%rsp)
+	movq	128(%rsp), %rax
+	movl	80(%rsp), %ecx
+	movl	76(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movw	$8, (%rax)
+	movq	128(%rsp), %rax
+	movl	80(%rsp), %ecx
+	movl	76(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movw	$0, 16(%rax)
+	movq	128(%rsp), %rax
+	movl	80(%rsp), %ecx
+	movl	76(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movq	(%rax,%rcx,8), %rax
+	movss	108(%rsp), %xmm0
+	movss	%xmm0, 20(%rax)
+	movl	84(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 84(%rsp)
+	jmp	.LBB73_4
+.LBB73_6:
+	movl	88(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 88(%rsp)
+	jmp	.LBB73_1
+.LBB73_7:
+	movl	88(%rsp), %eax
+	cmpl	208(%rsp), %eax
+	jge	.LBB73_9
+	movl	$0, 84(%rsp)
+	jmp	.LBB73_10
+.LBB73_9:
+	movq	128(%rsp), %rax
+	movl	124(%rsp), %ecx
+	addl	$1, %ecx
+	movl	192(%rsp), %edx
+	addl	208(%rsp), %edx
+	subl	$2, %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movq	40(%rax), %rax
+	movq	16(%rax), %rax
 	movq	8(%rax), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movw	$1, (%rax)
+	movq	128(%rsp), %rax
+	movl	124(%rsp), %ecx
+	addl	$2, %ecx
+	movl	192(%rsp), %edx
+	addl	208(%rsp), %edx
+	subl	$2, %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movq	40(%rax), %rax
+	movq	16(%rax), %rax
+	movq	8(%rax), %rax
+	movw	$1, (%rax)
+	movq	128(%rsp), %rax
+	movl	124(%rsp), %ecx
+	addl	$4, %ecx
+	movl	192(%rsp), %edx
+	addl	208(%rsp), %edx
+	subl	$2, %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movq	40(%rax), %rax
+	movq	16(%rax), %rax
+	movq	8(%rax), %rax
+	movw	$2, (%rax)
+	movq	128(%rsp), %rax
+	movl	124(%rsp), %ecx
+	addl	$4, %ecx
+	movl	192(%rsp), %edx
+	addl	208(%rsp), %edx
+	subl	$2, %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movq	40(%rax), %rax
+	movq	16(%rax), %rax
+	movq	(%rax), %rax
+	movw	$3, (%rax)
+	addq	$152, %rsp
+	retq
+.LBB73_10:
+	movl	84(%rsp), %eax
+	cmpl	200(%rsp), %eax
+	jge	.LBB73_12
+	movl	124(%rsp), %eax
+	addl	84(%rsp), %eax
+	movl	%eax, 80(%rsp)
+	movl	192(%rsp), %eax
+	addl	88(%rsp), %eax
+	subl	$1, %eax
+	movl	%eax, 76(%rsp)
+	movl	$0, 72(%rsp)
+	jmp	.LBB73_13
+.LBB73_12:
+	movl	88(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 88(%rsp)
+	jmp	.LBB73_7
+.LBB73_13:
+	cmpl	$3, 72(%rsp)
+	jge	.LBB73_15
+	movq	128(%rsp), %rax
+	movl	80(%rsp), %ecx
+	movl	76(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movq	40(%rax), %rcx
+	movq	%rcx, 48(%rsp)
+	movl	8(%rcx), %eax
+	movl	%eax, 60(%rsp)
+	callq	array_grow
+	movq	48(%rsp), %rax
+	movq	16(%rax), %rax
+	movq	%rax, 64(%rsp)
+	movl	$2, %ecx
+	xorl	%eax, %eax
+	movl	%eax, %edx
+	callq	gc_alloc
+	movl	60(%rsp), %ecx
+	movq	%rax, %rdx
+	movq	64(%rsp), %rax
+	movw	$0, (%rdx)
+	movslq	%ecx, %rcx
+	movq	%rdx, (%rax,%rcx,8)
+	movl	72(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 72(%rsp)
+	jmp	.LBB73_13
+.LBB73_15:
+	movl	84(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 84(%rsp)
+	jmp	.LBB73_10
+	.seh_endproc
+
+	.def	_none_Main_World_generateRoom;
+	.scl	2;
+	.type	32;
+	.endef
+	.section	.rdata,"dr"
+	.p2align	2, 0x0
+.LCPI74_0:
+	.long	0x3ecccccd
+.LCPI74_1:
+	.long	0x40000000
+.LCPI74_2:
+	.long	0x3f000000
+.LCPI74_3:
+	.long	0x3f4ccccd
+.LCPI74_4:
+	.long	0x40400000
+.LCPI74_5:
+	.long	0x3d8f5c29
+.LCPI74_6:
+	.long	0x3da3d70a
+.LCPI74_7:
+	.long	0x3e800000
+.LCPI74_8:
+	.long	0x3fc00000
+.LCPI74_9:
+	.long	0x3dcccccd
+.LCPI74_10:
+	.long	0x40800000
+.LCPI74_11:
+	.long	0x3e4ccccd
+.LCPI74_12:
+	.long	0x3f800000
+.LCPI74_13:
+	.long	0x3f333333
+.LCPI74_14:
+	.long	0x3cf5c28f
+.LCPI74_15:
+	.long	0x3eaa7efa
+.LCPI74_16:
+	.long	0x3fa66666
+.LCPI74_17:
+	.long	0x437f0000
+.LCPI74_18:
+	.long	0x3f19999a
+.LCPI74_19:
+	.long	0x3e99999a
+.LCPI74_20:
+	.long	0x3f99999a
+.LCPI74_21:
+	.long	0x41000000
+	.text
+	.globl	_none_Main_World_generateRoom
+	.p2align	4, 0x90
+_none_Main_World_generateRoom:
+.seh_proc _none_Main_World_generateRoom
+	subq	$616, %rsp
+	.seh_stackalloc 616
+	.seh_endprologue
+	movq	%rcx, 304(%rsp)
+	movl	$600, 612(%rsp)
+	callq	_none_Sys_Os_time
+	movl	$300, %ecx
+	xorl	%edx, %edx
+	divq	%rcx
+	movl	$10000, %ecx
+	xorl	%edx, %edx
+	divq	%rcx
+	movl	%edx, %ecx
+	callq	_Int_Sys_Os_newPRNG
+	movq	%rax, 600(%rsp)
+	movq	600(%rsp), %rax
+	movq	%rax, 312(%rsp)
+	movl	612(%rsp), %eax
+	movl	%eax, 324(%rsp)
+	movl	$4, %ecx
+	movl	$1, %edx
+	xorl	%r9d, %r9d
+	xorl	%eax, %eax
+	movl	%r9d, %r8d
+	movq	$0, 32(%rsp)
+	callq	gc_alloc_array
+	movq	%rax, 328(%rsp)
+	movq	16(%rax), %rax
+	movl	$0, (%rax)
+	movl	$40, %ecx
+	leaq	tc__Main_World_GenAuxInfo(%rip), %rdx
+	callq	gc_alloc
+	movq	312(%rsp), %r8
+	movl	324(%rsp), %edx
+	movq	328(%rsp), %rcx
+	movq	%r8, (%rax)
+	movl	%edx, 8(%rax)
+	movl	$0, 12(%rax)
+	movl	$0, 16(%rax)
+	movq	%rcx, 24(%rax)
+	movl	$1, 32(%rax)
+	movq	%rax, 592(%rsp)
+	movq	600(%rsp), %rcx
+	callq	_PRNG_ProcGen_Noise_newSimplex
+	movq	%rax, 584(%rsp)
+	movl	612(%rsp), %ecx
+	movl	612(%rsp), %edx
+	callq	_Int_ProcGen_Layer_newDataLayer
+	movq	%rax, 576(%rsp)
+	movl	612(%rsp), %ecx
+	movl	612(%rsp), %edx
+	callq	_Int_ProcGen_Layer_newDataLayer
+	movq	%rax, 568(%rsp)
+	movq	600(%rsp), %rcx
+	callq	_PRNG_Sys_Os_randomFloat
+	movss	.LCPI74_2(%rip), %xmm1
+	mulss	%xmm1, %xmm0
+	movss	.LCPI74_7(%rip), %xmm1
+	addss	%xmm1, %xmm0
+	movss	%xmm0, 564(%rsp)
+	movq	600(%rsp), %rcx
+	callq	_PRNG_Sys_Os_randomFloat
+	movss	.LCPI74_2(%rip), %xmm1
+	mulss	%xmm1, %xmm0
+	movss	.LCPI74_7(%rip), %xmm1
+	addss	%xmm1, %xmm0
+	movss	%xmm0, 560(%rsp)
+	movq	592(%rsp), %rax
+	movq	%rax, 336(%rsp)
+	cvtsi2ssl	612(%rsp), %xmm0
+	mulss	564(%rsp), %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, %ecx
+	movq	336(%rsp), %rax
+	movl	%ecx, 12(%rax)
+	movq	592(%rsp), %rax
+	movq	%rax, 344(%rsp)
+	cvtsi2ssl	612(%rsp), %xmm0
+	mulss	560(%rsp), %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, %ecx
+	movq	344(%rsp), %rax
+	movl	%ecx, 16(%rax)
+	movss	.LCPI74_15(%rip), %xmm0
+	movss	%xmm0, 556(%rsp)
+	movq	576(%rsp), %rcx
+	movq	584(%rsp), %rdx
+	movss	.LCPI74_14(%rip), %xmm3
+	mulss	556(%rsp), %xmm3
+	movss	.LCPI74_14(%rip), %xmm1
+	mulss	556(%rsp), %xmm1
+	movss	.LCPI74_13(%rip), %xmm2
+	xorps	%xmm0, %xmm0
+	movss	%xmm1, 32(%rsp)
+	movss	%xmm0, 40(%rsp)
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
+	movq	576(%rsp), %rcx
+	movq	584(%rsp), %rdx
+	movss	.LCPI74_6(%rip), %xmm3
+	mulss	556(%rsp), %xmm3
+	movss	.LCPI74_6(%rip), %xmm1
+	mulss	556(%rsp), %xmm1
+	movss	.LCPI74_11(%rip), %xmm2
+	movss	.LCPI74_12(%rip), %xmm0
+	movss	%xmm1, 32(%rsp)
+	movss	%xmm0, 40(%rsp)
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
+	movq	576(%rsp), %rcx
+	movq	584(%rsp), %rdx
+	movss	.LCPI74_11(%rip), %xmm3
+	mulss	556(%rsp), %xmm3
+	movss	.LCPI74_11(%rip), %xmm1
+	mulss	556(%rsp), %xmm1
+	movss	.LCPI74_9(%rip), %xmm2
+	movss	.LCPI74_10(%rip), %xmm0
+	movss	%xmm1, 32(%rsp)
+	movss	%xmm0, 40(%rsp)
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
+	movl	612(%rsp), %ecx
+	movl	612(%rsp), %edx
+	callq	_Int_ProcGen_Layer_newDataLayer
+	movq	%rax, 544(%rsp)
+	movl	612(%rsp), %ecx
+	movl	612(%rsp), %edx
+	callq	_Int_ProcGen_Layer_newDataLayer
+	movq	%rax, 536(%rsp)
+	movq	544(%rsp), %rcx
+	cvtsi2ssl	612(%rsp), %xmm1
+	movss	.LCPI74_2(%rip), %xmm0
+	mulss	%xmm0, %xmm1
+	cvtsi2ssl	612(%rsp), %xmm2
+	movss	.LCPI74_2(%rip), %xmm0
+	mulss	%xmm0, %xmm2
+	cvtsi2ssl	612(%rsp), %xmm3
+	movss	.LCPI74_2(%rip), %xmm0
+	mulss	%xmm0, %xmm3
+	movss	.LCPI74_8(%rip), %xmm0
+	movss	%xmm0, 32(%rsp)
+	movl	$1, 40(%rsp)
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle
+	movq	536(%rsp), %rcx
+	cvtsi2ssl	612(%rsp), %xmm1
+	mulss	564(%rsp), %xmm1
+	cvtsi2ssl	612(%rsp), %xmm2
+	mulss	560(%rsp), %xmm2
+	cvtsi2ssl	612(%rsp), %xmm3
+	movss	.LCPI74_7(%rip), %xmm0
+	mulss	%xmm0, %xmm3
+	movss	.LCPI74_1(%rip), %xmm0
+	xorl	%eax, %eax
+	movss	%xmm0, 32(%rsp)
+	movl	$0, 40(%rsp)
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_fillCircle
+	movq	544(%rsp), %rcx
+	movq	536(%rsp), %rdx
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMul
+	movq	576(%rsp), %rcx
+	movq	544(%rsp), %rdx
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Layer_compLayerMul
+	movq	568(%rsp), %rcx
+	movq	584(%rsp), %rdx
+	movss	.LCPI74_6(%rip), %xmm3
+	mulss	556(%rsp), %xmm3
+	movss	.LCPI74_5(%rip), %xmm1
+	mulss	556(%rsp), %xmm1
+	movss	.LCPI74_3(%rip), %xmm2
+	movss	.LCPI74_4(%rip), %xmm0
+	movss	%xmm1, 32(%rsp)
+	movss	%xmm0, 40(%rsp)
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
+	movq	568(%rsp), %rcx
+	movq	584(%rsp), %rdx
+	movss	.LCPI74_2(%rip), %xmm3
+	mulss	556(%rsp), %xmm3
+	movss	.LCPI74_2(%rip), %xmm1
+	mulss	556(%rsp), %xmm1
+	movss	.LCPI74_0(%rip), %xmm2
+	movss	.LCPI74_1(%rip), %xmm0
+	movss	%xmm1, 32(%rsp)
+	movss	%xmm0, 40(%rsp)
+	callq	__ProcGen_Layer_DataLayer_ProcGen_Noise_addSimplex
+	xorps	%xmm0, %xmm0
+	movss	%xmm0, 532(%rsp)
+	xorps	%xmm0, %xmm0
+	movss	%xmm0, 528(%rsp)
+	xorps	%xmm0, %xmm0
+	movss	%xmm0, 524(%rsp)
+	movl	$0, 428(%rsp)
+.LBB74_1:
+	movl	428(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_3
+	movl	$0, 424(%rsp)
+	jmp	.LBB74_4
+.LBB74_3:
+	movss	528(%rsp), %xmm0
+	divss	524(%rsp), %xmm0
+	movss	%xmm0, 528(%rsp)
+	movl	612(%rsp), %edx
+	movl	%edx, 296(%rsp)
+	movl	612(%rsp), %eax
+	movl	%eax, 300(%rsp)
+	imull	%eax, %edx
+	movl	$8, %r8d
+	movl	$1, %r9d
+	xorl	%eax, %eax
+	movl	%r8d, %ecx
+	movq	$0, 32(%rsp)
+	callq	gc_alloc_array
+	movl	296(%rsp), %edx
+	movl	300(%rsp), %ecx
+	movl	%edx, 24(%rax)
+	movl	%ecx, 28(%rax)
+	movq	%rax, 504(%rsp)
+	movl	$0, 500(%rsp)
+	jmp	.LBB74_13
+.LBB74_4:
+	movl	424(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_6
+	movq	576(%rsp), %rax
+	movq	8(%rax), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movss	(%rax,%rcx,4), %xmm0
-	ucomiss	412(%rsp), %xmm0
-	ja	.LBB48_7
-	jmp	.LBB48_8
-.LBB48_6:
-	movl	332(%rsp), %eax
+	ucomiss	532(%rsp), %xmm0
+	ja	.LBB74_7
+	jmp	.LBB74_8
+.LBB74_6:
+	movl	428(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 332(%rsp)
-	jmp	.LBB48_1
-.LBB48_7:
-	movq	456(%rsp), %rax
+	movl	%eax, 428(%rsp)
+	jmp	.LBB74_1
+.LBB74_7:
+	movq	576(%rsp), %rax
 	movq	8(%rax), %rcx
-	movl	328(%rsp), %eax
-	movl	332(%rsp), %edx
+	movl	424(%rsp), %eax
+	movl	428(%rsp), %edx
 	imull	24(%rcx), %edx
 	addl	%edx, %eax
 	movq	16(%rcx), %rcx
 	movslq	%eax, %rdx
 	movss	(%rcx,%rdx,4), %xmm0
 	cltq
-	movss	%xmm0, 412(%rsp)
-	jmp	.LBB48_9
-.LBB48_8:
-	jmp	.LBB48_9
-.LBB48_9:
-	movq	456(%rsp), %rax
+	movss	%xmm0, 532(%rsp)
+	jmp	.LBB74_9
+.LBB74_8:
+	jmp	.LBB74_9
+.LBB74_9:
+	movq	576(%rsp), %rax
 	movq	8(%rax), %rcx
-	movl	328(%rsp), %eax
-	movl	332(%rsp), %edx
+	movl	424(%rsp), %eax
+	movl	428(%rsp), %edx
 	imull	24(%rcx), %edx
 	addl	%edx, %eax
 	movq	16(%rcx), %rcx
@@ -3099,47 +5344,55 @@ _none_Main_World_generateRoom:
 	xorps	%xmm1, %xmm1
 	cltq
 	ucomiss	%xmm1, %xmm0
-	jbe	.LBB48_11
-	movss	408(%rsp), %xmm0
-	movq	456(%rsp), %rax
+	jbe	.LBB74_11
+	movss	528(%rsp), %xmm0
+	movq	576(%rsp), %rax
 	movq	8(%rax), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	addss	(%rax,%rcx,4), %xmm0
-	movss	%xmm0, 408(%rsp)
-	movss	.LCPI48_12(%rip), %xmm0
-	addss	404(%rsp), %xmm0
-	movss	%xmm0, 404(%rsp)
-	jmp	.LBB48_12
-.LBB48_11:
-	jmp	.LBB48_12
-.LBB48_12:
-	movl	328(%rsp), %eax
+	movss	%xmm0, 528(%rsp)
+	movss	.LCPI74_12(%rip), %xmm0
+	addss	524(%rsp), %xmm0
+	movss	%xmm0, 524(%rsp)
+	jmp	.LBB74_12
+.LBB74_11:
+	jmp	.LBB74_12
+.LBB74_12:
+	movl	424(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 328(%rsp)
-	jmp	.LBB48_4
-.LBB48_13:
-	movl	380(%rsp), %eax
-	movq	384(%rsp), %rcx
+	movl	%eax, 424(%rsp)
+	jmp	.LBB74_4
+.LBB74_13:
+	movl	500(%rsp), %eax
+	movq	504(%rsp), %rcx
 	cmpl	8(%rcx), %eax
-	jge	.LBB48_15
-	movq	384(%rsp), %rax
-	movl	380(%rsp), %ecx
-	movl	%ecx, 260(%rsp)
+	jge	.LBB74_15
+	movq	504(%rsp), %rax
+	movl	500(%rsp), %ecx
+	movl	%ecx, 276(%rsp)
 	movq	16(%rax), %rax
-	movq	%rax, 264(%rsp)
-	movl	$40, %ecx
+	movq	%rax, 280(%rsp)
+	movl	$8, %ecx
+	xorl	%r8d, %r8d
+	movl	$1, %r9d
 	xorl	%eax, %eax
-	movl	%eax, %edx
+	movl	%r8d, %edx
+	movq	$0, 32(%rsp)
+	callq	gc_alloc_array
+	movq	%rax, 264(%rsp)
+	movl	$48, %ecx
+	leaq	tc__Phys_Main_GameTile(%rip), %rdx
 	callq	gc_alloc
-	movl	260(%rsp), %ecx
+	movq	264(%rsp), %r8
+	movl	276(%rsp), %ecx
 	movq	%rax, %rdx
-	movq	264(%rsp), %rax
-	movq	%rdx, 272(%rsp)
+	movq	280(%rsp), %rax
+	movq	%rdx, 288(%rsp)
 	movw	$0, (%rdx)
 	movl	$0, 4(%rdx)
 	movl	$0, 8(%rdx)
@@ -3155,19 +5408,20 @@ _none_Main_World_generateRoom:
 	movss	%xmm0, 32(%rdx)
 	xorps	%xmm0, %xmm0
 	movss	%xmm0, 36(%rdx)
+	movq	%r8, 40(%rdx)
 	movslq	%ecx, %rcx
 	movq	%rdx, (%rax,%rcx,8)
-	movl	380(%rsp), %eax
+	movl	500(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 380(%rsp)
-	jmp	.LBB48_13
-.LBB48_15:
-	movl	484(%rsp), %eax
-	movl	%eax, 232(%rsp)
-	movl	484(%rsp), %eax
-	movl	%eax, 236(%rsp)
-	movq	384(%rsp), %rax
-	movq	%rax, 240(%rsp)
+	movl	%eax, 500(%rsp)
+	jmp	.LBB74_13
+.LBB74_15:
+	movl	612(%rsp), %eax
+	movl	%eax, 240(%rsp)
+	movl	612(%rsp), %eax
+	movl	%eax, 244(%rsp)
+	movq	504(%rsp), %rax
+	movq	%rax, 248(%rsp)
 	movl	$8, %ecx
 	xorl	%r8d, %r8d
 	movl	$1, %r9d
@@ -3175,237 +5429,273 @@ _none_Main_World_generateRoom:
 	movl	%r8d, %edx
 	movq	$0, 32(%rsp)
 	callq	gc_alloc_array
-	movq	%rax, 248(%rsp)
+	movq	%rax, 256(%rsp)
 	movl	$24, %ecx
 	leaq	tc__Phys_Main_GameRoom(%rip), %rdx
 	callq	gc_alloc
-	movl	232(%rsp), %r9d
-	movl	236(%rsp), %r8d
-	movq	240(%rsp), %rdx
-	movq	248(%rsp), %rcx
+	movl	240(%rsp), %r9d
+	movl	244(%rsp), %r8d
+	movq	248(%rsp), %rdx
+	movq	256(%rsp), %rcx
 	movl	%r9d, (%rax)
 	movl	%r8d, 4(%rax)
 	movq	%rdx, 8(%rax)
 	movq	%rcx, 16(%rax)
-	movq	%rax, 368(%rsp)
-	movl	$0, 332(%rsp)
-.LBB48_16:
-	movl	332(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_18
-	movl	$0, 328(%rsp)
-	jmp	.LBB48_19
-.LBB48_18:
-	movl	$0, 332(%rsp)
-	jmp	.LBB48_43
-.LBB48_19:
-	movl	328(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_21
-	movq	456(%rsp), %rax
+	movq	%rax, 488(%rsp)
+	movl	$0, 428(%rsp)
+.LBB74_16:
+	movl	428(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_18
+	movl	$0, 424(%rsp)
+	jmp	.LBB74_19
+.LBB74_18:
+	movl	$0, 428(%rsp)
+	jmp	.LBB74_43
+.LBB74_19:
+	movl	424(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_21
+	movq	576(%rsp), %rax
 	movq	8(%rax), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
-	movss	.LCPI48_17(%rip), %xmm0
+	movss	.LCPI74_17(%rip), %xmm0
 	movslq	%ecx, %rcx
 	mulss	(%rax,%rcx,4), %xmm0
 	callq	_Float_builtin_floor
-	movl	%eax, 356(%rsp)
-	movq	448(%rsp), %rax
+	movl	%eax, 476(%rsp)
+	movq	568(%rsp), %rax
 	movq	8(%rax), %rcx
-	movl	328(%rsp), %eax
-	movl	332(%rsp), %edx
+	movl	424(%rsp), %eax
+	movl	428(%rsp), %edx
 	imull	24(%rcx), %edx
 	addl	%edx, %eax
 	movq	16(%rcx), %rcx
 	movslq	%eax, %rdx
 	movss	(%rcx,%rdx,4), %xmm0
 	cltq
-	movss	%xmm0, 352(%rsp)
-	movw	$0, 326(%rsp)
-	movl	356(%rsp), %eax
+	movss	%xmm0, 472(%rsp)
+	movw	$0, 422(%rsp)
+	movl	476(%rsp), %eax
+	movl	%eax, 236(%rsp)
+	movss	.LCPI74_18(%rip), %xmm1
+	mulss	532(%rsp), %xmm1
+	movss	.LCPI74_17(%rip), %xmm0
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, %ecx
+	movl	236(%rsp), %eax
+	cmpl	%ecx, %eax
+	jg	.LBB74_22
+	jmp	.LBB74_23
+.LBB74_21:
+	movl	428(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 428(%rsp)
+	jmp	.LBB74_16
+.LBB74_22:
+	movw	$7, 422(%rsp)
+	jmp	.LBB74_24
+.LBB74_23:
+	movl	476(%rsp), %eax
+	movl	%eax, 232(%rsp)
+	movss	.LCPI74_11(%rip), %xmm1
+	mulss	528(%rsp), %xmm1
+	movss	.LCPI74_19(%rip), %xmm0
+	mulss	532(%rsp), %xmm0
+	addss	%xmm0, %xmm1
+	movss	.LCPI74_17(%rip), %xmm0
+	mulss	%xmm1, %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, %ecx
+	movl	232(%rsp), %eax
+	cmpl	%ecx, %eax
+	jg	.LBB74_25
+	jmp	.LBB74_26
+.LBB74_24:
+	movss	472(%rsp), %xmm0
+	movss	.LCPI74_18(%rip), %xmm1
+	ucomiss	%xmm1, %xmm0
+	seta	%al
+	cmpw	$5, 422(%rsp)
+	sete	%cl
+	andb	%cl, %al
+	movss	472(%rsp), %xmm0
+	movss	.LCPI74_13(%rip), %xmm1
+	ucomiss	%xmm1, %xmm0
+	seta	%cl
+	cmpw	$4, 422(%rsp)
+	sete	%dl
+	andb	%dl, %cl
+	orb	%cl, %al
+	testb	$1, %al
+	jne	.LBB74_37
+	jmp	.LBB74_38
+.LBB74_25:
+	movw	$5, 422(%rsp)
+	jmp	.LBB74_27
+.LBB74_26:
+	movl	476(%rsp), %eax
 	movl	%eax, 228(%rsp)
-	movss	.LCPI48_18(%rip), %xmm1
-	mulss	412(%rsp), %xmm1
-	movss	.LCPI48_17(%rip), %xmm0
+	movss	.LCPI74_17(%rip), %xmm0
+	mulss	528(%rsp), %xmm0
+	movss	.LCPI74_20(%rip), %xmm1
 	mulss	%xmm1, %xmm0
 	callq	_Float_builtin_floor
 	movl	%eax, %ecx
 	movl	228(%rsp), %eax
 	cmpl	%ecx, %eax
-	jg	.LBB48_22
-	jmp	.LBB48_23
-.LBB48_21:
-	movl	332(%rsp), %eax
-	addl	$1, %eax
-	movl	%eax, 332(%rsp)
-	jmp	.LBB48_16
-.LBB48_22:
-	movw	$7, 326(%rsp)
-	jmp	.LBB48_24
-.LBB48_23:
-	movl	356(%rsp), %eax
+	jg	.LBB74_28
+	jmp	.LBB74_29
+.LBB74_27:
+	jmp	.LBB74_24
+.LBB74_28:
+	movw	$4, 422(%rsp)
+	jmp	.LBB74_30
+.LBB74_29:
+	movl	476(%rsp), %eax
 	movl	%eax, 224(%rsp)
-	movss	.LCPI48_11(%rip), %xmm1
-	mulss	408(%rsp), %xmm1
-	movss	.LCPI48_19(%rip), %xmm0
-	mulss	412(%rsp), %xmm0
-	addss	%xmm0, %xmm1
-	movss	.LCPI48_17(%rip), %xmm0
+	movss	.LCPI74_17(%rip), %xmm0
+	mulss	528(%rsp), %xmm0
+	movss	.LCPI74_3(%rip), %xmm1
 	mulss	%xmm1, %xmm0
 	callq	_Float_builtin_floor
 	movl	%eax, %ecx
 	movl	224(%rsp), %eax
 	cmpl	%ecx, %eax
-	jg	.LBB48_25
-	jmp	.LBB48_26
-.LBB48_24:
-	movss	352(%rsp), %xmm0
-	movss	.LCPI48_18(%rip), %xmm1
-	ucomiss	%xmm1, %xmm0
-	seta	%al
-	cmpw	$5, 326(%rsp)
-	sete	%cl
-	andb	%cl, %al
-	movss	352(%rsp), %xmm0
-	movss	.LCPI48_13(%rip), %xmm1
-	ucomiss	%xmm1, %xmm0
-	seta	%cl
-	cmpw	$4, 326(%rsp)
-	sete	%dl
-	andb	%dl, %cl
-	orb	%cl, %al
-	testb	$1, %al
-	jne	.LBB48_37
-	jmp	.LBB48_38
-.LBB48_25:
-	movw	$5, 326(%rsp)
-	jmp	.LBB48_27
-.LBB48_26:
-	movl	356(%rsp), %eax
+	jg	.LBB74_31
+	jmp	.LBB74_32
+.LBB74_30:
+	jmp	.LBB74_27
+.LBB74_31:
+	movw	$2, 422(%rsp)
+	jmp	.LBB74_33
+.LBB74_32:
+	movl	476(%rsp), %eax
 	movl	%eax, 220(%rsp)
-	movss	.LCPI48_17(%rip), %xmm0
-	mulss	408(%rsp), %xmm0
-	movss	.LCPI48_20(%rip), %xmm1
+	movss	.LCPI74_17(%rip), %xmm0
+	mulss	528(%rsp), %xmm0
+	movss	.LCPI74_2(%rip), %xmm1
 	mulss	%xmm1, %xmm0
 	callq	_Float_builtin_floor
 	movl	%eax, %ecx
 	movl	220(%rsp), %eax
 	cmpl	%ecx, %eax
-	jg	.LBB48_28
-	jmp	.LBB48_29
-.LBB48_27:
-	jmp	.LBB48_24
-.LBB48_28:
-	movw	$4, 326(%rsp)
-	jmp	.LBB48_30
-.LBB48_29:
-	movl	356(%rsp), %eax
-	movl	%eax, 216(%rsp)
-	movss	.LCPI48_17(%rip), %xmm0
-	mulss	408(%rsp), %xmm0
-	movss	.LCPI48_3(%rip), %xmm1
-	mulss	%xmm1, %xmm0
-	callq	_Float_builtin_floor
-	movl	%eax, %ecx
-	movl	216(%rsp), %eax
-	cmpl	%ecx, %eax
-	jg	.LBB48_31
-	jmp	.LBB48_32
-.LBB48_30:
-	jmp	.LBB48_27
-.LBB48_31:
-	movw	$2, 326(%rsp)
-	jmp	.LBB48_33
-.LBB48_32:
-	movl	356(%rsp), %eax
-	movl	%eax, 212(%rsp)
-	movss	.LCPI48_17(%rip), %xmm0
-	mulss	408(%rsp), %xmm0
-	movss	.LCPI48_2(%rip), %xmm1
-	mulss	%xmm1, %xmm0
-	callq	_Float_builtin_floor
-	movl	%eax, %ecx
-	movl	212(%rsp), %eax
-	cmpl	%ecx, %eax
-	jg	.LBB48_34
-	jmp	.LBB48_35
-.LBB48_33:
-	jmp	.LBB48_30
-.LBB48_34:
-	movw	$1, 326(%rsp)
-	jmp	.LBB48_36
-.LBB48_35:
-	jmp	.LBB48_36
-.LBB48_36:
-	jmp	.LBB48_33
-.LBB48_37:
-	movw	$6, 326(%rsp)
-	jmp	.LBB48_39
-.LBB48_38:
-	movss	352(%rsp), %xmm0
-	movss	.LCPI48_13(%rip), %xmm1
+	jg	.LBB74_34
+	jmp	.LBB74_35
+.LBB74_33:
+	jmp	.LBB74_30
+.LBB74_34:
+	movw	$1, 422(%rsp)
+	jmp	.LBB74_36
+.LBB74_35:
+	jmp	.LBB74_36
+.LBB74_36:
+	jmp	.LBB74_33
+.LBB74_37:
+	movw	$6, 422(%rsp)
+	jmp	.LBB74_39
+.LBB74_38:
+	movss	472(%rsp), %xmm0
+	movss	.LCPI74_13(%rip), %xmm1
 	ucomiss	%xmm1, %xmm0
 	seta	%al
-	cmpw	$2, 326(%rsp)
+	cmpw	$2, 422(%rsp)
 	sete	%cl
 	andb	%cl, %al
 	testb	$1, %al
-	jne	.LBB48_40
-	jmp	.LBB48_41
-.LBB48_39:
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jne	.LBB74_40
+	jmp	.LBB74_41
+.LBB74_39:
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movw	326(%rsp), %cx
+	movw	422(%rsp), %cx
 	movw	%cx, (%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	cvtsi2ssl	356(%rsp), %xmm0
-	movss	.LCPI48_21(%rip), %xmm1
+	cvtsi2ssl	476(%rsp), %xmm0
+	movss	.LCPI74_21(%rip), %xmm1
 	divss	%xmm1, %xmm0
 	movss	%xmm0, 20(%rax)
-	movl	328(%rsp), %eax
+	movl	424(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 328(%rsp)
-	jmp	.LBB48_19
-.LBB48_40:
-	movw	$3, 326(%rsp)
-	jmp	.LBB48_42
-.LBB48_41:
-	jmp	.LBB48_42
-.LBB48_42:
-	jmp	.LBB48_39
-.LBB48_43:
-	movl	332(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_45
-	movl	$0, 328(%rsp)
-	jmp	.LBB48_46
-.LBB48_45:
-	movl	$0, 332(%rsp)
-	jmp	.LBB48_55
-.LBB48_46:
-	movl	328(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_48
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movl	%eax, 424(%rsp)
+	jmp	.LBB74_19
+.LBB74_40:
+	movw	$3, 422(%rsp)
+	jmp	.LBB74_42
+.LBB74_41:
+	jmp	.LBB74_42
+.LBB74_42:
+	jmp	.LBB74_39
+.LBB74_43:
+	movl	428(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_45
+	movl	$0, 424(%rsp)
+	jmp	.LBB74_46
+.LBB74_45:
+	movq	592(%rsp), %rcx
+	movq	504(%rsp), %rdx
+	callq	__Main_World_GenAuxInfo_Main_World_genAuxMap
+	movq	%rax, 448(%rsp)
+	movq	592(%rsp), %rdx
+	movq	448(%rsp), %r8
+	movq	504(%rsp), %r9
+	leaq	376(%rsp), %rcx
+	callq	__Main_World_GenAuxInfo_Main_World_rawRandomLoc
+	leaq	376(%rsp), %rax
+	movq	%rax, 440(%rsp)
+	movq	592(%rsp), %rdx
+	movq	448(%rsp), %r8
+	movq	504(%rsp), %r9
+	movq	440(%rsp), %rax
+	movl	(%rax), %r10d
+	movq	440(%rsp), %rax
+	movl	4(%rax), %eax
+	leaq	368(%rsp), %rcx
+	movl	%r10d, 32(%rsp)
+	movl	%eax, 40(%rsp)
+	movl	$8, 48(%rsp)
+	callq	__Main_World_GenAuxInfo_Main_World_rawProximaLoc
+	leaq	368(%rsp), %rax
+	movq	%rax, 432(%rsp)
+	movq	592(%rsp), %rcx
+	movq	448(%rsp), %rdx
+	movq	504(%rsp), %r8
+	movq	432(%rsp), %rax
+	movl	(%rax), %r9d
+	movq	432(%rsp), %rax
+	movl	4(%rax), %eax
+	movl	%eax, 32(%rsp)
+	movl	$6, 40(%rsp)
+	movl	$3, 48(%rsp)
+	callq	__Main_World_GenAuxInfo_Main_World_placeBuilding
+	movl	$0, 428(%rsp)
+	jmp	.LBB74_55
+.LBB74_46:
+	movl	424(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_48
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3413,70 +5703,70 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	(%rax), %ax
-	movw	%ax, 326(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movw	%ax, 422(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	384(%rsp), %rcx
-	movl	328(%rsp), %edx
-	movl	332(%rsp), %r8d
+	movq	504(%rsp), %rcx
+	movl	424(%rsp), %edx
+	movl	428(%rsp), %r8d
 	imull	24(%rcx), %r8d
 	addl	%r8d, %edx
 	movq	16(%rcx), %rcx
 	movslq	%edx, %rdx
 	movq	(%rcx,%rdx,8), %rcx
-	movss	.LCPI48_16(%rip), %xmm0
+	movss	.LCPI74_16(%rip), %xmm0
 	mulss	20(%rcx), %xmm0
 	movss	%xmm0, 20(%rax)
-	cmpw	$0, 326(%rsp)
+	cmpw	$0, 422(%rsp)
 	sete	%al
-	cmpw	$1, 326(%rsp)
+	cmpw	$1, 422(%rsp)
 	sete	%cl
 	orb	%cl, %al
 	testb	$1, %al
-	jne	.LBB48_49
-	jmp	.LBB48_50
-.LBB48_48:
-	movl	332(%rsp), %eax
+	jne	.LBB74_49
+	jmp	.LBB74_50
+.LBB74_48:
+	movl	428(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 332(%rsp)
-	jmp	.LBB48_43
-.LBB48_49:
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movl	%eax, 428(%rsp)
+	jmp	.LBB74_43
+.LBB74_49:
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rdx
 	movq	(%rax,%rdx,8), %rax
-	movss	.LCPI48_12(%rip), %xmm0
+	movss	.LCPI74_12(%rip), %xmm0
 	movslq	%ecx, %rcx
 	movss	%xmm0, 20(%rax)
-	jmp	.LBB48_51
-.LBB48_50:
-	cmpw	$2, 326(%rsp)
+	jmp	.LBB74_51
+.LBB74_50:
+	cmpw	$2, 422(%rsp)
 	sete	%al
-	cmpw	$3, 326(%rsp)
+	cmpw	$3, 422(%rsp)
 	sete	%cl
 	orb	%cl, %al
 	testb	$1, %al
-	jne	.LBB48_52
-	jmp	.LBB48_53
-.LBB48_51:
-	movl	328(%rsp), %eax
+	jne	.LBB74_52
+	jmp	.LBB74_53
+.LBB74_51:
+	movl	424(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 328(%rsp)
-	jmp	.LBB48_46
-.LBB48_52:
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movl	%eax, 424(%rsp)
+	jmp	.LBB74_46
+.LBB74_52:
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3484,28 +5774,41 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	$1, 16(%rax)
-	jmp	.LBB48_54
-.LBB48_53:
-	jmp	.LBB48_54
-.LBB48_54:
-	jmp	.LBB48_51
-.LBB48_55:
-	movl	332(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_57
-	movl	$0, 328(%rsp)
-	jmp	.LBB48_58
-.LBB48_57:
-	movq	368(%rsp), %rax
-	addq	$488, %rsp
+	jmp	.LBB74_54
+.LBB74_53:
+	jmp	.LBB74_54
+.LBB74_54:
+	jmp	.LBB74_51
+.LBB74_55:
+	movl	428(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_57
+	movl	$0, 424(%rsp)
+	jmp	.LBB74_58
+.LBB74_57:
+	movq	304(%rsp), %rax
+	movq	488(%rsp), %rcx
+	movq	440(%rsp), %r8
+	movl	(%r8), %edx
+	movl	4(%r8), %r8d
+	movl	%r8d, 364(%rsp)
+	movl	%edx, 360(%rsp)
+	movq	%rcx, 352(%rsp)
+	movq	352(%rsp), %rcx
+	movl	360(%rsp), %edx
+	movl	364(%rsp), %r8d
+	movl	%r8d, 12(%rax)
+	movl	%edx, 8(%rax)
+	movq	%rcx, (%rax)
+	addq	$616, %rsp
 	retq
-.LBB48_58:
-	movl	328(%rsp), %eax
-	cmpl	484(%rsp), %eax
-	jge	.LBB48_60
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+.LBB74_58:
+	movl	424(%rsp), %eax
+	cmpl	612(%rsp), %eax
+	jge	.LBB74_60
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3513,10 +5816,10 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	(%rax), %ax
-	movw	%ax, 326(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movw	%ax, 422(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3524,10 +5827,10 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 324(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movw	%ax, 420(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3535,71 +5838,71 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	20(%rax), %xmm0
-	movss	%xmm0, 320(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movss	%xmm0, 416(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movss	320(%rsp), %xmm0
+	movss	416(%rsp), %xmm0
 	movss	%xmm0, 24(%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movss	320(%rsp), %xmm0
+	movss	416(%rsp), %xmm0
 	movss	%xmm0, 28(%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movss	320(%rsp), %xmm0
+	movss	416(%rsp), %xmm0
 	movss	%xmm0, 32(%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movss	320(%rsp), %xmm0
+	movss	416(%rsp), %xmm0
 	movss	%xmm0, 36(%rax)
-	cmpw	$0, 324(%rsp)
-	je	.LBB48_61
-	jmp	.LBB48_62
-.LBB48_60:
-	movl	332(%rsp), %eax
+	cmpw	$0, 420(%rsp)
+	je	.LBB74_61
+	jmp	.LBB74_62
+.LBB74_60:
+	movl	428(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 332(%rsp)
-	jmp	.LBB48_55
-.LBB48_61:
-	cmpw	$0, 326(%rsp)
+	movl	%eax, 428(%rsp)
+	jmp	.LBB74_55
+.LBB74_61:
+	cmpw	$0, 422(%rsp)
 	sete	%al
 	xorb	$-1, %al
-	cmpw	$1, 326(%rsp)
+	cmpw	$1, 422(%rsp)
 	sete	%cl
 	xorb	$-1, %cl
 	andb	%cl, %al
 	testb	$1, %al
-	jne	.LBB48_64
-	jmp	.LBB48_65
-.LBB48_62:
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	jne	.LBB74_64
+	jmp	.LBB74_65
+.LBB74_62:
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	subl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3607,10 +5910,10 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 306(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movw	%ax, 402(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	subl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
@@ -3619,11 +5922,11 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 304(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	movw	%ax, 400(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	addl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3631,10 +5934,10 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 302(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movw	%ax, 398(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	addl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
@@ -3643,11 +5946,11 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 300(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	movw	%ax, 396(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	addl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	addl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
@@ -3656,11 +5959,11 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 298(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	movw	%ax, 394(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	addl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	subl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
@@ -3669,11 +5972,11 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 296(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	movw	%ax, 392(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	subl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	addl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
@@ -3682,125 +5985,125 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movw	16(%rax), %ax
-	movw	%ax, 294(%rsp)
-	cmpw	$1, 306(%rsp)
-	je	.LBB48_76
-	jmp	.LBB48_77
-.LBB48_63:
-	movl	328(%rsp), %eax
+	movw	%ax, 390(%rsp)
+	cmpw	$1, 402(%rsp)
+	je	.LBB74_76
+	jmp	.LBB74_77
+.LBB74_63:
+	movl	424(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 328(%rsp)
-	jmp	.LBB48_58
-.LBB48_64:
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
-	movl	332(%rsp), %r8d
+	movl	%eax, 424(%rsp)
+	jmp	.LBB74_58
+.LBB74_64:
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
+	movl	428(%rsp), %r8d
 	addl	$1, %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
-	movss	%xmm0, 316(%rsp)
-	movss	316(%rsp), %xmm1
-	movss	320(%rsp), %xmm0
+	movss	%xmm0, 412(%rsp)
+	movss	412(%rsp), %xmm1
+	movss	416(%rsp), %xmm0
 	ucomiss	%xmm1, %xmm0
-	ja	.LBB48_67
-	jmp	.LBB48_68
-.LBB48_65:
-	jmp	.LBB48_66
-.LBB48_66:
-	jmp	.LBB48_63
-.LBB48_67:
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	ja	.LBB74_67
+	jmp	.LBB74_68
+.LBB74_65:
+	jmp	.LBB74_66
+.LBB74_66:
+	jmp	.LBB74_63
+.LBB74_67:
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movq	(%rax,%rcx,8), %rax
+	movq	%rax, 208(%rsp)
+	movss	416(%rsp), %xmm0
+	subss	412(%rsp), %xmm0
+	callq	_Float_builtin_ceil
+	movl	%eax, %ecx
+	movq	208(%rsp), %rax
+	movl	%ecx, 4(%rax)
+	jmp	.LBB74_69
+.LBB74_68:
+	jmp	.LBB74_69
+.LBB74_69:
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
+	subl	$1, %edx
+	movl	428(%rsp), %r8d
+	callq	__Phys_Main_GameRoom_Phys_Main_elevation
+	movss	%xmm0, 408(%rsp)
+	movss	408(%rsp), %xmm1
+	movss	416(%rsp), %xmm0
+	ucomiss	%xmm1, %xmm0
+	jbe	.LBB74_71
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
 	movq	%rax, 200(%rsp)
-	movss	320(%rsp), %xmm0
-	subss	316(%rsp), %xmm0
+	movss	416(%rsp), %xmm0
+	subss	408(%rsp), %xmm0
 	callq	_Float_builtin_ceil
 	movl	%eax, %ecx
 	movq	200(%rsp), %rax
-	movl	%ecx, 4(%rax)
-	jmp	.LBB48_69
-.LBB48_68:
-	jmp	.LBB48_69
-.LBB48_69:
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
-	subl	$1, %edx
-	movl	332(%rsp), %r8d
+	movl	%ecx, 8(%rax)
+	jmp	.LBB74_72
+.LBB74_71:
+	jmp	.LBB74_72
+.LBB74_72:
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
+	addl	$1, %edx
+	movl	428(%rsp), %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
-	movss	%xmm0, 312(%rsp)
-	movss	312(%rsp), %xmm1
-	movss	320(%rsp), %xmm0
+	movss	%xmm0, 404(%rsp)
+	movss	404(%rsp), %xmm1
+	movss	416(%rsp), %xmm0
 	ucomiss	%xmm1, %xmm0
-	jbe	.LBB48_71
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jbe	.LBB74_74
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
 	movq	%rax, 192(%rsp)
-	movss	320(%rsp), %xmm0
-	subss	312(%rsp), %xmm0
+	movss	416(%rsp), %xmm0
+	subss	404(%rsp), %xmm0
 	callq	_Float_builtin_ceil
 	movl	%eax, %ecx
 	movq	192(%rsp), %rax
-	movl	%ecx, 8(%rax)
-	jmp	.LBB48_72
-.LBB48_71:
-	jmp	.LBB48_72
-.LBB48_72:
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
-	addl	$1, %edx
-	movl	332(%rsp), %r8d
-	callq	__Phys_Main_GameRoom_Phys_Main_elevation
-	movss	%xmm0, 308(%rsp)
-	movss	308(%rsp), %xmm1
-	movss	320(%rsp), %xmm0
-	ucomiss	%xmm1, %xmm0
-	jbe	.LBB48_74
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
-	imull	24(%rax), %edx
-	addl	%edx, %ecx
-	movq	16(%rax), %rax
-	movslq	%ecx, %rcx
-	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 184(%rsp)
-	movss	320(%rsp), %xmm0
-	subss	308(%rsp), %xmm0
-	callq	_Float_builtin_ceil
-	movl	%eax, %ecx
-	movq	184(%rsp), %rax
 	movl	%ecx, 12(%rax)
-	jmp	.LBB48_75
-.LBB48_74:
-	jmp	.LBB48_75
-.LBB48_75:
-	jmp	.LBB48_66
-.LBB48_76:
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jmp	.LBB74_75
+.LBB74_74:
+	jmp	.LBB74_75
+.LBB74_75:
+	jmp	.LBB74_66
+.LBB74_76:
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 168(%rsp)
-	movss	320(%rsp), %xmm0
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	movq	%rax, 176(%rsp)
+	movss	416(%rsp), %xmm0
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	subl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3809,22 +6112,22 @@ _none_Main_World_generateRoom:
 	movslq	%ecx, %rcx
 	movss	28(%rax), %xmm1
 	callq	_Float_Commons_Core_max
-	movq	168(%rsp), %rax
+	movq	176(%rsp), %rax
 	movss	%xmm0, 24(%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 176(%rsp)
-	movss	320(%rsp), %xmm0
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	movq	%rax, 184(%rsp)
+	movss	416(%rsp), %xmm0
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	subl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3833,26 +6136,26 @@ _none_Main_World_generateRoom:
 	movslq	%ecx, %rcx
 	movss	36(%rax), %xmm1
 	callq	_Float_Commons_Core_max
-	movq	176(%rsp), %rax
+	movq	184(%rsp), %rax
 	movss	%xmm0, 32(%rax)
-	jmp	.LBB48_78
-.LBB48_77:
-	jmp	.LBB48_78
-.LBB48_78:
-	cmpw	$1, 304(%rsp)
-	jne	.LBB48_80
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jmp	.LBB74_78
+.LBB74_77:
+	jmp	.LBB74_78
+.LBB74_78:
+	cmpw	$1, 400(%rsp)
+	jne	.LBB74_80
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 152(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	%rax, 160(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3860,9 +6163,9 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	24(%rax), %xmm0
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	subl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
@@ -3872,21 +6175,21 @@ _none_Main_World_generateRoom:
 	movslq	%ecx, %rcx
 	movss	32(%rax), %xmm1
 	callq	_Float_Commons_Core_max
-	movq	152(%rsp), %rax
+	movq	160(%rsp), %rax
 	movss	%xmm0, 24(%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 160(%rsp)
-	movss	320(%rsp), %xmm0
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	%rax, 168(%rsp)
+	movss	416(%rsp), %xmm0
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	subl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
@@ -3896,47 +6199,47 @@ _none_Main_World_generateRoom:
 	movslq	%ecx, %rcx
 	movss	36(%rax), %xmm1
 	callq	_Float_Commons_Core_max
-	movq	160(%rsp), %rax
+	movq	168(%rsp), %rax
 	movss	%xmm0, 28(%rax)
-	jmp	.LBB48_81
-.LBB48_80:
-	jmp	.LBB48_81
-.LBB48_81:
-	cmpw	$1, 302(%rsp)
-	jne	.LBB48_83
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jmp	.LBB74_81
+.LBB74_80:
+	jmp	.LBB74_81
+.LBB74_81:
+	cmpw	$1, 398(%rsp)
+	jne	.LBB74_83
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 128(%rsp)
-	movss	320(%rsp), %xmm0
-	movss	%xmm0, 124(%rsp)
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
+	movq	%rax, 136(%rsp)
+	movss	416(%rsp), %xmm0
+	movss	%xmm0, 132(%rsp)
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
 	addl	$1, %edx
-	movl	332(%rsp), %r8d
+	movl	428(%rsp), %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
 	movaps	%xmm0, %xmm1
-	movss	124(%rsp), %xmm0
+	movss	132(%rsp), %xmm0
 	callq	_Float_Commons_Core_max
-	movq	128(%rsp), %rax
+	movq	136(%rsp), %rax
 	movss	%xmm0, 36(%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 144(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	%rax, 152(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3944,35 +6247,35 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	28(%rax), %xmm0
-	movss	%xmm0, 140(%rsp)
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
+	movss	%xmm0, 148(%rsp)
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
 	addl	$1, %edx
-	movl	332(%rsp), %r8d
+	movl	428(%rsp), %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
 	movaps	%xmm0, %xmm1
-	movss	140(%rsp), %xmm0
+	movss	148(%rsp), %xmm0
 	callq	_Float_Commons_Core_max
-	movq	144(%rsp), %rax
+	movq	152(%rsp), %rax
 	movss	%xmm0, 28(%rax)
-	jmp	.LBB48_84
-.LBB48_83:
-	jmp	.LBB48_84
-.LBB48_84:
-	cmpw	$1, 300(%rsp)
-	jne	.LBB48_86
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jmp	.LBB74_84
+.LBB74_83:
+	jmp	.LBB74_84
+.LBB74_84:
+	cmpw	$1, 396(%rsp)
+	jne	.LBB74_86
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 96(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	%rax, 104(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -3980,29 +6283,29 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	36(%rax), %xmm0
-	movss	%xmm0, 92(%rsp)
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
-	movl	332(%rsp), %r8d
+	movss	%xmm0, 100(%rsp)
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
+	movl	428(%rsp), %r8d
 	addl	$1, %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
 	movaps	%xmm0, %xmm1
-	movss	92(%rsp), %xmm0
+	movss	100(%rsp), %xmm0
 	callq	_Float_Commons_Core_max
-	movq	96(%rsp), %rax
+	movq	104(%rsp), %rax
 	movss	%xmm0, 36(%rax)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 112(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	%rax, 120(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -4010,35 +6313,35 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	32(%rax), %xmm0
-	movss	%xmm0, 108(%rsp)
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
-	movl	332(%rsp), %r8d
+	movss	%xmm0, 116(%rsp)
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
+	movl	428(%rsp), %r8d
 	addl	$1, %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
 	movaps	%xmm0, %xmm1
-	movss	108(%rsp), %xmm0
+	movss	116(%rsp), %xmm0
 	callq	_Float_Commons_Core_max
-	movq	112(%rsp), %rax
+	movq	120(%rsp), %rax
 	movss	%xmm0, 32(%rax)
-	jmp	.LBB48_87
-.LBB48_86:
-	jmp	.LBB48_87
-.LBB48_87:
-	cmpw	$1, 298(%rsp)
-	jne	.LBB48_89
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jmp	.LBB74_87
+.LBB74_86:
+	jmp	.LBB74_87
+.LBB74_87:
+	cmpw	$1, 394(%rsp)
+	jne	.LBB74_89
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 80(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	%rax, 88(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -4046,36 +6349,36 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	36(%rax), %xmm0
-	movss	%xmm0, 76(%rsp)
-	movq	368(%rsp), %rcx
-	movl	328(%rsp), %edx
+	movss	%xmm0, 84(%rsp)
+	movq	488(%rsp), %rcx
+	movl	424(%rsp), %edx
 	addl	$1, %edx
-	movl	332(%rsp), %r8d
+	movl	428(%rsp), %r8d
 	addl	$1, %r8d
 	callq	__Phys_Main_GameRoom_Phys_Main_elevation
 	movaps	%xmm0, %xmm1
-	movss	76(%rsp), %xmm0
+	movss	84(%rsp), %xmm0
 	callq	_Float_Commons_Core_max
-	movq	80(%rsp), %rax
+	movq	88(%rsp), %rax
 	movss	%xmm0, 36(%rax)
-	jmp	.LBB48_90
-.LBB48_89:
-	jmp	.LBB48_90
-.LBB48_90:
-	cmpw	$1, 296(%rsp)
-	jne	.LBB48_92
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	jmp	.LBB74_90
+.LBB74_89:
+	jmp	.LBB74_90
+.LBB74_90:
+	cmpw	$1, 392(%rsp)
+	jne	.LBB74_92
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
 	movslq	%ecx, %rcx
 	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 64(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
+	movq	%rax, 72(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -4083,11 +6386,53 @@ _none_Main_World_generateRoom:
 	movq	(%rax,%rdx,8), %rax
 	movslq	%ecx, %rcx
 	movss	28(%rax), %xmm0
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
 	addl	$1, %ecx
-	movl	332(%rsp), %edx
+	movl	428(%rsp), %edx
 	subl	$1, %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movss	32(%rax), %xmm1
+	callq	_Float_Commons_Core_max
+	movq	72(%rsp), %rax
+	movss	%xmm0, 28(%rax)
+	jmp	.LBB74_93
+.LBB74_92:
+	cmpw	$1, 390(%rsp)
+	je	.LBB74_94
+	jmp	.LBB74_95
+.LBB74_93:
+	jmp	.LBB74_63
+.LBB74_94:
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rcx
+	movq	(%rax,%rcx,8), %rax
+	movq	%rax, 64(%rsp)
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	movl	428(%rsp), %edx
+	imull	24(%rax), %edx
+	addl	%edx, %ecx
+	movq	16(%rax), %rax
+	movslq	%ecx, %rdx
+	movq	(%rax,%rdx,8), %rax
+	movslq	%ecx, %rcx
+	movss	32(%rax), %xmm0
+	movq	504(%rsp), %rax
+	movl	424(%rsp), %ecx
+	subl	$1, %ecx
+	movl	428(%rsp), %edx
+	addl	$1, %edx
 	imull	24(%rax), %edx
 	addl	%edx, %ecx
 	movq	16(%rax), %rax
@@ -4097,54 +6442,12 @@ _none_Main_World_generateRoom:
 	movss	32(%rax), %xmm1
 	callq	_Float_Commons_Core_max
 	movq	64(%rsp), %rax
-	movss	%xmm0, 28(%rax)
-	jmp	.LBB48_93
-.LBB48_92:
-	cmpw	$1, 294(%rsp)
-	je	.LBB48_94
-	jmp	.LBB48_95
-.LBB48_93:
-	jmp	.LBB48_63
-.LBB48_94:
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
-	imull	24(%rax), %edx
-	addl	%edx, %ecx
-	movq	16(%rax), %rax
-	movslq	%ecx, %rcx
-	movq	(%rax,%rcx,8), %rax
-	movq	%rax, 56(%rsp)
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	movl	332(%rsp), %edx
-	imull	24(%rax), %edx
-	addl	%edx, %ecx
-	movq	16(%rax), %rax
-	movslq	%ecx, %rdx
-	movq	(%rax,%rdx,8), %rax
-	movslq	%ecx, %rcx
-	movss	32(%rax), %xmm0
-	movq	384(%rsp), %rax
-	movl	328(%rsp), %ecx
-	subl	$1, %ecx
-	movl	332(%rsp), %edx
-	addl	$1, %edx
-	imull	24(%rax), %edx
-	addl	%edx, %ecx
-	movq	16(%rax), %rax
-	movslq	%ecx, %rdx
-	movq	(%rax,%rdx,8), %rax
-	movslq	%ecx, %rcx
-	movss	32(%rax), %xmm1
-	callq	_Float_Commons_Core_max
-	movq	56(%rsp), %rax
 	movss	%xmm0, 32(%rax)
-	jmp	.LBB48_96
-.LBB48_95:
-	jmp	.LBB48_96
-.LBB48_96:
-	jmp	.LBB48_93
+	jmp	.LBB74_96
+.LBB74_95:
+	jmp	.LBB74_96
+.LBB74_96:
+	jmp	.LBB74_93
 	.seh_endproc
 
 	.def	_none_Main_World_newWorld;
@@ -4155,16 +6458,27 @@ _none_Main_World_generateRoom:
 	.p2align	4, 0x90
 _none_Main_World_newWorld:
 .seh_proc _none_Main_World_newWorld
-	subq	$120, %rsp
-	.seh_stackalloc 120
+	subq	$168, %rsp
+	.seh_stackalloc 168
 	.seh_endprologue
+	leaq	104(%rsp), %rcx
 	callq	_none_Main_World_generateRoom
-	movq	%rax, 112(%rsp)
-	movl	$3, %ecx
+	leaq	104(%rsp), %rax
+	movq	%rax, 152(%rsp)
+	movq	152(%rsp), %rax
+	movq	(%rax), %rax
+	movq	%rax, 144(%rsp)
+	movq	152(%rsp), %rax
+	movl	8(%rax), %eax
+	movl	%eax, 140(%rsp)
+	movq	152(%rsp), %rax
+	movl	12(%rax), %eax
+	movl	%eax, 136(%rsp)
+	movl	$3, %r8d
 	movl	$7, %edx
-	movl	$1, %r8d
+	movl	%r8d, %ecx
 	callq	_Int_Main_Obj_newGameObj
-	movq	%rax, 104(%rsp)
+	movq	%rax, 128(%rsp)
 	movl	$8, %ecx
 	xorl	%r8d, %r8d
 	movl	$1, %r9d
@@ -4172,50 +6486,51 @@ _none_Main_World_newWorld:
 	movl	%r8d, %edx
 	movq	$0, 32(%rsp)
 	callq	gc_alloc_array
-	movq	%rax, 96(%rsp)
-	movq	112(%rsp), %rax
-	movq	%rax, 40(%rsp)
-	movq	104(%rsp), %rax
-	movq	(%rax), %rax
+	movq	%rax, 120(%rsp)
+	movq	144(%rsp), %rax
 	movq	%rax, 48(%rsp)
-	movl	$300, %ecx
+	movq	128(%rsp), %rax
+	movq	(%rax), %rax
+	movq	%rax, 56(%rsp)
+	movl	140(%rsp), %ecx
 	callq	_Int_Commons_Core_tilePixel
-	movl	%eax, 56(%rsp)
-	movl	$520, %ecx
+	movl	%eax, 64(%rsp)
+	movl	136(%rsp), %ecx
 	callq	_Int_Commons_Core_tilePixel
-	movq	40(%rsp), %rcx
-	movq	48(%rsp), %rdx
-	movl	56(%rsp), %r8d
+	movq	48(%rsp), %rcx
+	movq	56(%rsp), %rdx
+	movl	64(%rsp), %r8d
 	movl	%eax, %r9d
 	callq	__Phys_Main_GameRoom_Phys_Main_addObj
-	movq	96(%rsp), %rcx
-	movq	%rcx, 64(%rsp)
+	movq	120(%rsp), %rcx
+	movq	%rcx, 72(%rsp)
 	movl	8(%rcx), %eax
-	movl	%eax, 60(%rsp)
+	movl	%eax, 68(%rsp)
 	callq	array_grow
-	movl	60(%rsp), %ecx
-	movq	64(%rsp), %rax
+	movl	68(%rsp), %ecx
+	movq	72(%rsp), %rax
 	movq	16(%rax), %rax
-	movq	104(%rsp), %rdx
+	movq	128(%rsp), %rdx
 	movslq	%ecx, %rcx
 	movq	%rdx, (%rax,%rcx,8)
-	movq	112(%rsp), %rax
-	movq	%rax, 72(%rsp)
-	movq	96(%rsp), %rax
+	movq	144(%rsp), %rax
 	movq	%rax, 80(%rsp)
-	movq	104(%rsp), %rax
+	movq	120(%rsp), %rax
 	movq	%rax, 88(%rsp)
+	movq	128(%rsp), %rax
+	movq	%rax, 96(%rsp)
 	movl	$32, %ecx
 	leaq	tc__Main_World_GameWorld(%rip), %rdx
 	callq	gc_alloc
-	movq	72(%rsp), %r8
-	movq	80(%rsp), %rdx
-	movq	88(%rsp), %rcx
+	movq	80(%rsp), %r8
+	movq	88(%rsp), %rdx
+	movq	96(%rsp), %rcx
 	movq	%r8, (%rax)
 	movq	%rdx, 8(%rax)
 	movq	%rcx, 16(%rax)
 	movb	$0, 24(%rax)
-	addq	$120, %rsp
+	movb	$0, 25(%rax)
+	addq	$168, %rsp
 	retq
 	.seh_endproc
 
@@ -4225,12 +6540,10 @@ _none_Main_World_newWorld:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI50_0:
+.LCPI76_0:
 	.long	0x3f800000
-.LCPI50_1:
+.LCPI76_1:
 	.long	0xbf800000
-.LCPI50_2:
-	.long	0x44a00000
 	.text
 	.globl	__Main_World_GameWorld_Phys_Main_update
 	.p2align	4, 0x90
@@ -4251,56 +6564,80 @@ __Main_World_GameWorld_Phys_Main_update:
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_keyDown
 	testb	$1, %al
-	jne	.LBB50_1
-	jmp	.LBB50_2
-.LBB50_1:
-	movss	.LCPI50_1(%rip), %xmm0
+	jne	.LBB76_1
+	jmp	.LBB76_2
+.LBB76_1:
+	movss	.LCPI76_1(%rip), %xmm0
 	movss	%xmm0, 68(%rsp)
 	movq	72(%rsp), %rax
 	movb	$0, 8(%rax)
 	movq	72(%rsp), %rax
 	movl	$0, 12(%rax)
-	jmp	.LBB50_3
-.LBB50_2:
+	jmp	.LBB76_3
+.LBB76_2:
 	movq	.refptr.K_right(%rip), %rax
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_keyDown
 	testb	$1, %al
-	jne	.LBB50_4
-	jmp	.LBB50_5
-.LBB50_3:
+	jne	.LBB76_4
+	jmp	.LBB76_5
+.LBB76_3:
 	movq	.refptr.K_up(%rip), %rax
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_keyDown
 	testb	$1, %al
-	jne	.LBB50_7
-	jmp	.LBB50_8
-.LBB50_4:
-	movss	.LCPI50_0(%rip), %xmm0
+	jne	.LBB76_7
+	jmp	.LBB76_8
+.LBB76_4:
+	movss	.LCPI76_0(%rip), %xmm0
 	movss	%xmm0, 68(%rsp)
 	movq	72(%rsp), %rax
 	movb	$1, 8(%rax)
 	movq	72(%rsp), %rax
 	movl	$0, 12(%rax)
-	jmp	.LBB50_6
-.LBB50_5:
-	jmp	.LBB50_6
-.LBB50_6:
-	jmp	.LBB50_3
-.LBB50_7:
-	movss	.LCPI50_1(%rip), %xmm0
+	jmp	.LBB76_6
+.LBB76_5:
+	jmp	.LBB76_6
+.LBB76_6:
+	jmp	.LBB76_3
+.LBB76_7:
+	movss	.LCPI76_1(%rip), %xmm0
 	movss	%xmm0, 64(%rsp)
 	movq	72(%rsp), %rax
 	movl	$-1, 12(%rax)
-	jmp	.LBB50_9
-.LBB50_8:
+	jmp	.LBB76_9
+.LBB76_8:
 	movq	.refptr.K_down(%rip), %rax
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_keyDown
 	testb	$1, %al
-	jne	.LBB50_10
-	jmp	.LBB50_11
-.LBB50_9:
+	jne	.LBB76_10
+	jmp	.LBB76_11
+.LBB76_9:
+	movq	.refptr.K_z(%rip), %rax
+	movl	(%rax), %ecx
+	callq	_Key_Sys_Input_keyPress
+	testb	$1, %al
+	jne	.LBB76_13
+	jmp	.LBB76_14
+.LBB76_10:
+	movss	.LCPI76_0(%rip), %xmm0
+	movss	%xmm0, 64(%rsp)
+	movq	72(%rsp), %rax
+	movl	$1, 12(%rax)
+	jmp	.LBB76_12
+.LBB76_11:
+	jmp	.LBB76_12
+.LBB76_12:
+	jmp	.LBB76_9
+.LBB76_13:
+	movq	72(%rsp), %rax
+	movq	(%rax), %rax
+	movl	$-2304, 20(%rax)
+	jmp	.LBB76_15
+.LBB76_14:
+	jmp	.LBB76_15
+.LBB76_15:
 	movss	68(%rsp), %xmm0
 	xorps	%xmm1, %xmm1
 	ucomiss	%xmm1, %xmm0
@@ -4311,19 +6648,9 @@ __Main_World_GameWorld_Phys_Main_update:
 	setne	%cl
 	orb	%cl, %al
 	testb	$1, %al
-	jne	.LBB50_13
-	jmp	.LBB50_14
-.LBB50_10:
-	movss	.LCPI50_0(%rip), %xmm0
-	movss	%xmm0, 64(%rsp)
-	movq	72(%rsp), %rax
-	movl	$1, 12(%rax)
-	jmp	.LBB50_12
-.LBB50_11:
-	jmp	.LBB50_12
-.LBB50_12:
-	jmp	.LBB50_9
-.LBB50_13:
+	jne	.LBB76_16
+	jmp	.LBB76_17
+.LBB76_16:
 	movss	68(%rsp), %xmm0
 	mulss	68(%rsp), %xmm0
 	movss	64(%rsp), %xmm1
@@ -4340,8 +6667,9 @@ __Main_World_GameWorld_Phys_Main_update:
 	movq	72(%rsp), %rax
 	movq	(%rax), %rax
 	movq	%rax, 40(%rsp)
-	movss	.LCPI50_2(%rip), %xmm0
-	mulss	68(%rsp), %xmm0
+	movss	68(%rsp), %xmm0
+	cvtsi2ssl	_Main_World__SPEED(%rip), %xmm1
+	mulss	%xmm1, %xmm0
 	callq	_Float_builtin_floor
 	movl	%eax, %ecx
 	movq	40(%rsp), %rax
@@ -4349,38 +6677,56 @@ __Main_World_GameWorld_Phys_Main_update:
 	movq	72(%rsp), %rax
 	movq	(%rax), %rax
 	movq	%rax, 48(%rsp)
-	movss	.LCPI50_2(%rip), %xmm0
-	mulss	64(%rsp), %xmm0
+	movss	64(%rsp), %xmm0
+	cvtsi2ssl	_Main_World__SPEED(%rip), %xmm1
+	mulss	%xmm1, %xmm0
 	callq	_Float_builtin_floor
 	movl	%eax, %ecx
 	movq	48(%rsp), %rax
 	movl	%ecx, 16(%rax)
-	jmp	.LBB50_15
-.LBB50_14:
+	jmp	.LBB76_18
+.LBB76_17:
 	movq	72(%rsp), %rax
 	movq	(%rax), %rax
 	movl	$0, 12(%rax)
 	movq	72(%rsp), %rax
 	movq	(%rax), %rax
 	movl	$0, 16(%rax)
-.LBB50_15:
-	movq	.refptr.K_z(%rip), %rax
+.LBB76_18:
+	movq	.refptr.K_x(%rip), %rax
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_keyPress
 	testb	$1, %al
-	jne	.LBB50_16
-	jmp	.LBB50_17
-.LBB50_16:
+	jne	.LBB76_19
+	jmp	.LBB76_20
+.LBB76_19:
 	movq	80(%rsp), %rax
 	movq	80(%rsp), %rcx
 	movb	24(%rcx), %cl
 	xorb	$-1, %cl
 	andb	$1, %cl
 	movb	%cl, 24(%rax)
-	jmp	.LBB50_18
-.LBB50_17:
-	jmp	.LBB50_18
-.LBB50_18:
+	jmp	.LBB76_21
+.LBB76_20:
+	jmp	.LBB76_21
+.LBB76_21:
+	movq	.refptr.K_m(%rip), %rax
+	movl	(%rax), %ecx
+	callq	_Key_Sys_Input_keyPress
+	testb	$1, %al
+	jne	.LBB76_22
+	jmp	.LBB76_23
+.LBB76_22:
+	movq	80(%rsp), %rax
+	movq	80(%rsp), %rcx
+	movb	25(%rcx), %cl
+	xorb	$-1, %cl
+	andb	$1, %cl
+	movb	%cl, 25(%rax)
+	jmp	.LBB76_24
+.LBB76_23:
+	jmp	.LBB76_24
+.LBB76_24:
 	movq	80(%rsp), %rax
 	movq	(%rax), %rcx
 	callq	__Phys_Main_GameRoom_Phys_Main_update
@@ -4429,13 +6775,13 @@ _Int_Main_World_updateCamMat:
 	.endef
 	.section	.rdata,"dr"
 	.p2align	2, 0x0
-.LCPI52_0:
+.LCPI78_0:
 	.long	0x41280000
-.LCPI52_1:
+.LCPI78_1:
 	.long	0x41000000
-.LCPI52_2:
+.LCPI78_2:
 	.long	0x40b00000
-.LCPI52_3:
+.LCPI78_3:
 	.long	0x40733333
 	.text
 	.globl	__Main_World_GameWorld_Sys_Sulfur_draw
@@ -4469,9 +6815,9 @@ __Main_World_GameWorld_Sys_Sulfur_draw:
 	movss	%xmm0, 60(%rsp)
 	movq	80(%rsp), %rax
 	testb	$1, 24(%rax)
-	jne	.LBB52_1
-	jmp	.LBB52_2
-.LBB52_1:
+	jne	.LBB78_1
+	jmp	.LBB78_2
+.LBB78_1:
 	movss	68(%rsp), %xmm0
 	movd	%xmm0, %eax
 	xorl	$2147483648, %eax
@@ -4480,18 +6826,18 @@ __Main_World_GameWorld_Sys_Sulfur_draw:
 	movd	%xmm0, %eax
 	xorl	$2147483648, %eax
 	movd	%eax, %xmm2
-	movss	.LCPI52_3(%rip), %xmm0
+	movss	.LCPI78_3(%rip), %xmm0
 	addss	%xmm0, %xmm2
 	movss	60(%rsp), %xmm0
 	movd	%xmm0, %eax
 	xorl	$2147483648, %eax
 	movd	%eax, %xmm3
-	movss	.LCPI52_2(%rip), %xmm0
+	movss	.LCPI78_2(%rip), %xmm0
 	subss	%xmm0, %xmm3
 	movl	$4294967256, %ecx
 	callq	_Int_Main_World_updateCamMat
-	jmp	.LBB52_3
-.LBB52_2:
+	jmp	.LBB78_3
+.LBB78_2:
 	movss	68(%rsp), %xmm0
 	movd	%xmm0, %eax
 	xorl	$2147483648, %eax
@@ -4500,17 +6846,17 @@ __Main_World_GameWorld_Sys_Sulfur_draw:
 	movd	%xmm0, %eax
 	xorl	$2147483648, %eax
 	movd	%eax, %xmm2
-	movss	.LCPI52_1(%rip), %xmm0
+	movss	.LCPI78_1(%rip), %xmm0
 	addss	%xmm0, %xmm2
 	movss	60(%rsp), %xmm0
 	movd	%xmm0, %eax
 	xorl	$2147483648, %eax
 	movd	%eax, %xmm3
-	movss	.LCPI52_0(%rip), %xmm0
+	movss	.LCPI78_0(%rip), %xmm0
 	subss	%xmm0, %xmm3
 	movl	$4294967251, %ecx
 	callq	_Int_Main_World_updateCamMat
-.LBB52_3:
+.LBB78_3:
 	movq	80(%rsp), %rax
 	movq	(%rax), %rax
 	movq	%rax, 40(%rsp)
@@ -4524,12 +6870,12 @@ __Main_World_GameWorld_Sys_Sulfur_draw:
 	movl	%eax, %r8d
 	callq	__Phys_Main_GameRoom_Sys_Sulfur_draw
 	movl	$0, 56(%rsp)
-.LBB52_4:
+.LBB78_4:
 	movl	56(%rsp), %eax
 	movq	80(%rsp), %rcx
 	movq	8(%rcx), %rcx
 	cmpl	8(%rcx), %eax
-	jge	.LBB52_6
+	jge	.LBB78_6
 	movq	80(%rsp), %rax
 	movq	8(%rax), %rcx
 	movl	56(%rsp), %eax
@@ -4541,9 +6887,58 @@ __Main_World_GameWorld_Sys_Sulfur_draw:
 	movl	56(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 56(%rsp)
-	jmp	.LBB52_4
-.LBB52_6:
+	jmp	.LBB78_4
+.LBB78_6:
 	addq	$88, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Main_World_GameWorld_Phys_Main_drawMini;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Main_World_GameWorld_Phys_Main_drawMini
+	.p2align	4, 0x90
+__Main_World_GameWorld_Phys_Main_drawMini:
+.seh_proc __Main_World_GameWorld_Phys_Main_drawMini
+	subq	$72, %rsp
+	.seh_stackalloc 72
+	.seh_endprologue
+	movq	%rcx, 64(%rsp)
+	movq	64(%rsp), %rax
+	movq	16(%rax), %rax
+	movq	(%rax), %rax
+	movq	%rax, 56(%rsp)
+	movq	56(%rsp), %rax
+	movq	(%rax), %rcx
+	callq	__Commons_Core_Box3D_Commons_Core_centerX
+	movl	%eax, %ecx
+	callq	_Int_Commons_Core_toFP
+	movss	%xmm0, 52(%rsp)
+	movq	56(%rsp), %rax
+	movq	(%rax), %rcx
+	callq	__Commons_Core_Box3D_Commons_Core_centerZ
+	movl	%eax, %ecx
+	callq	_Int_Commons_Core_toFP
+	movss	%xmm0, 48(%rsp)
+	movq	64(%rsp), %rax
+	movq	(%rax), %rax
+	movq	%rax, 32(%rsp)
+	movq	64(%rsp), %rax
+	movb	25(%rax), %al
+	movb	%al, 43(%rsp)
+	movss	52(%rsp), %xmm0
+	callq	_Float_builtin_floor
+	movl	%eax, 44(%rsp)
+	movss	48(%rsp), %xmm0
+	callq	_Float_builtin_floor
+	movq	32(%rsp), %rcx
+	movb	43(%rsp), %dl
+	movl	44(%rsp), %r8d
+	movl	%eax, %r9d
+	callq	__Phys_Main_GameRoom_Phys_Main_drawMini
+	nop
+	addq	$72, %rsp
 	retq
 	.seh_endproc
 
@@ -4555,8 +6950,8 @@ __Main_World_GameWorld_Sys_Sulfur_draw:
 	.p2align	4, 0x90
 _none_main:
 .seh_proc _none_main
-	subq	$104, %rsp
-	.seh_stackalloc 104
+	subq	$72, %rsp
+	.seh_stackalloc 72
 	.seh_endprologue
 	callq	init_globals
 	movl	$60, %ecx
@@ -4565,64 +6960,54 @@ _none_main:
 	movq	%rcx, 32(%rsp)
 	callq	gc_new_root
 	movq	32(%rsp), %rax
-	movq	%rax, 96(%rsp)
+	movq	%rax, 64(%rsp)
 	callq	_none_Main_World_newWorld
 	movq	%rax, %rcx
 	movq	%rcx, 40(%rsp)
 	callq	gc_new_root
 	movq	40(%rsp), %rax
-	movq	%rax, 88(%rsp)
+	movq	%rax, 56(%rsp)
 	callq	_none_Sys_Sulfur_waitRom
-.LBB53_1:
+.LBB80_1:
 	movb	$1, %al
 	testb	$1, %al
-	jne	.LBB53_2
-	jmp	.LBB53_3
-.LBB53_2:
-	movq	96(%rsp), %rcx
+	jne	.LBB80_2
+	jmp	.LBB80_3
+.LBB80_2:
+	movq	64(%rsp), %rcx
 	callq	__Commons_Core_FPSClock_Commons_Core_tick
-	movl	%eax, 84(%rsp)
-	movl	$0, 80(%rsp)
-	jmp	.LBB53_4
-.LBB53_3:
-	addq	$104, %rsp
+	movl	%eax, 52(%rsp)
+	movl	$0, 48(%rsp)
+	jmp	.LBB80_4
+.LBB80_3:
+	addq	$72, %rsp
 	retq
-.LBB53_4:
-	movl	80(%rsp), %eax
-	cmpl	84(%rsp), %eax
-	jge	.LBB53_6
-	movq	88(%rsp), %rcx
+.LBB80_4:
+	movl	48(%rsp), %eax
+	cmpl	52(%rsp), %eax
+	jge	.LBB80_6
+	movq	56(%rsp), %rcx
 	callq	__Main_World_GameWorld_Phys_Main_update
 	callq	_none_Sys_Input_inUpdate
-	movl	80(%rsp), %eax
+	movl	48(%rsp), %eax
 	addl	$1, %eax
-	movl	%eax, 80(%rsp)
-	jmp	.LBB53_4
-.LBB53_6:
-	cmpl	$1, 84(%rsp)
-	jl	.LBB53_8
-	movq	88(%rsp), %rcx
+	movl	%eax, 48(%rsp)
+	jmp	.LBB80_4
+.LBB80_6:
+	cmpl	$1, 52(%rsp)
+	jl	.LBB80_8
+	movq	56(%rsp), %rcx
 	callq	__Main_World_GameWorld_Sys_Sulfur_draw
-	movq	.refptr.C_TEXT(%rip), %rax
-	movw	(%rax), %ax
-	movq	_Sys_Rom_sfont(%rip), %rcx
-	leaq	_sz21(%rip), %rdx
-	movq	%rdx, 80(%rsp)
-	movq	%rcx, 56(%rsp)
-	movw	%ax, 48(%rsp)
-	movl	$4, 72(%rsp)
-	movl	$16, 68(%rsp)
-	movl	$16, 64(%rsp)
-	leaq	48(%rsp), %rcx
-	callq	_Glyph_Sys_Sulfur_draw
+	movq	56(%rsp), %rcx
+	callq	__Main_World_GameWorld_Phys_Main_drawMini
 	callq	_none_Sys_Sulfur_passRenderVars
 	callq	_none_Sys_Sulfur_refresh
 	callq	gc_collect
-	jmp	.LBB53_9
-.LBB53_8:
-	jmp	.LBB53_9
-.LBB53_9:
-	jmp	.LBB53_1
+	jmp	.LBB80_9
+.LBB80_8:
+	jmp	.LBB80_9
+.LBB80_9:
+	jmp	.LBB80_1
 	.seh_endproc
 
 	.bss
@@ -4902,8 +7287,9 @@ _sz16:
 	.globl	_sz17
 	.p2align	4, 0x0
 _sz17:
-	.long	3459
-	.asciz	"#version 330\r\nprecision mediump float;\r\n\r\nin vec3 xPos;\r\nin vec2 xTex;\r\n\r\nuniform sampler2D gPos;\r\nuniform sampler2D gNorm;\r\nuniform sampler2D gColor;\r\nuniform sampler2D gSpec;\r\nuniform sampler2D occlusion;\r\n\r\nout vec4 finalColor;\r\n\r\nconst vec4 cDarkColor = vec4(0.7, 0.7, 0.8, 1.0);\r\nconst vec3 cFogColor = vec3(0.4, 0.45, 0.6);\r\n\r\nconst vec3 cLightPos = vec3(-9.0, -15.0, -25.0);\r\nconst vec3 cDiffColor = vec3(0.3, 0.3, 0.3);\r\nconst vec3 cSpecColor = vec3(0.4, 0.3, 0.5);\r\n\r\nconst vec3 centerPos = vec3(0.0, -1.0, -10.0);\r\n\r\nconst float ox = 2.5 / 960.0;\r\nconst float oy = 2.5 / 640.0;\r\n\r\nconst vec2 poissonDisk[8] = vec2[](\r\n\tvec2(-0.942, -0.399),\r\n\tvec2( 0.945, -0.768),\r\n\tvec2(-0.094, -0.929),\r\n\tvec2( 0.344,  0.293),\r\n\tvec2(-0.915,  0.457),\r\n\tvec2( 0.791,  0.598),\r\n\tvec2(-0.488, -0.649),\r\n\tvec2( 0.087, -0.005)\r\n);\r\n\r\n\t// math functions\r\n\r\nvec3 squareVec(vec3 v) {\r\n\treturn vec3(v.r * v.r, v.g * v.g, v.b * v.b);\r\n}\r\n\r\nvec3 sqrtVec(vec3 v) {\r\n\treturn vec3(sqrt(v.r), sqrt(v.g), sqrt(v.b));\r\n}\r\n\r\nvoid main()\r\n{\r\n\tvec3 vPos = texture(gPos, xTex).rgb;\r\n\tvec3 vNorm = texture(gNorm, xTex).rgb;\r\n\tvec4 vColor = texture(gColor, xTex);\r\n\tvec4 vSpec = texture(gSpec, xTex);\r\n\tfloat vOcc = texture(occlusion, xTex).r;\r\n\r\n\tif (vColor.a <= 0.0) vOcc = 1.0;\r\n\r\n\tfloat distance = length(centerPos - vPos);\r\n\tfloat attenuation = 1.0 / (1.0 + 0.3 * pow(distance, 1.7));\r\n\tvColor = vColor + (vColor * attenuation * 0.8);\r\n\r\n\t// calculate shadow by averaging locations nearby\r\n\t/*float shadow = 0.0;\r\n\tfor (int i = -1; i <= 1; i++)\r\n\t{\r\n\t\tfor (int j = -2; j <= 0; j++)\r\n\t\t{\r\n\t\t\tfloat zx = xTex.x + (ox * float(i));\r\n\t\t\tfloat zy = xTex.y + (oy * float(i));\r\n\t\t\tfloat shadowP = texture(gSpec, vec2(zx, zy)).g;\r\n\t\t\tshadow = shadow + shadowP;\r\n\t\t}\r\n\t}\r\n\tshadow = (shadow * 0.4) / 9.0;*/\r\n\r\n\t// calculate shadow by averaging locations nearby\r\n\tfloat shadAngle = fract(sin(dot(vPos.xy, vec2(12.9898, 78.233))) * 43758.5453) * 6.2831853;\r\n\tmat2 shadRotate = mat2(cos(shadAngle), -sin(shadAngle), sin(shadAngle), cos(shadAngle));\r\n\tfloat shadow = 0.0;\r\n\tfor (int i = 0; i < 8; i++)\r\n\t{\r\n\t\tvec2 offset = shadRotate * poissonDisk[i];\r\n\t\tfloat zx = xTex.x + offset.x * ox;\r\n\t\tfloat zy = xTex.y + (offset.y - 0.8) * oy;\r\n\t\tfloat shadowP = texture(gSpec, vec2(zx, zy)).g;\r\n\t\tshadow = shadow + shadowP;\r\n\t}\r\n\tshadow = (shadow * 0.5) / 8.0;\r\n\r\n\t// calculate the specular reflection\r\n\tvec3 lightDir = normalize(cLightPos - vPos);\r\n\tfloat lambert = dot(vNorm, lightDir);\r\n\tfloat spec = 0.0;\r\n\tif (lambert > 0.0)\r\n\t{\r\n\t\tvec3 viewDir = normalize(-vPos);\r\n\t\tvec3 halfDir = normalize(lightDir + viewDir);\r\n\t\tfloat specAngle = dot(halfDir, vNorm);\r\n\t\tspec = pow(specAngle, 4.0);\r\n\t}\r\n\r\n\t// combine the ambient, diffuse, and specular light to get the base color\r\n\t// -- coloring given used as ambient light value\r\n\tfloat alpha = vColor.a;\r\n\tvec4 texColor = vColor * cDarkColor;\r\n\ttexColor = vec4(vOcc * (1.0 - shadow) * texColor.rgb, texColor.a);\r\n\t// -- lambert multiplier makes things lighter\r\n\tvec4 lightColor = vec4((lambert * 0.3 * cDiffColor) + (spec * 0.5 * cSpecColor), alpha);\r\n\tvec4 baseColor = texColor + (lightColor * 0.7);\r\n\t//vec4 baseColor = texColor;\r\n\t// fog factor\r\n\tfloat LOG2 = 1.442695;\r\n\tfloat fogCoord = vSpec.z - 3.0;\r\n\r\n\tfloat fogDensity = 0.07;\r\n\tfloat fogFactor = exp2(-fogDensity * fogDensity * fogCoord * fogCoord * LOG2);\r\n\tfogFactor = clamp(fogFactor, 0.0, 1.0);\r\n\tvec4 fogColor = mix(vec4(cFogColor, 1.0), baseColor, fogFactor);\r\n\r\n\tfinalColor = fogColor;\t\r\n}"
+	.long	3570
+	.asciz	"#version 330\r\nprecision mediump float;\r\n\r\nin vec3 xPos;\r\nin vec2 xTex;\r\n\r\nuniform sampler2D gPos;\r\nuniform sampler2D gNorm;\r\nuniform sampler2D gColor;\r\nuniform sampler2D gSpec;\r\nuniform sampler2D occlusion;\r\n\r\nout vec4 finalColor;\r\n\r\nconst vec4 cDarkColor = vec4(0.7, 0.7, 0.8, 1.0);\r\nconst vec3 cFogColor = vec3(0.4, 0.45, 0.6);\r\n\r\nconst vec3 cLightPos = vec3(-9.0, -15.0, -25.0);\r\nconst vec3 cDiffColor = vec3(0.3, 0.3, 0.3);\r\nconst vec3 cSpecColor = vec3(0.4, 0.3, 0.5);\r\n\r\nconst vec3 centerPos = vec3(0.0, -1.0, -10.0);\r\n\r\nconst float ox = 2.5 / 960.0;\r\nconst float oy = 2.5 / 640.0;\r\n\r\nconst vec2 poissonDisk[8] = vec2[](\r\n\tvec2(-0.942, -0.399),\r\n\tvec2( 0.945, -0.768),\r\n\tvec2(-0.094, -0.929),\r\n\tvec2( 0.344,  0.293),\r\n\tvec2(-0.915,  0.457),\r\n\tvec2( 0.791,  0.598),\r\n\tvec2(-0.488, -0.649),\r\n\tvec2( 0.087, -0.005)\r\n);\r\n\r\n\t// math functions\r\n\r\nvec3 squareVec(vec3 v) {\r\n\treturn vec3(v.r * v.r, v.g * v.g, v.b * v.b);\r\n}\r\n\r\nvec3 sqrtVec(vec3 v) {\r\n\treturn vec3(sqrt(v.r), sqrt(v.g), sqrt(v.b));\r\n}\r\n\r\nvoid main()\r\n{\r\n\tvec3 vPos = texture(gPos, xTex).rgb;\r\n\tvec3 vNorm = texture(gNorm, xTex).rgb;\r\n\tvec4 vColor = texture(gColor, xTex);\r\n\tvec4 vSpec = texture(gSpec, xTex);\r\n\tfloat vOcc = texture(occlusion, xTex).r;\r\n\r\n\tif (vColor.a <= 0.0) vOcc = 1.0;\r\n\r\n\tfloat distance = length(centerPos - vPos);\r\n\tfloat attenuation = 1.0 / (1.0 + 0.3 * pow(distance, 1.7));\r\n\tvColor = vColor + (vColor * attenuation * 0.8);\r\n\r\n\t// calculate shadow by averaging locations nearby\r\n\t/*float shadow = 0.0;\r\n\tfor (int i = -1; i <= 1; i++)\r\n\t{\r\n\t\tfor (int j = -2; j <= 0; j++)\r\n\t\t{\r\n\t\t\tfloat zx = xTex.x + (ox * float(i));\r\n\t\t\tfloat zy = xTex.y + (oy * float(i));\r\n\t\t\tfloat shadowP = texture(gSpec, vec2(zx, zy)).g;\r\n\t\t\tshadow = shadow + shadowP;\r\n\t\t}\r\n\t}\r\n\tshadow = (shadow * 0.4) / 9.0;*/\r\n\r\n\t// calculate shadow by averaging locations nearby\r\n\tfloat shadAngle = fract(sin(dot(vPos.xy, vec2(12.9898, 78.233))) * 43758.5453) * 6.2831853;\r\n\tmat2 shadRotate = mat2(cos(shadAngle), -sin(shadAngle), sin(shadAngle), cos(shadAngle));\r\n\tfloat shadow = 0.0;\r\n\tfor (int i = 0; i < 8; i++)\r\n\t{\r\n\t\tvec2 offset = shadRotate * poissonDisk[i];\r\n\t\tfloat zx = xTex.x + offset.x * ox;\r\n\t\tfloat zy = xTex.y + (offset.y - 0.8) * oy;\r\n\t\tfloat shadowP = texture(gSpec, vec2(zx, zy)).g;\r\n\t\tshadow = shadow + shadowP;\r\n\t}\r\n\tshadow = (shadow * 0.5) / 8.0;\r\n\r\n\t// calculate the specular reflection\r\n\tvec3 lightDir = normalize(cLightPos - vPos);\r\n\tfloat lambert = dot(vNorm, lightDir);\r\n\tfloat spec = 0.0;\r\n\tif (lambert > 0.0)\r\n\t{\r\n\t\tvec3 viewDir = normalize(-vPos);\r\n\t\tvec3 halfDir = normalize(lightDir + viewDir);\r\n\t\tfloat specAngle = dot(halfDir, vNorm);\r\n\t\tspec = pow(specAngle, 4.0);\r\n\t}\r\n\r\n\t// combine the ambient, diffuse, and specular light to get the base color\r\n\t// -- coloring given used as ambient light value\r\n\tfloat alpha = vColor.a;\r\n\tvec4 texColor = vColor * cDarkColor;\r\n\ttexColor = vec4(vOcc * (1.0 - shadow) * texColor.rgb, texColor.a);\r\n\t// -- lambert multiplier makes things lighter\r\n\tvec4 lightColor = vec4((lambert * 0.3 * cDiffColor) + (spec * 0.5 * cSpecColor), alpha);\r\n\tvec4 baseColor = texColor + (lightColor * 0.7);\r\n\t//vec4 baseColor = texColor;\r\n\t// fog factor\r\n\tfloat LOG2 = 1.442695;\r\n\tfloat fogCoord = vSpec.z - 3.0;\r\n\r\n\t//float fogDensity = 0.07;\r\n\tfloat fogDensity = 0.05;\r\n\t//float fogFactor = exp2(-fogDensity * fogDensity * fogCoord * fogCoord * LOG2);\r\n\tfloat fogFactor = exp2(-fogDensity * fogDensity * pow(fogCoord, 1.4) * LOG2);\r\n\tfogFactor = clamp(fogFactor, 0.0, 1.0);\r\n\tvec4 fogColor = mix(vec4(cFogColor, 1.0), baseColor, fogFactor);\r\n\r\n\tfinalColor = fogColor;\t\r\n}"
+	.zero	1
 
 	.globl	_sz18
 	.p2align	3, 0x0
@@ -4942,6 +7328,21 @@ _Sys_Sulfur_lightMat:
 _Sys_Sulfur_samples:
 	.quad	0
 
+	.data
+	.globl	tc_offs__Commons_Core_IntQueue
+	.p2align	2, 0x0
+tc_offs__Commons_Core_IntQueue:
+	.long	0
+	.long	8
+
+	.globl	tc__Commons_Core_IntQueue
+	.p2align	3, 0x0
+tc__Commons_Core_IntQueue:
+	.long	2
+	.zero	4
+	.quad	tc_offs__Commons_Core_IntQueue
+
+	.bss
 	.globl	tc_offs__Phys_Main_MoveObj
 	.p2align	2, 0x0
 tc_offs__Phys_Main_MoveObj:
@@ -4954,6 +7355,18 @@ tc__Phys_Main_MoveObj:
 	.long	1
 	.zero	4
 	.quad	tc_offs__Phys_Main_MoveObj
+
+	.globl	tc_offs__Phys_Main_GameTile
+	.p2align	2, 0x0
+tc_offs__Phys_Main_GameTile:
+	.long	40
+
+	.globl	tc__Phys_Main_GameTile
+	.p2align	3, 0x0
+tc__Phys_Main_GameTile:
+	.long	1
+	.zero	4
+	.quad	tc_offs__Phys_Main_GameTile
 
 	.globl	_rawC
 	.p2align	4, 0x0
@@ -4983,6 +7396,35 @@ _arrC:
 	.p2align	3, 0x0
 _Phys_Main__COLORS:
 	.quad	_arrC
+
+	.data
+	.globl	_rawC.1
+	.p2align	4, 0x0
+_rawC.1:
+	.long	15736864
+	.long	14696480
+	.long	13664288
+	.long	3207200
+	.long	2146528
+	.long	2109680
+	.long	6299840
+
+	.globl	_arrC.2
+	.p2align	4, 0x0
+_arrC.2:
+	.long	4
+	.long	7
+	.long	7
+	.zero	4
+	.quad	_rawC.1
+	.long	7
+	.zero	4
+
+	.section	.rdata,"dr"
+	.globl	_Phys_Main__CC
+	.p2align	3, 0x0
+_Phys_Main__CC:
+	.quad	_arrC.2
 
 	.data
 	.globl	tc_offs__Phys_Main_GameRoom
@@ -5024,9 +7466,9 @@ tc__ProcGen_Noise_PermTable:
 	.zero	4
 	.quad	tc_offs__ProcGen_Noise_PermTable
 
-	.globl	_rawC.1
+	.globl	_rawC.3
 	.p2align	4, 0x0
-_rawC.1:
+_rawC.3:
 	.long	1
 	.long	1
 	.long	4294967295
@@ -5052,14 +7494,14 @@ _rawC.1:
 	.long	0
 	.long	4294967295
 
-	.globl	_arrC.2
+	.globl	_arrC.4
 	.p2align	4, 0x0
-_arrC.2:
+_arrC.4:
 	.long	4
 	.long	24
 	.long	24
 	.zero	4
-	.quad	_rawC.1
+	.quad	_rawC.3
 	.long	24
 	.zero	4
 
@@ -5067,7 +7509,7 @@ _arrC.2:
 	.globl	_ProcGen_Noise__GRAD
 	.p2align	3, 0x0
 _ProcGen_Noise__GRAD:
-	.quad	_arrC.2
+	.quad	_arrC.4
 
 	.bss
 	.globl	tc_offs__ProcGen_Noise_Simplex
@@ -5097,6 +7539,18 @@ tc__Main_Obj_GameObj:
 	.zero	4
 	.quad	tc_offs__Main_Obj_GameObj
 
+	.globl	tc_offs__Main_World_GenAuxInfo
+	.p2align	2, 0x0
+tc_offs__Main_World_GenAuxInfo:
+	.long	24
+
+	.globl	tc__Main_World_GenAuxInfo
+	.p2align	3, 0x0
+tc__Main_World_GenAuxInfo:
+	.long	1
+	.zero	4
+	.quad	tc_offs__Main_World_GenAuxInfo
+
 	.globl	tc_offs__Main_World_GameWorld
 	.p2align	2, 0x0
 tc_offs__Main_World_GameWorld:
@@ -5111,13 +7565,17 @@ tc__Main_World_GameWorld:
 	.zero	4
 	.quad	tc_offs__Main_World_GameWorld
 
-	.globl	_sz21
-	.p2align	4, 0x0
-_sz21:
-	.long	12
-	.asciz	"HELLO WORLD!"
-	.zero	3
+	.section	.rdata,"dr"
+	.globl	_Main_World__SPEED
+	.p2align	2, 0x0
+_Main_World__SPEED:
+	.long	336
 
+	.section	.rdata$.refptr.C_BOX,"dr",discard,.refptr.C_BOX
+	.p2align	3, 0x0
+	.globl	.refptr.C_BOX
+.refptr.C_BOX:
+	.quad	C_BOX
 	.section	.rdata$.refptr.C_FBO_COLOR,"dr",discard,.refptr.C_FBO_COLOR
 	.p2align	3, 0x0
 	.globl	.refptr.C_FBO_COLOR
@@ -5153,11 +7611,6 @@ _sz21:
 	.globl	.refptr.C_GL_MAT4
 .refptr.C_GL_MAT4:
 	.quad	C_GL_MAT4
-	.section	.rdata$.refptr.C_TEXT,"dr",discard,.refptr.C_TEXT
-	.p2align	3, 0x0
-	.globl	.refptr.C_TEXT
-.refptr.C_TEXT:
-	.quad	C_TEXT
 	.section	.rdata$.refptr.K_down,"dr",discard,.refptr.K_down
 	.p2align	3, 0x0
 	.globl	.refptr.K_down
@@ -5168,6 +7621,11 @@ _sz21:
 	.globl	.refptr.K_left
 .refptr.K_left:
 	.quad	K_left
+	.section	.rdata$.refptr.K_m,"dr",discard,.refptr.K_m
+	.p2align	3, 0x0
+	.globl	.refptr.K_m
+.refptr.K_m:
+	.quad	K_m
 	.section	.rdata$.refptr.K_right,"dr",discard,.refptr.K_right
 	.p2align	3, 0x0
 	.globl	.refptr.K_right
@@ -5178,6 +7636,11 @@ _sz21:
 	.globl	.refptr.K_up
 .refptr.K_up:
 	.quad	K_up
+	.section	.rdata$.refptr.K_x,"dr",discard,.refptr.K_x
+	.p2align	3, 0x0
+	.globl	.refptr.K_x
+.refptr.K_x:
+	.quad	K_x
 	.section	.rdata$.refptr.K_z,"dr",discard,.refptr.K_z
 	.p2align	3, 0x0
 	.globl	.refptr.K_z
