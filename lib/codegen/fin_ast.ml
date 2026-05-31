@@ -69,6 +69,7 @@ let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e
 	UnaryExpC(_, e) -> collect_thru_exp f e
 	| BinExpC(_, e1, e2) -> (collect_thru_exp f e1) @ (collect_thru_exp f e2)
 	| CallExpC(_, ef, el, _) -> (f e) @ (collect_thru_exp f ef) @ (List.concat (List.map (collect_thru_exp f) el))
+	| EnumRawExpC e -> collect_thru_exp f e
 	| TupleExpC(_, _, el) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
 	| MemoryFieldExpC(_, e, _, _) -> collect_thru_exp f e
 	(*| TupleIndexExpC(e, _, _) -> collect_thru_exp f e*)
@@ -80,10 +81,11 @@ let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e
 	| ArrayIndexExpC(_, e, FullIndexC el, _) -> (collect_thru_exp f e) @ (List.concat (List.map (collect_thru_exp f) el))
 	| ArrayLengthExpC e -> collect_thru_exp f e
 	| ArrayDimsExpC(_, e) -> collect_thru_exp f e
+	| ArrayAddExpC(ea, ev, _) -> (collect_thru_exp f ea) @ (collect_thru_exp f ev)
 	| NewStructExpC(_, el) -> List.concat (List.map (collect_thru_exp f) el)
 	(*| StructFieldExpC(_, e, _, _) -> collect_thru_exp f e*)
 	| GCNewRootExpC e -> collect_thru_exp f e
-	| _ -> f e
+	| ConstExpC _ | NullExpC | VarExpC _ | EnumExpC _ | ConstArrayExpC _ -> f e
 and collect_thru_stmt (f: gen_exp -> 'a list) (s: gen_stmt): 'a list = match s with
 	EvalStmtC e -> collect_thru_exp f e
 	| AssignStmtC(_, e) -> collect_thru_exp f e

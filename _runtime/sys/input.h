@@ -35,6 +35,7 @@ const int32_t K_left = GLFW_KEY_LEFT;
 const int32_t K_right = GLFW_KEY_RIGHT;
 const int32_t K_up = GLFW_KEY_UP;
 const int32_t K_down = GLFW_KEY_DOWN;
+const int32_t K_space = GLFW_KEY_SPACE;
 const int32_t K_z = GLFW_KEY_Z;
 const int32_t K_x = GLFW_KEY_X;
 const int32_t K_c = GLFW_KEY_C;

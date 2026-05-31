@@ -3,7 +3,9 @@
 
 	/* resource loading */
 
-const char* ROM_DIR = "workspace/game/rom/";
+//const char* ROM_DIR = "workspace/game/rom/";
+
+extern char* rom_dir;
 
 extern void* res_url_list[];
 extern void* res_ptr_list[];
@@ -17,7 +19,7 @@ void* initRomLoad(void* arg) {
 	// unpack sulfur rom
 	sf_rom_t* rom = ((sulfur_t*) arg)->rom;
 	// initialize memory to store URL
-	size_t rom_len = strlen(ROM_DIR);
+	size_t rom_len = strlen(rom_dir);
 	size_t full_len = rom_len * 2;
 	char *full_url = malloc(full_len + 1);
 	// image data storage
@@ -32,7 +34,7 @@ void* initRomLoad(void* arg) {
 			full_url = realloc(full_url, full_len + 1);
 		}
 		// read URL name
-		strcpy(full_url, ROM_DIR);
+		strcpy(full_url, rom_dir);
 		strcat(full_url, res_url_list[i]);
 		// load image data
 		iData.type = R_IMAGE;
@@ -90,6 +92,16 @@ void* initRomLoad(void* arg) {
 		// pass sprite data to sulfur's resource loader
 		pthread_mutex_lock(&rom->loadMutex);
 		addResList(rom->resList, &iData);
+		pthread_mutex_unlock(&rom->loadMutex);
+	}
+	// default meta-information if no ROM
+	if (res_total + comp_res_total == 0) {
+		pthread_mutex_lock(&rom->loadMutex);
+		resListMeta_t* meta = &rom->resList->meta;
+		meta->init = 1;
+		meta->total = 0;
+		meta->width = 256;
+		meta->height = 256;
 		pthread_mutex_unlock(&rom->loadMutex);
 	}
 	return NULL;

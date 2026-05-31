@@ -36,8 +36,8 @@ int main(void) {
 	/*
 		FULL SULFUR RUNTIME INITIALIZATION
 	*/
-	int WIDTH = 960;
-	int HEIGHT = 640;
+	//int WIDTH = 960;
+	//int HEIGHT = 640;
 	//int WIDTH = 640;
 	//int HEIGHT = 480;
 	gc_init();

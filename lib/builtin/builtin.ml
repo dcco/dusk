@@ -130,7 +130,8 @@ let builtinList = [
 	("color", ExternalSym [], [uint8Ty; uint8Ty; uint8Ty], uint32Ty);
 	("rgb", ExternalSym [], [uint32Ty], uint32Ty);
 
-	("remove", ExternalSym [], [ArrayTy(1, intTy); intTy], unitTy);
+	("remove", ExternalSym [], [ArrayGenTy; intTy], unitTy);
+	("clear", ExternalSym [], [ArrayGenTy], unitTy);
 
 	("cLoad", InternalSym "cLoad", [stringTy], stringTy);
 ]
@@ -158,6 +159,7 @@ let inputList = [
 ]
 
 let vec3Ty = TupleTy [floatTy; floatTy; floatTy]
+let vec4Ty = TupleTy [floatTy; floatTy; floatTy; floatTy]
 let mat4Ty = builtinTy "Mat4"
 let shaderTy = builtinTy "Shader"
 let fboTy = builtinTy "FrameBuffer"
@@ -165,19 +167,14 @@ let renderDataTy = builtinTy "RenderData"
 let imageTy = builtinTy "Image"
 let fixImageTy = builtinTy "FixImage"
 let spriteTy = builtinTy "Sprite"
+let meshTy = builtinTy "Mesh"
 
-let sulfurList = [
-		(* main hooks *)
-	("waitRom", ExternalSym [], [], unitTy);
-	("refresh", ExternalSym [], [], unitTy);
-	("draw", ExternalSym [], [namedTy "Glyph"], unitTy);
+let sulfurShaderList = [
+		(* 3d rendering hooks *)
 	("drawQuadX", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
 	("drawQuadY", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
 	("drawQuadZ", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
-	("drawSprite", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy; boolTy], unitTy);
-
-		(* rom data *)
-	("pixel", ExternalSym [], [imageTy; intTy; intTy], uint32Ty);
+	("drawSprite3D", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy; boolTy], unitTy);
 
 		(* shader / fbo setup *)
 	("newShader", ExternalSym [], [stringTy; stringTy; 
@@ -210,6 +207,19 @@ let sulfurList = [
 	("get", ExternalSym [], [renderDataTy; intTy], namedTy "GLVal");
 	("set", ExternalSym [], [renderDataTy; intTy; namedTy "GLVal"], unitTy);
 	("setAttr", ExternalSym [], [intTy; namedTy "GLVal"], unitTy);
+]
+
+let sulfurList = [
+		(* main hooks *)
+	("waitRom", ExternalSym [], [], unitTy);
+	("refresh", ExternalSym [], [], unitTy);
+	("drawBox", ExternalSym [], [intTy; intTy; intTy; intTy; intTy], unitTy);
+	("drawSprite", ExternalSym [], [intTy; intTy; spriteTy; intTy; boolTy], unitTy);
+	("drawText", ExternalSym [], [spriteTy; intTy; intTy; intTy; stringTy], unitTy);
+	(*("draw", ExternalSym [], [namedTy "Glyph"], unitTy);*)
+	
+		(* rom data *)
+	("pixel", ExternalSym [], [imageTy; intTy; intTy], uint32Ty);
 
 		(* vec3 *)
 	("measure", ExternalSym [], [vec3Ty], floatTy);
@@ -219,19 +229,22 @@ let sulfurList = [
 		(* mat4 *)
 	("newMat4", ExternalSym [], [], mat4Ty);
 	("idMat4", ExternalSym [], [mat4Ty], unitTy);
+	("update", ExternalSym [], [mat4Ty; intTy; floatTy], unitTy);
 	("translate", ExternalSym [], [mat4Ty; floatTy; floatTy; floatTy], unitTy);
 	("rotateX", ExternalSym [], [mat4Ty; floatTy], unitTy);
 	("lookAt", ExternalSym [], [mat4Ty; vec3Ty; vec3Ty; vec3Ty], unitTy);
+
+	("mult", ExternalSym [], [mat4Ty; vec4Ty], vec4Ty)
 ]
 
 let sulfurTypes = [
-	(pb "Glyph", TDefVD (UnionTD [
+	(*(pb "Glyph", TDefVD (UnionTD [
 		(qn "GNop", [], GlobalEB "C_NOP");
 		(qn "GBox", [intTy; intTy; intTy; intTy; intTy], GlobalEB "C_BOX");
-		(qn "GSprite", [intTy; intTy; spriteTy; intTy], GlobalEB "C_SPRITE");
+		(qn "GSprite", [intTy; intTy; spriteTy; intTy; boolTy], GlobalEB "C_SPRITE");
 		(qn "GText", [spriteTy; stringTy], GlobalEB "C_TEXT")
 	]));
-	(*(QT None, "Glyph3d", TDefVD (UnionTD [
+	(QT None, "Glyph3d", TDefVD (UnionTD [
 		("G3Nop", [], GlobalEB "C3_NOP");
 		("G3QuadX", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QX");
 		("G3QuadY", [floatTy; floatTy; floatTy; spriteTy; intTy], GlobalEB "C3_QY");
@@ -263,11 +276,13 @@ let sulfurTypes = [
 		builtin tree map
 	*)
 
-let builtinTreeMap (): (m_virt_bind list) tree_map =
+let builtinTreeMap (shaderFlag: bool): (m_virt_bind list) tree_map =
 	let m1 = single_tree ["builtin"] (toVirtList builtinList) in
 	let m2 = add_tree m1 ["Sys"; "Os"] (toVirtList osList) in
 	let m3 = add_tree m2 ["Sys"; "Input"] (toVirtList inputList) in
-	add_tree m3 ["Sys"; "Sulfur"] (sulfurTypes @ (toVirtList sulfurList))
+	let sfl =
+		if shaderFlag then sulfurShaderList @ sulfurList else sulfurList
+	in add_tree m3 ["Sys"; "Sulfur"] (sulfurTypes @ (toVirtList sfl))
 
 let extractSymbols (symList: (raw_bind, qual_name) virt_bind list): raw_bind list =
 	List.concat (List.map (fun (f, vd) -> match vd with

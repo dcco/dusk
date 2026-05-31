@@ -38,6 +38,8 @@ type 'm raw_type =
 	| TagOfTy of 'm raw_type
 	| FunTy of 'm raw_type list * 'm raw_type
 	| BotTy
+		(* to replace with polymorphism *)
+	| ArrayGenTy
 
 type 'm fun_type = 'm raw_type list * 'm raw_type
 
@@ -55,6 +57,7 @@ let rec string_of_type (f: 'm -> string) (tau: 'm raw_type): string = match tau 
 	| TagOfTy tau -> (string_of_type f tau) ^ ".t"
 	| FunTy(tau_pl, tau_r) -> string_of_fun_type f (tau_pl, tau_r)
 	| BotTy -> "BOT"
+	| ArrayGenTy -> "1d[_]"
 	
 and string_of_fun_type (f: 'm -> string) ((tau_pl, tau_r): 'm fun_type): string =
 	"Fn(" ^ (String.concat ", " (List.map (string_of_type f) tau_pl)) ^ ") " ^ (string_of_type f tau_r)

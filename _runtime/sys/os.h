@@ -73,6 +73,10 @@ extern void _a1_builtin_remove(gc_array_t* arr, int32_t i) {
 	}
 }
 
+extern void _a1_builtin_clear(gc_array_t* arr, int32_t i) {
+	arr->size = 0;
+}
+
 	/*
 		os - console / printing functions
 	*/

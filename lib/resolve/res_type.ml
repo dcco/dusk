@@ -49,6 +49,7 @@ let rec resolve_type (env: res_env) (p: l_pos) (tau: m_type): g_type rs_res = ma
 		let* tau_pl' = map_try_res (resolve_type env p) tau_pl in
 		let* tau_r' = resolve_type env p tau_r in Valid (FunTy(tau_pl', tau_r'))
 	| BotTy -> Valid BotTy
+	| ArrayGenTy -> Valid ArrayGenTy
 
 let resolve_type_def (env: res_env) (p: l_pos) (td: m_tdef): g_tdef rs_res = match td with
 	StructTD fl ->

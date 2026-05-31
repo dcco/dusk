@@ -1,3 +1,5 @@
+open Yojson.Safe
+
 open Commons.Try_log
 open Commons.Tree_map
 open Parser
@@ -140,18 +142,6 @@ and ext_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
 	let*! res_f = pre_compile_file resEnv' typeEnv main_dir (PreludeFC(path, dir, f)) in
 	save_ext_dec_renv resEnv' path; validLog res_f
 
-(*
-let pre_compile_file (resEnv: Res_cont.res_env) (typeEnv: Tc_cont.type_env)
-	(main_dir: string) (f: string): ((string * gen_dec) list) try_log_res =
-		(* PHASE 1. lexing / parsing *)
-	let*! tkList = load_token_list (main_dir ^ "/" ^ f) in
-	let*! rawAst = tryWithErrLog string_of_parse_err (parseMain tkList) in
-		(* PHASE 2. namespace resolution *)
-	let resEnv' = Res_cont.freeze_env resEnv [] in
-	let*! canonAst = tryWithErrLog string_of_rs_err (resolve_section resEnv' rawAst) in
-		(* PHASE 3. type-checking *)
-	tryWithErrLog string_of_tc_err (tc_section typeEnv canonAst)*)
-
 	(* command line argument state *)
 
 let usage_msg = "dusk <directory>"
@@ -168,6 +158,36 @@ let fail_simple str = (print_string (str ^ "\n"); exit 1)
 
 let run_command s e =
 	let r = Sys.command s in if r <> 0 then fail_simple e else ()
+
+	(* configuration info *)
+
+type dusk_config = {
+	size: (int * int) ref;
+	shaderFlag: bool ref;
+	shaderDir: string option ref
+}
+
+let def_config (): dusk_config = {
+	size = ref (640, 480);
+	shaderFlag = ref false;
+	shaderDir = ref None
+}
+
+let read_config (path: string): dusk_config =
+	let cfg = def_config () in
+	if not (Sys.file_exists (path ^ "/config.json")) then cfg
+	else let json = Yojson.Safe.from_file (path ^ "/config.json") in
+	(match Util.member "size" json with
+		`Null -> ()
+		| `List [`Int w; `Int h] -> cfg.size := (w, h)
+		| _ -> fail_simple "Invalid JSON for size in configuration file."
+	); (match Util.member "shaderDir" json with
+		`Null -> ()
+		| `String s ->
+			cfg.shaderFlag := true;
+			cfg.shaderDir := Some s
+		| _ -> fail_simple "Invalid JSON for shader directory in configuration file."
+	); cfg;;
 
 	(* main program *)
 
@@ -188,9 +208,11 @@ let program _ =
 	if !main_arg = "" then failLog "No file / directory name given."
 	else let main_dir = !main_arg in (
 		print_string ("Source directory: " ^ main_dir ^ "\n");
+			(* read config file *)
+		let cfg = read_config main_dir in
 			(* build virtual bindings from builtin + rom *)
 		let romBindings = read_rom_layout (main_dir ^ "/rom") in
-		let virtTree = add_tree (Builtin.builtinTreeMap ()) ["Sys"; "Rom"] romBindings in
+		let virtTree = add_tree (Builtin.builtinTreeMap !(cfg.shaderFlag)) ["Sys"; "Rom"] romBindings in
 		let virtBindings = List.concat (List.map (fun (path, vdl) ->
 			List.map (fun vd -> (path, vd)) vdl
 		) (flatten_tree virtTree)) in
@@ -201,24 +223,33 @@ let program _ =
 		let typeEnv = Tc_cont.builtin_tenv canonBindings in
 		let tcBuiltins = Tc_cont.tc_complete_builtins typeEnv canonBindings in
 			(* compile shader/pipeline *)
-		let*! pipeAstFront = ext_compile_file resEnv typeEnv main_dir ["Sys"; "Sulfur"] "shader" "PipeAPI.dm" in
-		let*! pipeAstBack = ext_compile_file resEnv typeEnv main_dir ["pipeline"] "shader" "Pipeline.dm" in
+		let*! pipeAst = (match !(cfg.shaderDir) with
+			None -> validLog []
+			| Some sDir ->
+				let*! pipeAstFront = ext_compile_file resEnv typeEnv main_dir ["Sys"; "Sulfur"] sDir "PipeAPI.dm" in
+				let*! pipeAstBack = ext_compile_file resEnv typeEnv main_dir ["pipeline"] sDir "Pipeline.dm" in
+				validLog (pipeAstBack @ pipeAstFront)
+		) in
 			(* PHASES 1-3. incremental resolution *)
 		let*! typedAstList = pre_compile_file resEnv typeEnv main_dir TopLevelFC in
-		let typedAst = List.concat (pipeAstBack @ pipeAstFront @ typedAstList) in
+		let typedAst = List.concat (pipeAst @ typedAstList) in
 			(* PHASE 4. code generation *)
 		let targetArch =
 			if !target_arg <> "" then Some !target_arg
 			else if !win_arg then Some "x86_64-pc-windows-gnu" else None in
-		genProgramHook targetArch (main_dir ^ "/test") false tcBuiltins typedAst;
+		genProgramHook targetArch main_dir false tcBuiltins typedAst;
 			(* PHASE 5. linking *)
 		let runDir = if !runtime_arg = "" then binDir ^ "/_runtime" else !runtime_arg in
 			(* -- copy test object file to runtime directory *)
 		run_command (Printf.sprintf "cp -f %s/test.o %s/j_out.o" main_dir runDir)
 			("Failed to copy test binary to runtime directory\n  " ^ runDir ^ "");
 			(* -- run makefile in runtime directory, copy output to output directory *)
+		let sizeFlag = (let (w, h) = !(cfg.size) in
+			"-DWIDTH=" ^ (string_of_int w) ^ " -DHEIGHT=" ^ (string_of_int h)) in
+		let sFlag = " DUSK_FLAGS=\"" ^
+			(if !(cfg.shaderFlag) then "-DPIPELINE_DEF=1 " ^ sizeFlag else sizeFlag) ^ "\"" in
 		let runTarget = if !win_arg then "main.exe" else "main" in
-		run_command (Printf.sprintf "cd %s; make %s" runDir runTarget) "Failed MAKE for runtime.";
+		run_command ((Printf.sprintf ("cd %s; make %s") runDir runTarget) ^ sFlag) "Failed MAKE for runtime.";
 		let outFile = if !out_arg = "" then runTarget else !out_arg in
 		run_command (Printf.sprintf "cp %s/%s %s" runDir runTarget outFile)
 			"Failed to copy final binary to output directory.";

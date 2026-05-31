@@ -81,7 +81,7 @@ void addQuad3dRTable(r3d_t* cont, renderTable_t* rt, gl_var_list_t* attrList,
 	writeRVarList((int8_t*) (dat + 1), attrList);
 }
 
-void addSprite3dRTable(r3d_t* cont, renderTable_t* rt,  gl_var_list_t* attrList,
+void addSprite3dRTable(r3d_t* cont, renderTable_t* rt, gl_var_list_t* attrList,
 	float x, float y, float z, sprite_t* spritePtr, int32_t frame, int8_t facing)
 {
 	if (spritePtr == NULL) return;

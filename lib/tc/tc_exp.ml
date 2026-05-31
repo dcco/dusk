@@ -75,6 +75,8 @@ let rec is_subtype (s: g_type) (t: g_type): bool = match (s, t) with
 		if List.length _sl <> List.length _tl then false
 		else List.for_all (fun (s, t) -> is_subtype s t) (List.combine _sl _tl)
 	| (ArrayTy(i, s'), ArrayTy(j, t')) -> i = j && is_subtype s' t'
+	| (ArrayTy(i, _), ArrayGenTy) -> i = 1
+	| (ArrayGenTy, ArrayGenTy) -> true
 	| (ValArrayTy s', ValArrayTy t') -> is_subtype s' t'
 	| (TagOfTy s', TagOfTy t') -> is_subtype s' t'
 	| _ -> false
@@ -328,12 +330,30 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt) (tau_r: g_type): (t
 			if not (is_subtype t tau_r) then Error (BadReturn_Err(t, tau_r, p))
 			else Valid (env, [ReturnStmtC (Some e', t)], true)
 	)
-	| PatStmt(px, e, _) -> (match px with
+	| PatStmt(px, e, p) -> (match px with
 		VarPat x ->
-			let* (e', tau_e, b) = tc_extra_exp env e x in 
+			let* (e', tau_e, b) = tc_extra_exp env e x in
 			let ef = if cont.lf = Lin && is_heap_type env tau_e then GCNewRootExpC e' else e' in
 			Valid ({ env with localIds = StringMap.add x tau_e env.localIds }, (VarStmtC(x, ef, tau_e)) :: b, false)
-		| _ -> failwith "Unimplemented: tc_exp.ml - Patterns.")
+			(* TODO: allow a tuple to be used as a GC root *)
+		| ListPat xol ->
+			let* (e', tau_e) = tc_exp env e in
+			let* tau_vl = (match tau_e with
+				TupleTy tau_l ->
+					if List.length tau_l <> List.length xol then
+						Error (MismatchedPatNum_Err(List.length tau_l, List.length xol, p))
+					else Valid tau_l
+				| _ -> Error (NonTuplePat_Err(tau_e, p))
+			) in let dt = TypeDeref tau_e in
+			let (envX, b, _) = List.fold_left (fun (env', b, i) xo -> match xo with
+				None -> (env', b, i + 1)
+				| Some x ->
+					let tau_v = List.nth tau_vl i in
+					({ env' with localIds = StringMap.add x tau_v env'.localIds },
+						b @ [VarStmtC(x, MemoryFieldExpC(RC, VarExpC "__pat", i, dt), tau_v)], i + 1)
+			) (env, [], 0) xol in
+			Valid (envX, (VarStmtC("__pat", e', tau_e)) :: b, false)
+	)
 	| IfStmt(ec, b1, b2, _) ->
 		let* (ec', _) = tc_exp env ec in 
 		let* (_, b1', term1) = tc_body (nonLinCont cont) env b1 tau_r in

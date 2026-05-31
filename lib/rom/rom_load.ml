@@ -21,7 +21,8 @@ let read_sprite_def (json: Yojson.Safe.t): m_virt_bind = match json with
 	| _ -> failwith "TOERR: bad json sprite definition"
 
 let read_rom_layout (path: string): m_virt_bind list =
-	let layout = Yojson.Safe.from_file (path ^ "/layout.json") in
+	if not (Sys.file_exists (path ^ "/layout.json")) then []
+	else let layout = Yojson.Safe.from_file (path ^ "/layout.json") in
 	let spriteBinds = Util.member "sprites" layout |> Util.to_list |> List.map read_sprite_def in
 	let resBinds = Array.to_list (Sys.readdir path)
 	|> List.map (fun subName ->

@@ -12,10 +12,28 @@ sulfur_t* sulfur = NULL;
 
 	/* main bindings */
 
-extern void _Glyph_Sys_Sulfur_draw(int8_t raw[32])
+/*extern void _Glyph_Sys_Sulfur_draw(int8_t raw[32])
 {
 	renderList_t* rl = &sulfur->back_buffer->list2d;
 	addGlyphRList(rl, (glyph_t*) raw);
+}*/
+
+extern void _Int_Sys_Sulfur_drawBox(int32_t c, int32_t x, int32_t y, int32_t w, int32_t h)
+{
+	renderList_t* rl = &sulfur->back_buffer->list2d;
+	addBoxRList(rl, c, x, y, w, h);
+}
+
+extern void _Int_Sys_Sulfur_drawSprite(int32_t x, int32_t y, sprite_t* spritePtr, int32_t frame, int8_t facing)
+{
+	renderList_t* rl = &sulfur->back_buffer->list2d;
+	addSpriteRList(rl, x, y, spritePtr, frame, facing);
+}
+
+extern void _Sprite_Sys_Sulfur_drawText(sprite_t* fontPtr, int32_t x, int32_t y, int32_t kw, dusk_string_t* text)
+{
+	renderList_t* rl = &sulfur->back_buffer->list2d;
+	addTextRList(rl, fontPtr, x, y, kw, text);
 }
 
 extern void _none_Sys_Sulfur_refresh()

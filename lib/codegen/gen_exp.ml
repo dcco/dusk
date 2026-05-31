@@ -494,7 +494,7 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 			let vs = build_store vp vx cont.builder in
 			let t = genType "(Parameter List [2])" env tau in
 			Option.iter (fun align -> set_alignment align vx; set_alignment align vs) alignOpt;
-			Hashtbl.add env' (DVar x) (DVal ((vx, t), alignOpt)); gpl_rec pt (i + 1)
+			Hashtbl.add env' (DVar x) (DVal ((vx, t), None)); gpl_rec pt (i + 1)
 	in let startId = (match genStoreTypeFull "(Parameter List Return)" env tau_r with
 		TStore _ -> 0
 		| CopyStore(_, _) ->
@@ -505,11 +505,13 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 let genPreAlloc (cont: llvm_cont) (env: dusk_env) (b: gen_stmt list): unit =
 	let varList = collect_var_body b in
 	List.iter (fun (x, tau) ->
-		let (tx, alignOpt) = genStoreType "(Variable Alloc [1])" env tau in
+		let tx = genType "(Variable Alloc)" env tau in
+		let vx = build_alloca tx ("_" ^ x) (cont.builder) in
+		(*let (tx, alignOpt) = genType "(Variable Alloc [1])" env tau in
 		let vx = build_alloca tx ("_" ^ x) (cont.builder) in
 		Option.iter (fun align -> set_alignment align vx) alignOpt;
-		let t = genType "(Variable Alloc [2])" env tau in
-		Hashtbl.add env (DVar x) (DVal ((vx, t), alignOpt))
+		let t = genType "(Variable Alloc [2])" env tau in*)
+		Hashtbl.add env (DVar x) (DVal ((vx, tx), None))
 	) varList;
 	let boxList = collect_box_body b in
 	List.iter (fun (i, t_b) -> (match t_b with
@@ -650,7 +652,7 @@ let genGC (cont: llvm_cont): unit =
 		gc_collect = (gc_collect, collect_type);
 	}
 
-let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): unit =
+let genExternals (cont: llvm_cont) (mainDir: string) (env: dusk_env) (symList: g_virt_bind list): unit =
 	let simpResList = ref [] in
 	let simpPtrMap = Hashtbl.create 50 in
 	let compResList = ref [] in
@@ -697,16 +699,16 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 		(* build URL + ptr list for simple resources *)
 	let urlLitList = List.mapi (fun i (_, url, _) -> 
 		let strVal = const_stringz context url in
-		let g = define_global ("url_" ^ (string_of_int i)) strVal (cont.llmod) in
+		let g = define_global ("url_" ^ (string_of_int i)) strVal cont.llmod in
 		set_global_constant true g;
 		set_linkage Linkage.Private g; g
 	) !simpResList in
 	let urlArrVal = const_array ptrType (Array.of_list urlLitList) in
-	let g = define_global "res_url_list" urlArrVal (cont.llmod) in
+	let g = define_global "res_url_list" urlArrVal cont.llmod in
 		(* - storage ptrs + total *)
 	let ptrArrVal = const_array ptrType (Array.of_list (List.map (fun (_, _, ptr) -> ptr) !simpResList)) in
-	let g_p = define_global "res_ptr_list" ptrArrVal (cont.llmod) in
-	let g_n = define_global "res_total" (const_int iType (List.length !simpResList)) (cont.llmod) in
+	let g_p = define_global "res_ptr_list" ptrArrVal cont.llmod in
+	let g_n = define_global "res_total" (const_int iType (List.length !simpResList)) cont.llmod in
 	set_global_constant true g; set_global_constant true g_p; set_global_constant true g_n;
 		(* build argument + ptr list for composite resources *)
 	let argsList = List.mapi (fun i (_, xargs, args, _) ->
@@ -716,17 +718,21 @@ let genExternals (cont: llvm_cont) (env: dusk_env) (symList: g_virt_bind list): 
 		) xargs in
 		let argList = List.map (fun i -> const_int iType i) args in
 		let argWrapPtr = const_array iType (Array.of_list argList) in
-		let g_ip = define_global ("cr_iargs" ^ (string_of_int i)) argWrapPtr (cont.llmod) in
+		let g_ip = define_global ("cr_iargs" ^ (string_of_int i)) argWrapPtr cont.llmod in
 		set_global_constant true g_ip;
-		define_global ("cr_arg" ^ (string_of_int i)) (const_array ptrType (Array.of_list (g_ip :: xargList))) (cont.llmod)
+		define_global ("cr_arg" ^ (string_of_int i)) (const_array ptrType (Array.of_list (g_ip :: xargList))) cont.llmod
 	) !compResList in
 	let argsVal = const_array ptrType (Array.of_list argsList) in
-	let gc = define_global "comp_res_arg_list" argsVal (cont.llmod) in
+	let gc = define_global "comp_res_arg_list" argsVal cont.llmod in
 		(* - storage ptrs + total *)
 	let ptrArrVal = const_array ptrType (Array.of_list (List.map (fun (_, _, _, ptr) -> ptr) !compResList)) in
-	let gc_p = define_global "comp_res_ptr_list" ptrArrVal (cont.llmod) in
-	let gc_n = define_global "comp_res_total" (const_int iType (List.length !compResList)) (cont.llmod) in
-	set_global_constant true gc; set_global_constant true gc_p; set_global_constant true gc_n
+	let gc_p = define_global "comp_res_ptr_list" ptrArrVal cont.llmod in
+	let gc_n = define_global "comp_res_total" (const_int iType (List.length !compResList)) cont.llmod in
+	set_global_constant true gc; set_global_constant true gc_p; set_global_constant true gc_n;
+		(* - rom dir *)
+	let grd = define_global "rom_dir_v" (const_string context (mainDir ^ "/rom/\x00")) cont.llmod in
+	let grd_p = define_global "rom_dir" (const_gep i8Type grd [| const_int iType 0 |]) cont.llmod in
+	set_global_constant true grd_p
 
 	(*
 		code generation hook
@@ -768,13 +774,13 @@ let genFinalize (cont: llvm_cont) (tm: TargetMachine.t) (fname: string): unit =
 	TargetMachine.emit_to_file cont.llmod (CodeGenFileType.ObjectFile) (fname ^ ".o") tm;
 	TargetMachine.emit_to_file cont.llmod (CodeGenFileType.AssemblyFile) (fname ^ ".xx") tm
 
-let genProgramHook (targetArg: string option) (fname: string) (optimizeFlag: bool)
+let genProgramHook (targetArg: string option) (mainDir: string) (optimizeFlag: bool)
 	(symList: g_virt_bind list) (dl: (string * gen_dec) list): unit =
 	let (cont, tm) = genTarget targetArg optimizeFlag in
 	let env = Hashtbl.create 50 in
 	genGC cont;
-	genExternals cont env symList;
+	genExternals cont mainDir env symList;
 	let vInit = declare_function "init_globals" (function_type voidType (Array.of_list [])) cont.llmod in
 	genDecList cont env vInit dl;
 	genInitFun cont env dl;
-	genFinalize cont tm fname;;
+	genFinalize cont tm (mainDir ^ "/test");;

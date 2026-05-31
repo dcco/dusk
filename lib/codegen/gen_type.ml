@@ -53,6 +53,7 @@ let genType (debug: string) (env: dusk_env) (tau: g_type): lltype = match tau wi
 	)
 	| TupleTy _ -> ptrType
 	| ArrayTy(_, _) -> ptrType
+	| ArrayGenTy -> ptrType
 	| ValArrayTy _ -> ptrType
 	| TagOfTy _ -> tagType
 	| FunTy _ -> ptrType

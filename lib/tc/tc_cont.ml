@@ -23,6 +23,7 @@ let tag_of_type (tau_o: g_type option): string = match tau_o with
 	| Some (TagOfTy _) -> "tag"
 	| Some (FunTy _) -> "fn"
 	| Some BotTy -> "bot"
+	| Some ArrayGenTy -> "a1"
 
 let aug_cn (tag: string) (CN(x, xl): canon_name): canon_name = CN(tag ^ x, xl)
 

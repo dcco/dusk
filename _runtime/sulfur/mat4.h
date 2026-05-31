@@ -37,6 +37,17 @@ extern void _triple_Sys_Sulfur_scale(vec3_t* v, float f) {
 }
 
 	/*
+		VEC 4
+	*/
+
+typedef struct vec4 {
+	float x;
+	float y;
+	float z;
+	float w;
+} vec4_t;
+
+	/*
 		MAT 4
 	*/
 
@@ -56,6 +67,10 @@ extern void* _none_Sys_Sulfur_newMat4() {
 
 float* rawNewMat4() {
 	return (float*) malloc(sizeof(float) * 16);
+}
+
+extern void _Mat4_Sys_Sulfur_update(float* m, int32_t i, float v) {
+	m[i] = v;
 }
 
 extern void _Mat4_Sys_Sulfur_translate(float* m, float x, float y, float z) {
@@ -144,6 +159,17 @@ extern void _Mat4_Sys_Sulfur_lookAt(float* m, vec3_t* start, vec3_t* end, vec3_t
 	m[13] = -(y0 * start->x + y1 * start->y + y2 * start->z);
 	m[14] = -(d0 * start->x + d1 * start->y + d2 * start->z);
 	m[15] = 1.0f;
+}
+
+extern void _Mat4_Sys_Sulfur_mult(vec4_t* out, float* m, vec4_t* v) {
+	/*out->x = m[0] * v->x + m[1] * v->y + m[2] * v->z + m[3] * v->w;
+	out->y = m[4] * v->x + m[5] * v->y + m[6] * v->z + m[7] * v->w;
+	out->z = m[8] * v->x + m[9] * v->y + m[10] * v->z + m[11] * v->w;
+	out->w = m[12] * v->x + m[13] * v->y + m[14] * v->z + m[15] * v->w;*/
+	out->x = m[0] * v->x + m[4] * v->y + m[8] * v->z + m[12] * v->w;
+	out->y = m[1] * v->x + m[5] * v->y + m[9] * v->z + m[13] * v->w;
+	out->z = m[2] * v->x + m[6] * v->y + m[10] * v->z + m[14] * v->w;
+	out->w = m[3] * v->x + m[7] * v->y + m[11] * v->z + m[15] * v->w;
 }
 
 #endif

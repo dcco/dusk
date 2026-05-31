@@ -35,7 +35,7 @@
 #include "sf2d.h"
 #include "captureCard.h"
 
-#define PIPELINE_DEF 1
+//#define PIPELINE_DEF 1
 
 const int ZOOM = 2;
 

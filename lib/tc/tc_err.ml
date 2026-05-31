@@ -12,6 +12,8 @@ type tc_err =
 	| NoOverload_Err of string * g_type option * l_pos
 		(* tuples *)
 	| NonTuple_Err of g_type * l_pos
+	| NonTuplePat_Err of g_type * l_pos
+	| MismatchedPatNum_Err of int * int * l_pos
 	| TupleIndexOOB_Err of g_type * int * l_pos
 		(* enum / tag tuples *)
 	| NonCtor_Err of string * l_pos
@@ -48,6 +50,9 @@ let string_of_tc_err (e: tc_err) = match e with
 	| NoOverload_Err(f, t, p) -> "Function \"" ^ f ^ "\" does not have overload for " ^
 		(string_of_first_arg t) ^ " at " ^ (string_of_pos p) ^ "."
 	| NonTuple_Err(t, p) -> "Tuple operation called on non-tuple type \"" ^ (string_of_type cr t) ^ "\" at " ^ (string_of_pos p) ^ "."
+	| NonTuplePat_Err(t, p) -> "Tuple pattern used on non-tuple type \"" ^ (string_of_type cr t) ^ "\" at " ^ (string_of_pos p) ^ "."
+	| MismatchedPatNum_Err(s, t, p) -> "Pattern expected tuple of " ^ (string_of_int t) ^ " values and received " ^
+		(string_of_int s) ^ " at " ^ (string_of_pos p) ^ "."
 	| TupleIndexOOB_Err(t, i, p) -> "Attempted to access index " ^ (string_of_int i ) ^ " of tuple type \"" ^
 		(string_of_type cr t) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| NonCtor_Err(t, p) -> "Type name \"" ^ t ^ "\" did not resolve to a constructor at " ^ (string_of_pos p) ^ "."
