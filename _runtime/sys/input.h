@@ -7,6 +7,8 @@ typedef struct kbm_input {
 	GLFWwindow* window;
 	int8_t down[KEY_TOTAL];
 	int8_t press[KEY_TOTAL];
+	int8_t mbDown[2];
+	int8_t mbPress[2];
 } kbm_input_t;
 
 kbm_input_t* initInput(GLFWwindow* window) {
@@ -16,6 +18,10 @@ kbm_input_t* initInput(GLFWwindow* window) {
 		input->down[i] = 0;
 		input->press[i] = 0;
 	}
+	for (int i = 0; i < 2; i++) {
+		input->mbDown[i] = 0;
+		input->mbPress[i] = 0;
+	}
 	return input;
 }
 
@@ -24,6 +30,13 @@ void updateInput(kbm_input_t* input) {
 		int8_t cur = glfwGetKey(input->window, i) == GLFW_PRESS;
 		input->press[i] = cur && !input->down[i];
 		input->down[i] = cur;
+	}
+	for (int i = 0; i < 2; i++) {
+		int b = GLFW_MOUSE_BUTTON_LEFT;
+		if (i == 1) b = GLFW_MOUSE_BUTTON_RIGHT;
+		int8_t cur = glfwGetMouseButton(input->window, b) == GLFW_PRESS;
+		input->mbPress[i] = cur && !input->mbDown[i];
+		input->mbDown[i] = cur;
 	}
 }
 
@@ -60,6 +73,28 @@ extern int8_t _Key_Sys_Input_keyDown(int32_t c) {
 
 extern int8_t _Key_Sys_Input_keyPress(int32_t c) {
 	return mainInput->press[c];
+}
+
+extern int8_t _Key_Sys_Input_mouseDown(int32_t c) {
+	if (c == K_right) return mainInput->mbDown[1];
+	else return mainInput->mbDown[0];
+}
+
+extern int8_t _Key_Sys_Input_mousePress(int32_t c) {
+	if (c == K_right) return mainInput->mbPress[1];
+	else return mainInput->mbPress[0];
+}
+
+typedef struct mpos {
+	int32_t x;
+	int32_t y;
+} mpos_t;
+
+extern void _none_Sys_Input_mousePos(mpos_t* ret) {
+	double fx, fy;
+	glfwGetCursorPos(mainInput->window, &fx, &fy);
+	ret->x = (int32_t) fx;
+	ret->y = (int32_t) fy;
 }
 
 #endif

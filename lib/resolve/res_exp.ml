@@ -23,8 +23,8 @@ let rec resolve_exp (env: res_env) (e: m_exp): r_exp rs_res = match e with
 	| TupleExp(ctorOpt, el, p) ->
 		let* ctor' = opt_try_res (resolve_name env p) ctorOpt in
 		let* el' = resolve_exp_list env el in Valid (TupleExp(ctor', el', p))
-	| ValueArrayExp(el, p) ->
-		let* el' = resolve_exp_list env el in Valid (ValueArrayExp(el', p))
+	(*| ValueArrayExp(el, p) ->
+		let* el' = resolve_exp_list env el in Valid (ValueArrayExp(el', p))*)
 	| DataArrayExp(i, tau_o, dim_l, el, p) ->
 		let* tau_o' = opt_try_res (resolve_type env p) tau_o in
 		let* el' = resolve_exp_list env el in Valid (DataArrayExp(i, tau_o', dim_l, el', p))

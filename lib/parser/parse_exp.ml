@@ -108,6 +108,7 @@ let rec parseType: m_type parser = fun tkList -> match tkList with
 		let* (QN(q, x), tkRem) = parseDerefTId "Type Name" tkList in
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "U8"; "U32"; "U64"] then Valid (primTy x, tkRem)
 		else if List.mem x ["PRNG"; "Mat4"; "Image"; "FixImage"; "Sprite"; "Mesh"; "RenderData"] then Valid (builtinTy x, tkRem)
+		else if x = "BOT" then Valid (BotTy, tkRem)
 		else Valid (NamedTy (QN(q, x)), tkRem)
 
 and parseTypeList: m_type list parser = fun tkList -> 
@@ -241,9 +242,9 @@ let rec parseAtomExp: m_exp parser = fun tkList -> match tkList with
 		| tk :: _ -> Error (BadToken_Err(tk, "Heap Memory Initializer"))
 		| _ -> Error (EOF_Err "Heap Memory Initializer")*)
 	)
-	| (VDIM, p) :: tkRem ->
+	(*| (VDIM, p) :: tkRem ->
 		let* (el, tkRem2) = parseBraceWrap (parseOrEmpty (parseSepList parseExp chkComma) chkBrackR) "Array Initializer" tkRem in
-		Valid (ValueArrayExp(el, p), tkRem2)
+		Valid (ValueArrayExp(el, p), tkRem2)*)
 	| (LPAREN, p) :: _ ->
 		let* (el, tkRem) = parseParenWrap (parseSepList parseExp chkComma) "Tag Value" tkList in
 		if List.length el = 1 then Valid (List.hd el, tkRem)

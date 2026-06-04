@@ -34,7 +34,7 @@ type 'm raw_type =
 	| NamedTy of 'm
 	| TupleTy of 'm raw_type list
 	| ArrayTy of int * 'm raw_type
-	| ValArrayTy of 'm raw_type
+	(*| ValArrayTy of 'm raw_type *)
 	| TagOfTy of 'm raw_type
 	| FunTy of 'm raw_type list * 'm raw_type
 	| BotTy
@@ -53,7 +53,7 @@ let rec string_of_type (f: 'm -> string) (tau: 'm raw_type): string = match tau 
 	| NamedTy x -> f x
 	| TupleTy tau_l -> "(" ^ String.concat ", " (List.map (string_of_type f) tau_l) ^ ")"
 	| ArrayTy(i, tau) -> (string_of_int i) ^ "d[" ^ (string_of_type f tau) ^ "]"
-	| ValArrayTy tau -> "1v[" ^ (string_of_type f tau) ^ "]"
+	(*| ValArrayTy tau -> "1v[" ^ (string_of_type f tau) ^ "]"*)
 	| TagOfTy tau -> (string_of_type f tau) ^ ".t"
 	| FunTy(tau_pl, tau_r) -> string_of_fun_type f (tau_pl, tau_r)
 	| BotTy -> "BOT"

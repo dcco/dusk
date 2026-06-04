@@ -299,11 +299,11 @@ fn drawMini(GameWorld world)
 			var mx = toTile(curObj.body.hitbox.centerX()) - (tx - 60)
 			var mz = toTile(curObj.body.hitbox.centerZ()) - (tz - 60)
 			if mx >= 0 && mx < 120 && mz >= 0 && mz < 120 then
-				Sulfur.draw(GBox(0xc04040, mx, mz, 1, 1))
+				Sulfur.drawBox(0xc04040, mx, mz, 1, 1)
 			end
 		end
 	end
-	Sulfur.draw(GText(sfont, 8, 8, 4, toString(world.camera.state.x)))
-	Sulfur.draw(GText(sfont, 8, 16, 4, toString(world.camera.state.y)))
-	Sulfur.draw(GText(sfont, 8, 24, 4, toString(world.camera.state.z)))
+	Sulfur.drawText(sfont, 8, 8, 4, toString(world.camera.state.x))
+	Sulfur.drawText(sfont, 8, 16, 4, toString(world.camera.state.y))
+	Sulfur.drawText(sfont, 8, 24, 4, toString(world.camera.state.z))
 end

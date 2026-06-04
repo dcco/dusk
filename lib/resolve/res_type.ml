@@ -43,7 +43,7 @@ let rec resolve_type (env: res_env) (p: l_pos) (tau: m_type): g_type rs_res = ma
 	*)
 	| TupleTy tau_l -> let* tau_l' = map_try_res (resolve_type env p) tau_l in Valid (TupleTy tau_l')
 	| ArrayTy(i, tau) -> let* tau' = resolve_type env p tau in Valid (ArrayTy(i, tau'))
-	| ValArrayTy tau -> let* tau' = resolve_type env p tau in Valid (ValArrayTy tau')
+	(*| ValArrayTy tau -> let* tau' = resolve_type env p tau in Valid (ValArrayTy tau')*)
 	| TagOfTy tau -> let* tau' = resolve_type env p tau in Valid (TagOfTy tau')
 	| FunTy(tau_pl, tau_r) ->
 		let* tau_pl' = map_try_res (resolve_type env p) tau_pl in

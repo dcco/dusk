@@ -120,8 +120,8 @@ end*)
 fn drawMini(GameTile tile, Int i, Int j)
 	var baseId = tile.baseType.i
 	if baseId > |_COLORS| then
-		Sulfur.draw(GBox(0x202030, i, j, 1, 1))
+		Sulfur.drawBox(0x202030, i, j, 1, 1)
 	else
-		Sulfur.draw(GBox(_COLORS[tile.baseType.i], i, j, 1, 1))
+		Sulfur.drawBox(_COLORS[tile.baseType.i], i, j, 1, 1)
 	end
 end

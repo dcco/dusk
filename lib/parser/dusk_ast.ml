@@ -38,7 +38,7 @@ type ('m, 'ann) exp =
 		(* ctors *)
 	| AtCtorExp of 'm * 'ann
 	| TupleExp of 'm option * ('m, 'ann) exp list * 'ann
-	| ValueArrayExp of ('m, 'ann) exp list * 'ann
+	(*| ValueArrayExp of ('m, 'ann) exp list * 'ann*)
 		(* - arity, type annotation, static dimensions, data *)
 	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
 		(* - arity, dynamic dimensions, initializer *)
@@ -84,7 +84,7 @@ let ann_exp e = match e with
 	| VarExp(_, a) -> a
 	| AtCtorExp(_, a) -> a
 	| TupleExp(_, _, a) -> a
-	| ValueArrayExp(_, a) -> a
+	(*| ValueArrayExp(_, a) -> a*)
 	| DataArrayExp(_, _, _, _, a) -> a
 	| FormatArrayExp(_, _, _, a) -> a
 	| NewStructExp(_, _, a) -> a

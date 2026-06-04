@@ -69,7 +69,7 @@ float* rawNewMat4() {
 	return (float*) malloc(sizeof(float) * 16);
 }
 
-extern void _Mat4_Sys_Sulfur_update(float* m, int32_t i, float v) {
+extern void _Mat4_Sys_Sulfur_ixUpdate(float* m, int32_t i, float v) {
 	m[i] = v;
 }
 

@@ -32,23 +32,23 @@ fn initAttrVars()
 end
 
 globals Pipeline in RenderThread{
-	shadow = newFrameBuffer(cLoad("shadow.vs"), cLoad("shadow.fs"), 4096, 4096, 1v[FBODepth],
-		1v[(@GLFloat, 4), (@GLFloat, 1)],
-		"uPMat", 1v[("uMVMat", @GLMat4, 0), ("uLightMat", @GLMat4, 0)], 1v["uSampler"]),
+	shadow = newFrameBuffer(cLoad("shadow.vs"), cLoad("shadow.fs"), 4096, 4096, new 1d[FBODepth],
+		new 1d[(@GLFloat, 4), (@GLFloat, 1)],
+		"uPMat", new 1d[("uMVMat", @GLMat4, 0), ("uLightMat", @GLMat4, 0)], new 1d["uSampler"]),
 
 	geometry = newFrameBuffer(cLoad("geometry.vs"), cLoad("geometry.fs"), 960, 640,
-		1v[FBOColor, FBOColor, FBOColor, FBOColor, FBORender],
-		1v[(@GLFloat, 4)],
-		"uPMat", 1v[("uMVMat", @GLMat4, 0), ("uLightMat", @GLMat4, 0)], 1v["uSampler", "uShadowMap"]),
+		new 1d[FBOColor, FBOColor, FBOColor, FBOColor, FBORender],
+		new 1d[(@GLFloat, 4)],
+		"uPMat", new 1d[("uMVMat", @GLMat4, 0), ("uLightMat", @GLMat4, 0)], new 1d["uSampler", "uShadowMap"]),
 
-	ssao = newFrameBuffer(cLoad("ssao.vs"), cLoad("ssao.fs"), 960, 640, 1v[FBOColor],
-		1v[], "uPMat", 1v[("samples", @GLFloatVec3, 0)], 1v["null", "gPos", "gNorm", "texNoise"]),
+	ssao = newFrameBuffer(cLoad("ssao.vs"), cLoad("ssao.fs"), 960, 640, new 1d[FBOColor],
+		new 1d[~BOT], "uPMat", new 1d[("samples", @GLFloatVec3, 0)], new 1d["null", "gPos", "gNorm", "texNoise"]),
 
 	(*blur = newFrameBuffer(cLoad("blur.vs"), cLoad("blur.fs"), 960, 640, 1v[FBOColor],
 		"null", 1v[], 1v["null", "gColor"]),*)
 
 	light = newShader(cLoad("light.vs"), cLoad("light.fs"),
-		1v[], "null", 1v[], 1v["null", "gPos", "gNorm", "gColor", "gSpec", "occlusion"]),
+		new 1d[~BOT], "null", new 1d[~BOT], new 1d["null", "gPos", "gNorm", "gColor", "gSpec", "occlusion"]),
 
 	noiseTex = noiseTex()
 }

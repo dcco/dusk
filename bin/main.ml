@@ -13,7 +13,7 @@ open Tc
 open Tc.Tc_err
 open Tc.Tc_exp
 open Codegen.Fin_ast
-open Codegen.Gen_exp
+open Codegen.Gen_dec
 open Rom.Rom_load
 
 	(*

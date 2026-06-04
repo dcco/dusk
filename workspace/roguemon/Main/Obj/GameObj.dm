@@ -78,12 +78,12 @@ end
 
 fn persMat() Mat4
 	var m = newMat4()
-	m.update(0, 1.3333333)
-	m.update(5, -2.0)
-	m.update(10, -1.0020020)
-	m.update(11, -1.0)
-	m.update(14, -0.2002002)
-	m.update(15, 0.0)
+	m.ixUpdate(0, 1.3333333)
+	m.ixUpdate(5, -2.0)
+	m.ixUpdate(10, -1.0020020)
+	m.ixUpdate(11, -1.0)
+	m.ixUpdate(14, -0.2002002)
+	m.ixUpdate(15, 0.0)
 	return m
 end
 

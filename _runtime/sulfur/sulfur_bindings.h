@@ -135,7 +135,7 @@ extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t*
 	int32_t exAttrTotal = attrs->size;
 	shader_attr_def_t* newAttrList = copyBaseAttrList(exAttrTotal);
 	partial_map_gc_array(newAttrList + BASE3_ATTR_TOTAL, attrs,
-		sizeof(raw_attr_def_t*), sizeof(shader_attr_def_t), &read_attr);
+		sizeof(raw_attr_def_t), sizeof(shader_attr_def_t), &read_attr);
 
 	// - add attribute offsets
 	size_t offset = sizeof(draw_dat3d_t);
@@ -147,7 +147,7 @@ extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t*
 	// convert uniform list into usable data structure
 	int32_t uniformTotal = uniforms->size;
 	shader_uniform_def_t* uniformList = map_gc_array(uniforms,
-		sizeof(raw_uniform_def_t*), sizeof(shader_uniform_def_t), &read_uniform);
+		sizeof(raw_uniform_def_t), sizeof(shader_uniform_def_t), &read_uniform);
 
 	int32_t uTexTotal = uniformTexs->size;
 	char** uniformTexList = map_gc_array(uniformTexs, sizeof(dusk_string_t*), sizeof(char*), &read_string);
@@ -180,6 +180,7 @@ extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t*
 	free(uniformList);
 	free(uniformTexList);
 	return shader;
+	return NULL;
 }
 /*
 fbo_layer_def_t* convert_layers(gc_array_t* layers)

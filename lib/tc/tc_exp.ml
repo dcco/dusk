@@ -39,6 +39,10 @@ let is_heap_type (env: type_env) (tau: g_type): bool = match tau with
 	| ArrayTy(_, _) -> true
 	| _ -> false
 
+let rc_of_type (env: type_env) (tau: g_type): gen_rw =
+	if is_boxed_type env tau then RC(Some (get_box_id_tenv env), tau)
+	else RC(None, tau)
+
 	(* type-checking auxiliaries *)
 
 type g_fun =
@@ -50,7 +54,7 @@ type g_fun =
 	| ArrayLengthGF
 	| ArrayDimsGF of int
 	| ArrayAddGF
-	| StructFieldGF of rw * int * canon_name
+	| StructFieldGF of rw * int
 	| CallGF of int list
 	| EnumRawGF
 
@@ -77,7 +81,7 @@ let rec is_subtype (s: g_type) (t: g_type): bool = match (s, t) with
 	| (ArrayTy(i, s'), ArrayTy(j, t')) -> i = j && is_subtype s' t'
 	| (ArrayTy(i, _), ArrayGenTy) -> i = 1
 	| (ArrayGenTy, ArrayGenTy) -> true
-	| (ValArrayTy s', ValArrayTy t') -> is_subtype s' t'
+	(*| (ValArrayTy s', ValArrayTy t') -> is_subtype s' t'*)
 	| (TagOfTy s', TagOfTy t') -> is_subtype s' t'
 	| _ -> false
 
@@ -134,12 +138,12 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				| _ -> Error (NonCtor_Err(cr cx, p))
 			)
 		)
-	| ValueArrayExp(el, _) ->
+	(*| ValueArrayExp(el, _) ->
 		let* et_l' = tc_exp_list env el in
 		let tau = if List.length el = 0 then BotTy else snd (List.hd et_l') in
 		let i1 = get_box_id_tenv env in
 		let i2 = get_box_id_tenv env in
-		Valid (ValueArrayExpC(i1, i2, List.map fst et_l', tau), ValArrayTy tau)
+		Valid (ValueArrayExpC(i1, i2, List.map fst et_l', tau), ValArrayTy tau)*)
 	| DataArrayExp(i, tau_o, dim_l, el, p) ->
 		let* et_l' = tc_exp_list env el in
 		let tau = (match tau_o with None -> snd (List.hd et_l') | Some tau -> tau) in
@@ -170,7 +174,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			| Some (_, TcCtorU _) -> Valid (true, EnumExpC (cr ctor))
 			| _ -> Error (NonCtorU_Err(cr ctor, p))
 		) in
-		let ev = if derefFlag then MemoryFieldExpC(RC, ex, 0, TypeDeref tau) else ex in
+		let ev = if derefFlag then MemoryFieldExpC(rc_of_type env tau, ex, 0) else ex in
 		Valid (BinExpC("tag_eq", ev, ec), boolTy)
 	| AppExp(ef, el, p) ->
 		let* et_l' = tc_exp_list env el in
@@ -181,18 +185,18 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			UnaryGF fsm -> Valid (UnaryExpC(fsm, List.nth el' 0), tau_rn)
 			| BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_rn)
 			| InternalGF fsm ->	let* c = calc_cfun env fsm el' p in Valid (c, tau_rn)
-			| TupleIndexGF i -> Valid (MemoryFieldExpC(RC, List.hd el', i, TypeDeref (List.hd tau_pl)), tau_rn)
+			| TupleIndexGF i -> Valid (MemoryFieldExpC(rc_of_type env tau_rn, List.hd el', i), tau_rn)
 			| ArrayIndexGF rw ->
 				let (rw', tau_r', et') =
-					if rw = RR then (RC, tau_rn, List.tl el')
+					if rw = RR then (rc_of_type env tau_rn, tau_rn, List.tl el')
 					else (WC (List.nth el' 1), unitTy, List.tl (List.tl el')) in
-				Valid (ArrayIndexExpC(rw', List.hd el', FullIndexC et', tau_rn), tau_r')
+				Valid (ArrayIndexExpC(rw', List.hd el', FullIndexC et'), tau_r')
 			| ArrayLengthGF -> Valid (ArrayLengthExpC (List.hd el'), tau_rn)
 			| ArrayDimsGF i -> Valid (ArrayDimsExpC(i, List.hd el'), tau_rn)
-			| ArrayAddGF -> Valid (ArrayAddExpC(List.hd el', List.nth el' 1, List.nth tau_pl 1), tau_rn)
-			| StructFieldGF(rw, i, cx) ->
-				let rw' = if rw = RR then RC else WC (List.nth el' 1) in
-				Valid (MemoryFieldExpC(rw', List.nth el' 0, i, TypeDeref (NamedTy cx)), tau_rn)
+			| ArrayAddGF -> Valid (ArrayAddExpC(List.hd el', List.nth el' 1), tau_rn)
+			| StructFieldGF(rw, i) ->
+				let rw' = if rw = RR then rc_of_type env tau_rn else WC (List.nth el' 1) in
+				Valid (MemoryFieldExpC(rw', List.nth el' 0, i), tau_rn)
 			| CallGF _ ->
 				(*let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
 				*)
@@ -243,7 +247,7 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 					let (tau_args, tau_r) =
 						if rw = RR then ([NamedTy cx], tau)
 						else ([NamedTy cx; tau], unitTy)
-					in Valid ("", StructFieldGF(rw, i, cx), (tau_args, tau_r))
+					in Valid ("", StructFieldGF(rw, i), (tau_args, tau_r))
 			)
 			| _ -> Error (NonStruct_Err(NamedTy cx, p))
 		)
@@ -302,7 +306,7 @@ let tc_extra_exp (env: type_env) (e: r_exp) (x: string): (gen_exp * g_type * gen
 		let b = [
 			VarStmtC("__i", ConstExpC (IConst 0), intTy);
 			WhileStmtC(BinExpC("ilt", VarExpC "__i", ArrayLengthExpC (VarExpC x)), [
-				EvalStmtC (ArrayIndexExpC(WC e', VarExpC x, RawIndexC (VarExpC "__i"), tau));
+				EvalStmtC (ArrayIndexExpC(WC e', VarExpC x, RawIndexC (VarExpC "__i")));
 				AssignStmtC("__i", BinExpC("iadd", VarExpC "__i", ConstExpC (IConst 1)))
 			])
 		] in Valid (NewArrayExpC(List.map fst dt_l', [], tau), ArrayTy(i, tau), b)
@@ -324,11 +328,11 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt) (tau_r: g_type): (t
 	| ReturnStmt(eo, p) -> (match eo with
 		None ->
 			if not (is_subtype unitTy tau_r) then Error (BadReturn_Err(unitTy, tau_r, p))
-			else Valid (env, [ReturnStmtC (None, unitTy)], true)
+			else Valid (env, [ReturnStmtC None], true)
 		| Some e ->
 			let* (e', t) = tc_exp env e in
 			if not (is_subtype t tau_r) then Error (BadReturn_Err(t, tau_r, p))
-			else Valid (env, [ReturnStmtC (Some e', t)], true)
+			else Valid (env, [ReturnStmtC (Some e')], true)
 	)
 	| PatStmt(px, e, p) -> (match px with
 		VarPat x ->
@@ -344,13 +348,13 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt) (tau_r: g_type): (t
 						Error (MismatchedPatNum_Err(List.length tau_l, List.length xol, p))
 					else Valid tau_l
 				| _ -> Error (NonTuplePat_Err(tau_e, p))
-			) in let dt = TypeDeref tau_e in
+			) in (*let dt = TypeDeref tau_e in*)
 			let (envX, b, _) = List.fold_left (fun (env', b, i) xo -> match xo with
 				None -> (env', b, i + 1)
 				| Some x ->
 					let tau_v = List.nth tau_vl i in
 					({ env' with localIds = StringMap.add x tau_v env'.localIds },
-						b @ [VarStmtC(x, MemoryFieldExpC(RC, VarExpC "__pat", i, dt), tau_v)], i + 1)
+						b @ [VarStmtC(x, MemoryFieldExpC(rc_of_type env' tau_v, VarExpC "__pat", i), tau_v)], i + 1)
 			) (env, [], 0) xol in
 			Valid (envX, (VarStmtC("__pat", e', tau_e)) :: b, false)
 	)
@@ -413,7 +417,7 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 		let* (_, b', term) = tc_body { f = fName; lf = lf; } localEnv b tau_r in
 		if not term then (
 			if tau_r <> unitTy then Error (NoReturn_Err(fName, p))
-			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC(None, unitTy)])))]
+			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 	| TDefDec(x, td, _) -> add_tdef_tenv env x td; Valid [(cr x, TDefDecC td)]
 	| ExtendsDec(_, _, _, _) -> Valid []
@@ -436,7 +440,7 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 		let iDec =
 			if c = None then [("", InitDecC sl)]
 			else
-				let m = MethodC([], unitTy, sl @ [ReturnStmtC(None, unitTy)]) in
+				let m = MethodC([], unitTy, sl @ [ReturnStmtC None]) in
 				[("init" ^ (cr x), FunDecC m)]
 		in Valid ((List.map (fun (x, _, tau) -> (x, GlobalDecC tau)) fl') @ iDec)
 

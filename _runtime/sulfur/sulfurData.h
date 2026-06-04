@@ -45,7 +45,7 @@ typedef struct raw_attr_def {
 void read_attr(void* dst, void* src)
 {
 	shader_attr_def_t* attr = (shader_attr_def_t*) dst;
-	raw_attr_def_t* rawAttr = *((raw_attr_def_t**) src);
+	raw_attr_def_t* rawAttr = ((raw_attr_def_t*) src);
 	attr->vertAttrFlag = 0;
 	attr->glType = readGLType(rawAttr->g);
 	attr->arity = rawAttr->arity;
@@ -63,7 +63,7 @@ typedef struct raw_uniform_def {
 void read_uniform(void* dst, void* src)
 {
 	shader_uniform_def_t* uniform = (shader_uniform_def_t*) dst;
-	raw_uniform_def_t* rawUniform = *((raw_uniform_def_t**) src);
+	raw_uniform_def_t* rawUniform = ((raw_uniform_def_t*) src);
 	uniform->name = &rawUniform->name->start;
 	uniform->glType = readGLType(rawUniform->g);
 	uniform->arity = rawUniform->arity;

@@ -66,6 +66,7 @@ let genRef (LCont(_, _, _, r): llvm_cont): int = r := !r + 1; !r - 1
 
 	(*
 		dusk compilation type definitions:
+			- enum: raw enum value
 			- opaque: opaque array of bytes used for unions
 				(size, alignment, GC type layout)
 			- struct: heap-allocated struct + GC type layout
@@ -74,26 +75,67 @@ let genRef (LCont(_, _, _, r): llvm_cont): int = r := !r + 1; !r - 1
 type dusk_tdef =
 	EnumTD_C
 	| OpaqueTD_C of int * int
-	| StructTD_C of lltype list * llvalue
+	| StructTD_C of g_type array * llvalue
+
+	(*
+		dusk type: type of an llvm value augmented w/ the "inner" structure of pointer values
+			(assumed to be either a storage struct, or an "opqaue" set of bytes)
+		- fun: includes ll function type + detailed return type
+		- stack ptr: includes alignment when applicable
+
+		store type: similar, but types for "stored" values (instead of top-level values)
+	*)
+
+type store_type =
+	PrimST of lltype
+	| TupleST of store_type array
+	| TagTupleST of lltype * int
+	| ArrayPtrST of store_type
+	| StructPtrST of deref_type array
+	| FunPtrST of lltype * store_type
+and deref_type =
+	ExplDST of store_type
+	| ImplDST of g_type
+
+	(*| StructPtrST of store_type array
+	| ArrayPtrST of store_type*)
+
+type dusk_type =
+	PrimDT of lltype
+	| FunDT of lltype * store_type
+	| StackPtrDT of inner_type
+	| HeapPtrDT of inner_type
+and inner_type =
+	OpaqueIDT of lltype * int
+	| StructIDT of store_type array
+	| ArrayIDT of store_type
+
+	(* var type: wraps variables - ensures that a load is done to obtain the underlying type
+		a regular variable is always a pointer to a dusk_type, so we treat it accordingly
+	*)
+
+type var_type =
+	VarVT of dusk_type
+	| LitVT
+	| FunVT of lltype * store_type
 
 	(*
 		code generation environment
 	*)
 
-type dusk_val = llvalue * lltype
+type dusk_val = llvalue * dusk_type
+type raw_dusk_val = llvalue * lltype
+type store_val = llvalue * store_type
 
-	(*
-		- val: normal storage variable (includes alignment when applicable)
-	*)
-
-type dusk_enum_val = IntEV of int | GlobalEV of dusk_val
+type dusk_enum_val = IntEV of int | GlobalEV of llvalue
 
 type dusk_fval =
-	DVal of dusk_val * int option
-	| DGlobal of dusk_val
-	| DFunVal of llvalue * lltype
+	(*DVal of llvalue * var_type
+	| DGlobal of llvalue * var_type*)
+	DVal of llvalue * var_type
+	| DBoxVal of llvalue * store_type
 	| DTDef of dusk_tdef
-	| DEnum of dusk_enum_val * lltype list
+	| DEnum of dusk_enum_val
 	| DLayout of llvalue
 
 type dusk_key =
@@ -122,11 +164,14 @@ let string_of_dkey (k: dusk_key): string = match k with
 	| DCtor c -> "CTOR " ^ c
 
 let string_of_dval (v: dusk_fval): string = match v with
-	DVal(_, _) -> "VAL"
-	| DGlobal _ -> "GLOBAL"
-	| DFunVal(_, _) -> "FUNC"
+	DVal(_, VarVT _) -> "VAL"
+	| DVal(_, LitVT) -> "LIT"
+	| DVal(_, FunVT _) -> "FUNC"
+	| DBoxVal _ -> "BOX"
+	(*| DGlobal _ -> "GLOBAL"
+	| DFunVal(_, _) -> "FUNC"*)
 	| DTDef _ -> "TYPE DEF"
-	| DEnum(_, _) -> "ENUM"
+	| DEnum _ -> "ENUM"
 	| DLayout _ -> "GC LAYOUT TYPE"
 
 let dump_denv (env: dusk_env): unit =

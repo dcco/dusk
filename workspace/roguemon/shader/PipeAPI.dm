@@ -3,7 +3,7 @@ references Sys modules Sulfur, Os
 	(*
 		builtin meshes
 	*)
-
+(*
 fn meshBox(Int w, Int h, Int d) Mesh
 	var fw = toFloat(w) /. 8.0
 	var fh = toFloat(h) /. 8.0
@@ -15,7 +15,7 @@ end
 
 globals GMesh{
 	dice = meshBox(3, 3, 3)
-}
+}*)
 
 	(*
 		pipeline API (frontend). functionally the same as regular code,

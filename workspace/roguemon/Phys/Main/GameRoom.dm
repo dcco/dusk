@@ -116,7 +116,7 @@ fn drawMini1(GameRoom room, Int cx, Int cy)
 		var tx = cx + i - 60
 		var ty = cy + j - 60
 		if tx < 0 || tx >= room.width || ty < 0 || ty >= room.height then
-			Sulfur.draw(GBox(_COLORS[0], i, j, 1, 1))
+			Sulfur.drawBox(_COLORS[0], i, j, 1, 1)
 		else
 			room.grid[tx, ty].drawMini(i, j)
 		end

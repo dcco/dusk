@@ -155,7 +155,10 @@ let osList = [
 let inputList = [
 	("inUpdate", ExternalSym [], [], unitTy);
 	("keyDown", ExternalSym [], [keyTy], boolTy);
-	("keyPress", ExternalSym [], [keyTy], boolTy)
+	("keyPress", ExternalSym [], [keyTy], boolTy);
+	("mouseDown", ExternalSym [], [keyTy], boolTy);
+	("mousePress", ExternalSym [], [keyTy], boolTy);
+	("mousePos", ExternalSym [], [], TupleTy [intTy; intTy])
 ]
 
 let vec3Ty = TupleTy [floatTy; floatTy; floatTy]
@@ -174,19 +177,19 @@ let sulfurShaderList = [
 	("drawQuadX", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
 	("drawQuadY", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
 	("drawQuadZ", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy], unitTy);
-	("drawSprite3D", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy; boolTy], unitTy);
+	("drawSprite", ExternalSym [], [floatTy; floatTy; floatTy; spriteTy; intTy; boolTy], unitTy);
 
 		(* shader / fbo setup *)
 	("newShader", ExternalSym [], [stringTy; stringTy; 
-		ValArrayTy (TupleTy [TagOfTy (namedTy "GLVal"); intTy]);
-		stringTy; ValArrayTy (TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
-		ValArrayTy stringTy
+		ArrayTy(1, TupleTy [TagOfTy (namedTy "GLVal"); intTy]);
+		stringTy; ArrayTy(1, TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
+		ArrayTy(1, stringTy)
 	], shaderTy);
 	("newFrameBuffer", ExternalSym [], [stringTy; stringTy; intTy; intTy;
-		ValArrayTy (namedTy "BufferType");
-		ValArrayTy (TupleTy [TagOfTy (namedTy "GLVal"); intTy]);
-		stringTy; ValArrayTy (TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
-		ValArrayTy stringTy
+		ArrayTy(1, namedTy "BufferType");
+		ArrayTy(1, TupleTy [TagOfTy (namedTy "GLVal"); intTy]);
+		stringTy; ArrayTy (1, TupleTy [stringTy; TagOfTy (namedTy "GLVal"); intTy]);
+		ArrayTy(1, stringTy)
 	], fboTy);
 	("setUniform", ExternalSym [], [shaderTy; intTy; namedTy "GLVal"], unitTy);
 	("setUniform", ExternalSym [], [fboTy; intTy; namedTy "GLVal"], unitTy);
@@ -229,7 +232,7 @@ let sulfurList = [
 		(* mat4 *)
 	("newMat4", ExternalSym [], [], mat4Ty);
 	("idMat4", ExternalSym [], [mat4Ty], unitTy);
-	("update", ExternalSym [], [mat4Ty; intTy; floatTy], unitTy);
+	("ixUpdate", ExternalSym [], [mat4Ty; intTy; floatTy], unitTy);
 	("translate", ExternalSym [], [mat4Ty; floatTy; floatTy; floatTy], unitTy);
 	("rotateX", ExternalSym [], [mat4Ty; floatTy], unitTy);
 	("lookAt", ExternalSym [], [mat4Ty; vec3Ty; vec3Ty; vec3Ty], unitTy);

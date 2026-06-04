@@ -15,6 +15,8 @@ let idChar = ['a'-'z' 'A'-'Z' '0'-'9' '_']
 let numChar = ['0'-'9']
 let hexChar = ['a'-'f' 'A'-'F' '0'-'9']
 
+	(*| "1v" { lexWrap lexbuf VDIM }*)
+	
 rule token = parse
 	| "\r\n" | "\r" | "\n" { new_line lexbuf; token lexbuf }
 	| "(*" { comment 1 lexbuf }
@@ -56,7 +58,6 @@ rule token = parse
 	| ("_"? ['a'-'z'] idChar*) as x { lexWrap lexbuf (ID x) }
 	| ("_" ['A'-'Z''_']+) as x { lexWrap lexbuf (CID x) }
 	| ("_"? ['A'-'Z'] idChar*) as x { lexWrap lexbuf (TID x) }
-	| "1v" { lexWrap lexbuf VDIM }
 	| ((numChar+) as i) "d" { lexWrap lexbuf (DIM (int_of_string i)) }
 	| ("-"? "0x" hexChar+) as h { lexWrap lexbuf (INT (int_of_string h)) }
 	| ("-"? numChar+ "." numChar+) as f { lexWrap lexbuf (FLOAT (float_of_string f)) }
