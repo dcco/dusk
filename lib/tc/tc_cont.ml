@@ -9,19 +9,24 @@ module StringMap = Map.Make(String)
 		tags of types (for overloading)
 	*)
 
-let tag_of_type (tau_o: g_type option): string = match tau_o with
+let tag_of_ntuple (n: int): string =
+	if n = 2 then "pair"
+	else if n = 3 then "triple"
+	else "t" ^ (string_of_int n)
+
+let rec tag_of_type (tau_o: g_type option): string = match tau_o with
 	None -> "none"
 	| Some (PrimTy x) -> x
 	| Some (BuiltinTy x) -> x
 	| Some (NamedTy x) -> cr x
-	| Some (TupleTy tau_l) -> let n = List.length tau_l in
-		if n = 2 then "pair"
-		else if n = 3 then "triple"
-		else "t" ^ (string_of_int n) 
+	| Some (TupleTy tau_l) -> tag_of_ntuple (List.length tau_l)
+	| Some (TagTupleTy(x, _)) -> cr x
 	| Some (ArrayTy(i, _)) -> "a" ^ (string_of_int i)
 	(*| Some (ValArrayTy _) -> "a1v"*)
 	| Some (TagOfTy _) -> "tag"
 	| Some (FunTy _) -> "fn"
+	| Some (NullableTy t) -> tag_of_type (Some t)
+	| Some NullTy -> "null"
 	| Some BotTy -> "bot"
 	| Some ArrayGenTy -> "a1"
 
@@ -46,6 +51,49 @@ let disambig_ptype (rho: 'a poly_type) (tag: string): 'a option =
 	in dp_rec rho
 
 	(*
+		individual guard set
+	*)
+
+type guard_set = GuardSet of string list * string list
+
+let null_guard_set: guard_set = GuardSet(["null"], ["valid"; "null"])
+
+let new_guard_set (x: string) (all: string list): guard_set = GuardSet([x], all)
+
+let neg_guard_set (GuardSet(g, all): guard_set): guard_set =
+	GuardSet(List.filter (fun x -> not (List.mem x g)) all, all)
+
+let conj_guard_set (GuardSet(g, all): guard_set) (GuardSet(h, _): guard_set): guard_set =
+	GuardSet(List.filter (fun x -> List.mem x h) g, all)
+
+let disj_guard_set (GuardSet(g, all): guard_set) (GuardSet(h, _): guard_set): guard_set =
+	GuardSet(g @ (List.filter (fun x -> not (List.mem x g)) h), all) 
+
+let disj_guard_set_opt (g: guard_set option) (h: guard_set option): guard_set option = match (g, h) with
+	(Some g, Some h) -> Some (disj_guard_set g h)
+	| _ -> None
+
+	(*
+		full guard set
+	*)
+
+type guard_map = guard_set StringMap.t
+
+let new_guard_map (x: string) (g: guard_set): guard_map = StringMap.singleton x g
+
+let neg_guard_map (g: guard_map): guard_map = StringMap.map neg_guard_set g
+
+let conj_guard_map (g: guard_map) (h: guard_map): guard_map = 
+	StringMap.union (fun _ g h -> Some (conj_guard_set g h)) g h
+
+let disj_guard_map (g: guard_map) (h: guard_map): guard_map = 
+	StringMap.merge (fun _ g h -> disj_guard_set_opt g h) g h
+
+let try_narrow_guard_map (g: guard_map) (x: string): string option = match StringMap.find_opt x g with
+	Some (GuardSet([x], _)) -> Some x
+	| _ -> None
+
+	(*
 		typed environment
 	*)
 
@@ -64,6 +112,7 @@ type type_env = {
 	globalTIds: (string, canon_name * tc_tval) Hashtbl.t;
 	globalIds: (string, canon_name * g_type) Hashtbl.t;
 	localIds: g_type StringMap.t;
+	guardMap: guard_map;
 	boxCount: int ref
 }
 
@@ -117,6 +166,7 @@ let builtin_tenv (dl: g_virt_bind list): type_env =
 		globalTIds = Hashtbl.create 50;
 		globalIds = Hashtbl.create 50;
 		localIds = StringMap.empty;
+		guardMap = StringMap.empty;
 		boxCount = ref 0
 	} in List.iter (fun (f, vd) -> match vd with
 		SymVD(s, tau_f) -> add_fun_tenv env f (s, tau_f)

@@ -92,7 +92,7 @@ let readRelOp (tk: raw_token): string option = match tk with
 
 	(* type parsing *)
 
-let rec parseType: m_type parser = fun tkList -> match tkList with
+let rec parseAtomType: m_type parser = fun tkList -> match tkList with
 	(DIM i, _) :: tkRem ->
 		let* (tau, tkRem2) = parseBraceWrap parseType "Array Type" tkRem in
 		Valid (ArrayTy(i, tau), tkRem2)
@@ -110,6 +110,12 @@ let rec parseType: m_type parser = fun tkList -> match tkList with
 		else if List.mem x ["PRNG"; "Mat4"; "Image"; "FixImage"; "Sprite"; "Mesh"; "RenderData"] then Valid (builtinTy x, tkRem)
 		else if x = "BOT" then Valid (BotTy, tkRem)
 		else Valid (NamedTy (QN(q, x)), tkRem)
+
+and parseType: m_type parser = fun tkList ->
+	let* (tau, tkRem) = parseAtomType tkList in (match tkRem with
+		(QMARK, _) :: tkRem2 -> Valid (NullableTy tau, tkRem2)
+		| _ -> Valid (tau, tkRem)
+	)
 
 and parseTypeList: m_type list parser = fun tkList -> 
 	parseSepList parseType chkComma tkList
@@ -191,22 +197,16 @@ let forceIntList (el: m_exp list): (int list) parse_res = map_try_res (fun e -> 
 		| e -> Error (NonIntExp_Err (ann_exp e))
 	) el
 
-(*let rec parseIdAtomExp (prefix: qual_tag): m_exp parser = fun tkList -> match tkList with
-	(ID x, p) :: tkRem -> Valid (VarExp(prefix, x, p), tkRem)
-	| (TID m, p) :: tkRem -> (match tkRem with
-		(LPAREN, _) :: _ ->
-			let* (el, tkRem2) = parseParenWrap (parseSepList parseExp chkComma) "Enum / Union" tkRem in
-			Valid (TupleExp(Some (prefix, m), el, p), tkRem2)
-		| _ -> Valid (TupleExp(Some (prefix, m), [], p), tkRem)
-	)
-	| tk :: _ -> Error (BadToken_Err(tk, "Qualified Exp"))
-	| _ -> Error (EOF_Err "Qualified Exp")*)
+let parseTagOrNull (debug: string): (qual_name option) parser = fun tkList -> match tkList with
+	(NULL, _) :: tkRem -> Valid (None, tkRem)
+	| _ -> let* (y, tkRem) = parseDerefTId debug tkList in Valid (Some y, tkRem)
 
 let rec parseAtomExp: m_exp parser = fun tkList -> match tkList with
 	(INT i, p) :: tkRem -> Valid (ConstExp(IConst i, p), tkRem)
 	| (FLOAT f, p) :: tkRem -> Valid (ConstExp(FConst f, p), tkRem)
 	| (FALSE, p) :: tkRem -> Valid (ConstExp(BConst false, p), tkRem)
 	| (TRUE, p) :: tkRem -> Valid (ConstExp(BConst true, p), tkRem)
+	| (NULL, p) :: tkRem -> Valid (ConstExp(NullConst, p), tkRem)
 	| (STRLIT s, p) :: tkRem -> Valid (ConstExp(SConst s, p), tkRem)
 	| (U8 i, p) :: tkRem -> Valid (ConstExp(U8Const i, p), tkRem)
 	| (LONG l, p) :: tkRem -> Valid (ConstExp(LConst l, p), tkRem)
@@ -237,14 +237,7 @@ let rec parseAtomExp: m_exp parser = fun tkList -> match tkList with
 			let* (fl, tkRem3) = parseBrackWrap
 				(parseOrEmpty (parseSepList parseStructInit chkComma) chkBrackR) "Struct Initializer" tkRem2 in
 			Valid (NewStructExp(x, fl, p), tkRem3)
-			(*
-		| (TID x, _) :: tkRem2 ->
-		| tk :: _ -> Error (BadToken_Err(tk, "Heap Memory Initializer"))
-		| _ -> Error (EOF_Err "Heap Memory Initializer")*)
 	)
-	(*| (VDIM, p) :: tkRem ->
-		let* (el, tkRem2) = parseBraceWrap (parseOrEmpty (parseSepList parseExp chkComma) chkBrackR) "Array Initializer" tkRem in
-		Valid (ValueArrayExp(el, p), tkRem2)*)
 	| (LPAREN, p) :: _ ->
 		let* (el, tkRem) = parseParenWrap (parseSepList parseExp chkComma) "Tag Value" tkList in
 		if List.length el = 1 then Valid (List.hd el, tkRem)
@@ -255,11 +248,7 @@ let rec parseAtomExp: m_exp parser = fun tkList -> match tkList with
 		Valid (AppExp(OpExp(MeasureOp, p), [e], p), tkRem3)
 
 	| _ -> let* (xx, tkRem) = parseDerefXId "Exp" tkList in (match xx with
-		ParseId(x, p) -> (match tkRem with
-			(IS, _) :: tkRem2 ->
-				let* (y, tkRem3) = parseDerefTId "`is` Expression" tkRem2 in Valid (IsExp(x, y, p), tkRem3)
-			| _ -> Valid (VarExp(x, p), tkRem)
-		)
+		ParseId(x, p) -> Valid (VarExp(x, p), tkRem)
 		| ParseTId(x, p) -> (match tkRem with
 			(LPAREN, _) :: _ ->
 				let* (el, tkRem2) = parseParenWrap (parseSepList parseExp chkComma) "Enum/Union" tkRem in
@@ -267,22 +256,6 @@ let rec parseAtomExp: m_exp parser = fun tkList -> match tkList with
 			| _ -> Valid (TupleExp(Some x, [], p), tkRem)
 		)
 	)
-
-	(*| (ID x, p) :: tkRem -> (match tkRem with
-		(IS, _) :: tkRem2 -> let* (y, tkRem3) = parseDerefTId tkRem2 in Valid (IsExp(x, y, p), tkRem3)
-		| _ -> Valid (VarExp(QN(None, x), p), tkRem)
-	| (CID x, p) :: tkRem -> Valid (VarExp(QN(None, x), p), tkRem)
-	| (TID prefix, p) :: tkRem -> (match tkRem with
-		(DOT, _) :: tkRem2 -> parseIdAtomExp (QT (Some prefix)) tkRem2
-		| (LPAREN, _) :: _ ->
-			let* (el, tkRem2) = parseParenWrap (parseSepList parseExp chkComma) "Enum" tkRem in
-			Valid (TupleExp(Some (QT None, prefix), el, p), tkRem2)
-		| _ -> parseIdAtomExp (QT None) tkList
-	)*)
-	(*
-	| tk :: _ -> Error (BadToken_Err(tk, "Exp"))
-	| _ -> Error (EOF_Err "Exp")
-*)
 
 and parseArgList: m_exp list parser = fun tkList -> match tkList with
 	(RPAREN, _) :: _ -> Valid ([], tkList)
@@ -295,20 +268,6 @@ and parseArrayInner: (m_type option * m_exp list) parser = fun tkList -> match t
 	| _ ->
 		let* (el, tkRem) = parseSepList parseExp chkComma tkList in
 		Valid ((None, el), tkRem)
-
-(*
-and parseArrayInner: (n_exp list * n_exp list * bool) parser = fun tkList ->
-	let* (e0, tkRem) = parseExp tkList in (match tkRem with
-		(BY, _) :: tkRem2 ->
-			let* (dim_l, tkRem3) = parseSepList parseExp chkBy tkRem2 in
-			let* (_, tkRem4) = parseTk BAR "Array Initializer (Bar)" tkRem3 in
-			let* ((el, b), tkRem5) = parseArrayEnd tkRem4 in
-			Valid ((e0 :: dim_l, el, b), tkRem5)
-		| (COMMA, _) :: tkRem2 ->
-			let* ((el, b), tkRem3) = parseArrayEnd tkRem2 in
-			Valid (([], e0 :: el, b), tkRem3)
-		| _ -> Valid (([], [e0], false), tkRem)
-	)*)
 
 and parseArrayEnd: (m_exp list * bool) parser = fun tkList ->
 	let* (el, tkRem) = parseSepList parseExp chkComma tkList in
@@ -348,9 +307,16 @@ and parseAppExp: m_exp parser = fun tkList ->
 	let* (appList, tkRem2) = parseList parseAppObj chkAppEnd tkRem in
 	Valid (foldAppList e appList, tkRem2)
 
+and parseIsExp: m_exp parser = fun tkList ->
+	let* (eo, tkRem) = parseAppExp tkList in (match tkRem with
+		(IS, p) :: tkRem2 ->
+			let* (y, tkRem3) = parseTagOrNull "`is` Expression" tkRem2 in Valid (IsExp(eo, y, p), tkRem3)
+		| _ -> Valid (eo, tkRem)
+	)
+
 and parseUniExp: m_exp parser = fun tkList ->
 	let* (eOpList, tkRem) = parseList (parseTkMulti readUniOp "Unary Operator") chkUniEnd tkList in
-	let* (e, tkRem2) = parseAppExp tkRem in
+	let* (e, tkRem2) = parseIsExp tkRem in
 	Valid (foldOpListU e eOpList, tkRem2)
 
 and parseMulExp: m_exp parser = fun tkList ->

@@ -53,6 +53,7 @@ rule token = parse
 	| "return" { lexWrap lexbuf RETURN }
 	| "false" { lexWrap lexbuf FALSE }
 	| "true" { lexWrap lexbuf TRUE }
+	| "null" { lexWrap lexbuf NULL }
 	| "gc_collect" { lexWrap lexbuf GC_COLLECT }
 	| "\"" { strlit (lexeme_start_p lexbuf) "" lexbuf }
 	| ("_"? ['a'-'z'] idChar*) as x { lexWrap lexbuf (ID x) }
@@ -95,6 +96,7 @@ rule token = parse
 	| "}" { lexWrap lexbuf RBRACK }
 	| "," { lexWrap lexbuf COMMA }
 	| "~" { lexWrap lexbuf TILDE }
+	| "?" { lexWrap lexbuf QMARK }
 	| "@" { lexWrap lexbuf AT }
 	| eof { lexWrap lexbuf EOF }
 	| _ { token lexbuf }

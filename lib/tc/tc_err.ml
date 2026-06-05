@@ -28,6 +28,8 @@ type tc_err =
 	| BadCtorStruct_Err of string * l_pos
 	| MissingField_Err of string * string * l_pos
 	| BadField_Err of string * string * l_pos
+		(* nullable *)
+	| BadNullCheck_Err of g_type * l_pos
 		(* returns *)
 	| EarlyReturn_Err of string * l_pos
 	| NoReturn_Err of string * l_pos
@@ -70,6 +72,8 @@ let string_of_tc_err (e: tc_err) = match e with
 		"\" missing field \"" ^ x ^ "\" at " ^ (string_of_pos p) ^ "."
 	| BadField_Err(t, x, p) -> "Attempted to read non-existent field \"" ^ x ^
 		"\" from struct \"" ^ t ^ "\" at " ^ (string_of_pos p) ^ "."
+	| BadNullCheck_Err(t, p) -> "Attempted to perform null check on non-nullable type \"" ^
+		(string_of_type cr t) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| EarlyReturn_Err(f, p) ->
 		"Early return from function \"" ^ f ^ "\" producing unreachable code at " ^ (string_of_pos p) ^ "."
 	| NoReturn_Err(f, p) ->

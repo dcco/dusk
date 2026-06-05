@@ -14,6 +14,7 @@ type const =
 	| BConst of bool
 	| U8Const of int
 	| LConst of Int64.t
+	| NullConst
 	| KConst of string
 
 type rw = RR | WW
@@ -45,7 +46,7 @@ type ('m, 'ann) exp =
 	| FormatArrayExp of int * ('m, 'ann) exp list * ('m, 'ann) exp * 'ann
 	| NewStructExp of 'm * ('m, 'ann) field_init * 'ann
 		(* selectors *)
-	| IsExp of 'm * 'm * 'ann
+	| IsExp of ('m, 'ann) exp * 'm option * 'ann
 		(* function call *)
 	| AppExp of ('m, 'ann) exp * ('m, 'ann) exp list * 'ann
 and ('m, 'ann) field_init = (string * ('m, 'ann) exp) list

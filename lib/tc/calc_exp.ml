@@ -18,7 +18,6 @@ let rec calc_exp (env: type_env) (e: gen_exp): gen_exp tc_res = match e with
 		Some (_, tau) -> Valid (VarExpC (cr x), tau)
 		| _ -> failwith "BUG: calc_exp.ml - Failed variable lookup during type-checking phase."
 	)*)
-	| NullExpC -> Valid NullExpC
 	| NewArrayExpC(dim_l, el, tau) ->
 		let* dim_l' = map_try_res (calc_exp env) dim_l in
 		let dims = List.map as_int dim_l' in
@@ -40,5 +39,4 @@ let calc_cfun (env: type_env) (f: string) (el: gen_exp list) (p: l_pos): gen_exp
 			)
 		| _ -> failwith "BUG: calc_exp.ml - Constant expression cLoad with unspecified directory."
 	)
-	| ("null", _) -> Valid NullExpC
 	| _ -> failwith "UNIMPLEMENTED: calc_exp.ml - Constant expression cfun failure."

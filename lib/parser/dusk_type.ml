@@ -33,10 +33,12 @@ type 'm raw_type =
 	| BuiltinTy of string
 	| NamedTy of 'm
 	| TupleTy of 'm raw_type list
+	| TagTupleTy of 'm * 'm raw_type list
 	| ArrayTy of int * 'm raw_type
-	(*| ValArrayTy of 'm raw_type *)
 	| TagOfTy of 'm raw_type
 	| FunTy of 'm raw_type list * 'm raw_type
+	| NullableTy of 'm raw_type
+	| NullTy
 	| BotTy
 		(* to replace with polymorphism *)
 	| ArrayGenTy
@@ -52,10 +54,12 @@ let rec string_of_type (f: 'm -> string) (tau: 'm raw_type): string = match tau 
 	| BuiltinTy x -> x
 	| NamedTy x -> f x
 	| TupleTy tau_l -> "(" ^ String.concat ", " (List.map (string_of_type f) tau_l) ^ ")"
+	| TagTupleTy(x, _) -> f x
 	| ArrayTy(i, tau) -> (string_of_int i) ^ "d[" ^ (string_of_type f tau) ^ "]"
-	(*| ValArrayTy tau -> "1v[" ^ (string_of_type f tau) ^ "]"*)
 	| TagOfTy tau -> (string_of_type f tau) ^ ".t"
 	| FunTy(tau_pl, tau_r) -> string_of_fun_type f (tau_pl, tau_r)
+	| NullableTy tau -> (string_of_type f tau) ^ "?"
+	| NullTy -> "NULL"
 	| BotTy -> "BOT"
 	| ArrayGenTy -> "1d[_]"
 	

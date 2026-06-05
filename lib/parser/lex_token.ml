@@ -1,5 +1,5 @@
 
-type raw_token = INT of int | FLOAT of float | TRUE | FALSE
+type raw_token = INT of int | FLOAT of float | TRUE | FALSE | NULL
 	| STRLIT of string | KLIT of string | U8 of int | LONG of Int64.t
 	| ID of string | TID of string | CID of string | DIM of int | T_FN 
 	| REFERENCES | MODULE | MODULES | CHAPTER | END
@@ -7,7 +7,7 @@ type raw_token = INT of int | FLOAT of float | TRUE | FALSE
 	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
 	| LOOP | WHILE | DO | FOR | IN | RETURN
 	| GC_COLLECT | UNDERSCORE
-	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA | TILDE | AT
+	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA | TILDE | QMARK | AT
 	| LBRACE | RBRACE | BAR | LBRACK | RBRACK
 	| NEQ | LANGLE | RANGLE | LEQ | GEQ | AND | OR | EXCLAM
 	| PLUS | DASH | STAR | SLASH | FLDIV | PERC | EXPO
@@ -25,6 +25,7 @@ let string_of_raw_token tk = match tk with
 	| T_FN -> "Fn"
 	| TRUE -> "true"
 	| FALSE -> "false"
+	| NULL -> "null"
 	| ID x -> "id:" ^ x
 	| TID x -> "tid:" ^ x
 	| CID x -> "cid:" ^ x
@@ -66,6 +67,7 @@ let string_of_raw_token tk = match tk with
 	| RPAREN -> ")"
 	| COMMA -> ","
 	| TILDE -> "~"
+	| QMARK -> "?"
 	| AT -> "@"
 	| LBRACE -> "["
 	| RBRACE -> "]"

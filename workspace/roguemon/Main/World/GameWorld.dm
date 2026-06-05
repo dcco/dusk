@@ -9,7 +9,7 @@ struct WorldFlag{
 }
 
 struct Targeter{
-	1d[GameObj] obj
+	GameObj? obj
 }
 
 struct GameWorld{
@@ -92,7 +92,7 @@ fn newWorld() GameWorld
 		objList = initList,
 		player = player,
 		target = new Targeter{
-			obj = new 1d[~GameObj],
+			obj = null,
 			aimFlag = false
 		},
 		camera = newCamera(player.body),
@@ -151,11 +151,11 @@ fn pcInput(GameWorld world)
 		player.body.zspd = 0
 	end	
 	-- target options
-	if |world.target.obj| > 0 then
+	(*if !world.target.obj is null then
 		if keyPress(^c) then
 			player.mode = 1 - player.mode
 		end
-	end
+	end*)
 end
 
 fn dist(GameObj obj1, GameObj obj2) Int
@@ -172,11 +172,12 @@ fn pcTarget(GameWorld world)
 	-- set distance of "closest" target (if target exists)
 	-- - if target exists, bias towards not changing targets
 	var closestDist = fromTile(99)
-	if |target.obj| > 0 then
-		closestDist = max(fromTile(2), dist(world.player, target.obj[0]) - fromTile(2))
+	var tarObj = target.obj
+	if !tarObj is null then
+		closestDist = max(fromTile(2), dist(world.player, tarObj) - fromTile(2))
 		-- de-select target if too far away
 		if closestDist > fromTile(10) then
-			target.obj /= 0
+			target.obj = null
 		end
 	end
 	-- check for new target
@@ -186,8 +187,7 @@ fn pcTarget(GameWorld world)
 		if oType is EnemyCol then
 			var d = dist(world.player, curObj)
 			if d < fromTile(10) && d < closestDist then
-				if |target.obj| = 0 then target.obj += curObj
-				else target.obj[0] = curObj	end
+				target.obj = curObj
 				closestDist = d
 			end
 		end
@@ -281,8 +281,9 @@ fn draw(GameWorld world)
 	for i < |world.objList| do
 		world.objList[i].draw()
 	end
-	if |world.target.obj| > 0 then
-		world.target.obj[0].drawTarget()
+	var tarObj = world.target.obj
+	if !tarObj is null then
+		tarObj.drawTarget()
 	end
 	Sulfur.setSPFlag(0.0)
 end

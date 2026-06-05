@@ -10,8 +10,6 @@ open Fin_type
 
 type gen_exp =
 	ConstExpC of const
-	| NullExpC
-	(*| LitExpC of int *)
 	| VarExpC of string
 	| UnaryExpC of string * gen_exp
 	| BinExpC of string * gen_exp * gen_exp
@@ -23,11 +21,8 @@ type gen_exp =
 	| EnumRawExpC of gen_exp
 	| TupleExpC of int * g_type * gen_exp list
 	| MemoryFieldExpC of gen_rw * gen_exp * int
-	(*| TagTupleExpC of int * g_type * string * gen_exp list*)
-	(*| TupleIndexExpC of gen_exp * int * g_type*)
 		(* array operations *)
 	| ConstArrayExpC of int list * gen_exp list * g_type
-	(*| ValueArrayExpC of int * int * gen_exp list * g_type*)
 	| NewArrayExpC of gen_exp list * gen_exp list * g_type
 	| ArrayIndexExpC of gen_rw * gen_exp * gen_index
 	| ArrayLengthExpC of gen_exp
@@ -35,7 +30,6 @@ type gen_exp =
 	| ArrayAddExpC of gen_exp * gen_exp
 		(* struct operations *)
 	| NewStructExpC of string * gen_exp list
-	(*| StructFieldExpC of gen_rw * gen_exp * int * string*)
 		(* garbage collection *)
 	| GCNewRootExpC of gen_exp
 and gen_rw = RC of int option * g_type | WC of gen_exp
@@ -88,7 +82,7 @@ let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e
 	| NewStructExpC(_, el) -> List.concat (List.map (collect_thru_exp f) el)
 	(*| StructFieldExpC(_, e, _, _) -> collect_thru_exp f e*)
 	| GCNewRootExpC e -> collect_thru_exp f e
-	| ConstExpC _ | NullExpC | VarExpC _ | EnumExpC _ | ConstArrayExpC _ -> f e
+	| ConstExpC _ | VarExpC _ | EnumExpC _ | ConstArrayExpC _ -> f e
 and collect_thru_stmt (f: gen_exp -> 'a list) (s: gen_stmt): 'a list = match s with
 	EvalStmtC e -> collect_thru_exp f e
 	| AssignStmtC(_, e) -> collect_thru_exp f e

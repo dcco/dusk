@@ -5,13 +5,6 @@ open Parser.Dusk_ast
 open Res_cont
 open Res_type
 
-	(* basic name resolution *)
-(*
-let resolve_name (env: res_env) (p: l_pos) (prefix: qual_tag) (x: string): string rs_res = match lookup_env env prefix x with
-	[(ox, x')] -> Valid (canonize_binding env ox x')
-	| [] -> Error (BadLookup_Err(prefix, x, p))
-	| _ -> Error (AmbiguousLookup_Err(prefix, x, p))*)
-
 	(* expression resolution *)
 
 let rec resolve_exp (env: res_env) (e: m_exp): r_exp rs_res = match e with
@@ -36,9 +29,9 @@ let rec resolve_exp (env: res_env) (e: m_exp): r_exp rs_res = match e with
 		let* fl' = map_try_res (fun (f, e) ->
 			let* e' = resolve_exp env e in Valid (f, e')
 		) fl in Valid (NewStructExp(x', fl', p))
-	| IsExp(x, y, p) ->
-		let* x' = resolve_name env p x in
-		let* y' = resolve_name env p y in Valid (IsExp(x', y', p))
+	| IsExp(e, y, p) ->
+		let* e' = resolve_exp env e in
+		let* y' = opt_try_res (resolve_name env p) y in Valid (IsExp(e', y', p))
 	| AppExp(ef, el, p) ->
 		let* ef' = resolve_exp env ef in
 		let* el' = resolve_exp_list env el in Valid (AppExp(ef', el', p))

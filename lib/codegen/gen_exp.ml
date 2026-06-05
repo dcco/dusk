@@ -35,6 +35,7 @@ let genConst (cont: llvm_cont) (env: dusk_env) (c: const): dusk_val = match c wi
 	)
 	| U8Const i -> (const_int i8Type i, PrimDT i8Type)
 	| LConst l -> (const_of_int64 i64Type l true, PrimDT i64Type)
+	| NullConst -> (const_null _ptrType, PrimDT _ptrType)
 	| KConst k -> (match Hashtbl.find_opt env (DKeyLit k) with
 		Some (DVal (v, _)) -> (build_load kType v "_kT" cont.builder, PrimDT kType)
 		| _ ->
@@ -289,7 +290,6 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 		DVal (v, t) -> (v, t)
 		| _ -> failwith ("BUG: gen_exp.ml - String literal incorrectly resolved in generation phase.")
 	)*)
-	| NullExpC -> failwith "UNIMPLEMENTED: gen_exp.ml - null value generation"
 	| VarExpC x -> genLoadVar cont env (DVar x) x 
 	| UnaryExpC(xOp, e) ->
 		let (v, _) = genExp cont env e in
@@ -336,6 +336,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "ui64div" -> (build_udiv v1 v2 "_divT" bx, i64Type)
 			| "ui64mod" -> (build_urem v1 v2 "_modT" bx, i64Type)
 			| "tag_eq" -> (build_icmp Icmp.Eq v1 v2 "_isT" bx, tagType)
+			| "ptr_eq" -> (build_icmp Icmp.Eq v1 v2 "_isT" bx, tagType)
 			| "ifdiv" ->
 				let v1' = build_sitofp v1 fType "_castAT" bx in
 				let v2' = build_sitofp v2 fType "_castBT" bx in
@@ -672,7 +673,6 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 
 let rec genConstExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = (*let bx = cont.builder in*) match e with
 	ConstExpC c -> genConst cont env c
-	| NullExpC -> (const_null _ptrType, PrimDT _ptrType)
 	| ConstArrayExpC(dims, el, tau) ->
 		let size = List.fold_left (fun i v -> i * v) 1 dims in
 		let tau_store = toStoreType "(Constant Array)" env tau in

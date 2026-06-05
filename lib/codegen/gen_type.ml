@@ -18,7 +18,6 @@ let kType = iType
 let i64Type = i64_type context
 let fType = float_type context
 let bType = i1_type context
-(*let ptrType = pointer_type context;;*)
 let _ptrType = pointer_type context
 
 	(* - complex types *)
@@ -117,24 +116,28 @@ let rec toStoreType (debug: string) (env: dusk_env) (tau: g_type): store_type = 
 	| PrimTy "Key" -> PrimST kType
 	| PrimTy x -> failwith ("BUG: gen_type.ml - Non-existent primitive type \"" ^ x ^ "\". " ^ debug)
 	| BuiltinTy _ -> PrimST _ptrType
-	| NamedTy t -> (match Hashtbl.find_opt env (DTName (cr t)) with
-		Some (DTDef td) -> (match td with
-			EnumTD_C -> PrimST tagType
-			| OpaqueTD_C(i, align) -> TagTupleST(array_type i8Type i, align)
-			| StructTD_C(tau_l, _) -> StructPtrST (Array.map (fun t -> ImplDST t) tau_l)
-			(*| StructTD_C(tau_l, _) -> StructPtrST tau_l*)
-		) 
-		| Some v -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^
-			"\" mapped to unexpected value " ^ (string_of_dval v) ^ " while generating storage type.")
-		| None -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^ "\" encountered while generating storage type.")
-	)
+	| NamedTy t -> _namedStoreType debug env t
 	| TupleTy tau_l -> TupleST (Array.of_list (List.map (toStoreType debug env) tau_l))
+	| TagTupleTy(t, _) -> _namedStoreType debug env t
 	| ArrayTy(_, tau) -> gcArrStoreType (toStoreType debug env tau)
 	| ArrayGenTy -> gcArrStoreType (PrimST iType)
-	(*| ValArrayTy tau -> gcArrStoreType (toStoreType debug env tau)*)
 	| TagOfTy _ -> PrimST tagType
 	| FunTy _ -> PrimST _ptrType
+	| NullableTy tau -> toStoreType debug env tau
 	| BotTy -> PrimST iType
+	| NullTy -> failwith ("BUG: gen_type.ml - Null-only type encountered while generating storage type.")
+and _namedStoreType (debug: string) (env: dusk_env) (t: canon_name): store_type =
+	match Hashtbl.find_opt env (DTName (cr t)) with
+	Some (DTDef td) -> (match td with
+		EnumTD_C -> PrimST tagType
+		| OpaqueTD_C(i, align) -> TagTupleST(array_type i8Type i, align)
+		| StructTD_C(tau_l, _) -> StructPtrST (Array.map (fun t -> ImplDST t) tau_l)
+		(*| StructTD_C(tau_l, _) -> StructPtrST tau_l*)
+	) 
+	| Some v -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^
+		"\" mapped to unexpected value " ^ (string_of_dval v) ^ " while generating storage type. " ^ debug)
+	| None -> failwith ("BUG: gen_type.ml - Invalid type \"" ^ (cr t) ^ "\" encountered while generating storage type." ^ debug)
+	
 
 	(*
 		valToStoreType: converts a value type into its corresponding storage type
