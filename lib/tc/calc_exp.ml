@@ -14,6 +14,7 @@ let as_int (e: gen_exp): int = match e with
 
 let rec calc_exp (env: type_env) (e: gen_exp): gen_exp tc_res = match e with
 	ConstExpC c -> Valid (ConstExpC c)
+	| EnumExpC tag -> Valid (EnumExpC tag)
 	(*| VarExpC x -> (match Hashtbl.find_opt env.globalIds (cr x) with
 		Some (_, tau) -> Valid (VarExpC (cr x), tau)
 		| _ -> failwith "BUG: calc_exp.ml - Failed variable lookup during type-checking phase."

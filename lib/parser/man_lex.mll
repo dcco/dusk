@@ -29,7 +29,6 @@ rule token = parse
 	| "end" { lexWrap lexbuf END }
 	| "struct" { lexWrap lexbuf STRUCT }
 	| "enum" { lexWrap lexbuf ENUM }
-	| "enum+" { lexWrap lexbuf ENUMP }
 	| "extends" { lexWrap lexbuf EXTENDS }
 	| "attrs" { lexWrap lexbuf ATTRS }
 	| "union" { lexWrap lexbuf UNION }
@@ -45,6 +44,7 @@ rule token = parse
 	| "elsif" { lexWrap lexbuf ELSIF }
 	| "else" { lexWrap lexbuf ELSE }
 	| "is" { lexWrap lexbuf IS }
+	| "isnt" { lexWrap lexbuf ISNT } 
 	| "loop" { lexWrap lexbuf LOOP }
 	| "while" { lexWrap lexbuf WHILE }
 	| "do" { lexWrap lexbuf DO }

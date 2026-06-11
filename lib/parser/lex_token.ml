@@ -3,8 +3,8 @@ type raw_token = INT of int | FLOAT of float | TRUE | FALSE | NULL
 	| STRLIT of string | KLIT of string | U8 of int | LONG of Int64.t
 	| ID of string | TID of string | CID of string | DIM of int | T_FN 
 	| REFERENCES | MODULE | MODULES | CHAPTER | END
-	| STRUCT | ENUM | ENUMP | EXTENDS | ATTRS | UNION | CONST | GLOBALS
-	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS
+	| STRUCT | ENUM | EXTENDS | ATTRS | UNION | CONST | GLOBALS
+	| FN | LIN | VAR | NEW | BY | IF | THEN | ELSIF | ELSE | IS | ISNT
 	| LOOP | WHILE | DO | FOR | IN | RETURN
 	| GC_COLLECT | UNDERSCORE
 	| EQ | DOT | ELLIP | LPAREN | RPAREN | COMMA | TILDE | QMARK | AT
@@ -36,7 +36,6 @@ let string_of_raw_token tk = match tk with
 	| END -> "end"
 	| STRUCT -> "struct"
 	| ENUM -> "enum"
-	| ENUMP -> "enum+"
 	| EXTENDS -> "extends"
 	| ATTRS -> "attrs"
 	| UNION -> "union"
@@ -52,6 +51,7 @@ let string_of_raw_token tk = match tk with
 	| ELSIF -> "elsif"
 	| ELSE -> "else"
 	| IS -> "is"
+	| ISNT -> "isnt"
 	| LOOP -> "loop"
 	| WHILE -> "while"
 	| DO -> "do"

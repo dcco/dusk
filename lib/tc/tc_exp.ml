@@ -43,6 +43,9 @@ let rc_of_type (env: type_env) (tau: g_type): gen_rw =
 	if is_boxed_type env tau then RC(Some (get_box_id_tenv env), tau)
 	else RC(None, tau)
 
+let attrConstName (tx: canon_name) (x: string): string =
+	"ATTR" ^ (cr tx) ^ "_" ^ x
+
 	(* type-checking auxiliaries *)
 
 type g_fun =
@@ -57,6 +60,7 @@ type g_fun =
 	| StructFieldGF of rw * int
 	| CallGF of int list
 	| EnumRawGF
+	| EnumAttrGF of canon_name * string
 
 let rec index_type_list (tau_l: g_type list) (i: int): g_type option = match tau_l with
 	[] -> None
@@ -212,7 +216,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			| Some (_, TcCtorU _) -> Valid (true, EnumExpC (cr ctor))
 			| _ -> Error (NonCtorU_Err(cr ctor, p))
 		) in
-		let ev = if derefFlag then MemoryFieldExpC(rc_of_type env tau, ex, 0) else ex in
+		let ev = if derefFlag then MemoryFieldExpC(rc_of_type env tau, ex, None) else ex in
 		Valid (BinExpC("tag_eq", ev, ec), boolTy)
 	| AppExp(ef, el, p) ->
 		let* et_l' = tc_exp_list env el in
@@ -223,7 +227,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			UnaryGF fsm -> Valid (UnaryExpC(fsm, List.nth el' 0), tau_rn)
 			| BinaryGF fsm -> Valid (BinExpC(fsm, List.nth el' 0, List.nth el' 1), tau_rn)
 			| InternalGF fsm ->	let* c = calc_cfun env fsm el' p in Valid (c, tau_rn)
-			| TupleIndexGF i -> Valid (MemoryFieldExpC(rc_of_type env tau_rn, List.hd el', i), tau_rn)
+			| TupleIndexGF i -> Valid (MemoryFieldExpC(rc_of_type env tau_rn, List.hd el', Some i), tau_rn)
 			| ArrayIndexGF rw ->
 				let (rw', tau_r', et') =
 					if rw = RR then (rc_of_type env tau_rn, tau_rn, List.tl el')
@@ -234,7 +238,7 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 			| ArrayAddGF -> Valid (ArrayAddExpC(List.hd el', List.nth el' 1), tau_rn)
 			| StructFieldGF(rw, i) ->
 				let rw' = if rw = RR then rc_of_type env tau_rn else WC (List.nth el' 1) in
-				Valid (MemoryFieldExpC(rw', List.nth el' 0, i), tau_rn)
+				Valid (MemoryFieldExpC(rw', List.nth el' 0, Some i), tau_rn)
 			| CallGF _ ->
 				(*let elx = List.mapi (fun i (e', tau_a) -> if List.mem i vl then BoxExpC(get_box_id_tenv env, e', tau_a) else e') et_l' in
 				*)
@@ -242,6 +246,9 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				let iOpt = if is_boxed_type env tau_rn then Some (get_box_id_tenv env) else None in
 				Valid (CallExpC(iOpt, VarExpC fRaw, elx, tau_rn), tau_rn)
 			| EnumRawGF -> Valid (EnumRawExpC (List.hd el'), tau_rn)
+			| EnumAttrGF(tx, x) ->
+				let rc = rc_of_type env tau_rn in
+				Valid (ArrayIndexExpC(rc, VarExpC (attrConstName tx x), RawIndexC (List.hd el')), tau_rn)
 		)
 and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_fun * canon_name fun_type) tc_res = match ef with
 	VarExp(f, p) -> (match lookup_fun_tenv env f tau_a with
@@ -290,6 +297,13 @@ and tc_fun_exp (env: type_env) (ef: r_exp) (tau_a: g_type option): (string * g_f
 						if rw = RR then ([NamedTy cx], tau)
 						else ([NamedTy cx; tau], unitTy)
 					in Valid ("", StructFieldGF(rw, i), (tau_args, tau_r))
+			)
+			| Some (_, TcTDef (EnumTD _)) -> (match Hashtbl.find_opt env.globalAttrs (cr cx) with
+				None -> Error (NonStruct_Err(NamedTy cx, p))
+				| Some attrs -> (match Hashtbl.find_opt attrs x with
+					None -> Error (BadAttr_Err(cr cx, x, p))
+					| Some tau -> Valid ("", EnumAttrGF(cx, x), ([NamedTy cx], tau))
+				)
 			)
 			| _ -> Error (NonStruct_Err(NamedTy cx, p))
 		)
@@ -366,9 +380,9 @@ let var_ctor_list (env: type_env) (x: string): string list =
 			Some (_, TcTDef td) -> td
 			| _ -> failwith "BUG: tc_exp.ml - Attempted to read constructor list for non-existent type definition."
 		) in (match td with
-			EnumTD(_, cl) -> List.map (fun (cx, _) -> cr cx) cl
+			EnumTD cl -> List.map (fun (cx, _) -> cr cx) cl
 			| UnionTD ul -> List.map (fun (cx, _, _) -> cr cx) ul
-			| _ -> failwith "BUG: tc_exp.ml - Attempted to read constructor list for non-enum/union variable."
+			| _ -> print_string tx; failwith "BUG: tc_exp.ml - Attempted to read constructor list for non-enum/union variable."
 		)
 	in match tc_var env x with
 	NamedTy tx -> vcl_aux (cr tx)
@@ -380,7 +394,7 @@ let rec read_guard_exp (env: type_env) (e: gen_exp): guard_map = match e with
 		new_guard_map x null_guard_set
 	| BinExpC("tag_eq", VarExpC x, EnumExpC y) ->
 		new_guard_map x (new_guard_set y (var_ctor_list env x))
-	| BinExpC("tag_eq", MemoryFieldExpC(_, VarExpC x, _), EnumExpC y) ->
+	| BinExpC("tag_eq", MemoryFieldExpC(_, VarExpC x, None), EnumExpC y) ->
 		new_guard_map x (new_guard_set y (var_ctor_list env x))
 	| UnaryExpC("bnot", ev) ->
 		neg_guard_map (read_guard_exp env ev)
@@ -429,7 +443,7 @@ let rec tc_stmt (cont: fun_cont) (env: type_env) (s: r_stmt) (tau_r: g_type): (t
 				| Some x ->
 					let tau_v = List.nth tau_vl i in
 					({ env' with localIds = StringMap.add x tau_v env'.localIds },
-						b @ [VarStmtC(x, MemoryFieldExpC(rc_of_type env' tau_v, VarExpC "__pat", i), tau_v)], i + 1)
+						b @ [VarStmtC(x, MemoryFieldExpC(rc_of_type env' tau_v, VarExpC "__pat", Some i), tau_v)], i + 1)
 			) (env, [], 0) xol in
 			Valid (envX, (VarStmtC("__pat", e', tau_e)) :: b, false)
 	)
@@ -501,7 +515,30 @@ let tc_dec (env: type_env) (d: r_dec): ((string * gen_dec) list) tc_res = match 
 			else Valid [(fName, FunDecC (MethodC(pl, tau_r, b' @ [ReturnStmtC None])))]
 		) else Valid [(fName, FunDecC (MethodC(pl, tau_r, b')))]
 	| TDefDec(x, td, _) -> add_tdef_tenv env x td; Valid [(cr x, TDefDecC td)]
-	| ExtendsDec(_, _, _, _) -> Valid []
+	(*| ExtendsDec(_, _, _, _) -> Valid []*)
+	| AttrsDec(tx, fl, cl, p) ->
+			(* add attributes to type environment *)
+		Hashtbl.add env.globalAttrs (cr tx) (
+			Hashtbl.of_seq (List.to_seq fl)
+		);
+			(* check that each case has the right number of attributes *)
+		let total = List.length fl in
+		let* _ = map_try_res (fun (ctor, el) ->
+			if List.length el <> total then
+				Error (MismatchedAttrNum_Err(cr ctor, List.length el, total, p))
+			else Valid ()
+		) cl in
+			(* make each attribute constant *)
+		map_try_resi (fun (fx, tau) ix ->
+			let* el' = map_try_res (fun (_, el) ->
+				let* (e', tau_e) = tc_exp env (List.nth el ix) in
+				let* _ = tc_type tau_e tau p in
+				calc_exp env e'
+			) cl in
+			let ea = ConstArrayExpC([List.length cl], el', tau) in
+			let f = attrConstName tx fx in
+			Valid (f, ConstDecC ea)
+		) fl
 	| ConstDec(x, e, _) ->
 		let* (e', tau) = tc_exp env e in
 		let* ef = calc_exp env e' in

@@ -21,6 +21,14 @@ let rec map_try_res (f: 'a -> ('b, 'c) try_res) (l: 'a list): ('b list, 'c) try_
 		let* v' = f v in
 		let* t' = map_try_res f t in Valid (v' :: t')
 
+let map_try_resi (f: 'a -> int -> ('b, 'c) try_res) (l: 'a list): ('b list, 'c) try_res =
+	let rec mtri l i = match l with
+		[] -> Valid []
+		| v :: t ->
+			let* v' = f v i in
+			let* t' = mtri t (i + 1) in Valid (v' :: t')
+	in mtri l 0
+
 	(* type for (possible) error results + logging state *)
 
 type 'a try_log_res = LogRes of 'a option * string list

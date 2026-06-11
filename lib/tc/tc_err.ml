@@ -20,6 +20,8 @@ type tc_err =
 	| NonCtorU_Err of string * l_pos
 	| NonTagType_Err of g_type * l_pos
 	| NonEnum_Err of g_type * l_pos
+	| BadAttr_Err of string * string * l_pos
+	| MismatchedAttrNum_Err of string * int * int * l_pos
 		(* arrays *)
 	| MismatchedArrayDim_Err of int list * int * int * l_pos
 	| NestedFormat_Err of l_pos
@@ -61,6 +63,10 @@ let string_of_tc_err (e: tc_err) = match e with
 	| NonCtorU_Err(t, p) -> "Type name \"" ^ t ^ "\" did not resolve to a union constructor at " ^ (string_of_pos p) ^ "."
 	| NonTagType_Err(t, p) -> "Tag requested for untagged type \"" ^ (string_of_type cr t) ^ "\" at " ^ (string_of_pos p) ^ "."
 	| NonEnum_Err(t, p) -> "Enum operation called on non-enum type \"" ^ (string_of_type cr t) ^ "\" at " ^ (string_of_pos p) ^ "."
+	| BadAttr_Err(t, x, p) -> "Attempted to read non-existent attribute \"" ^ x ^
+		"\" from enum \"" ^ t ^ "\" at " ^ (string_of_pos p) ^ "."
+	| MismatchedAttrNum_Err(tx, s, t, p) -> "Enum constructor \"" ^ tx ^ "\" expected " ^ (string_of_int t) ^ " attributes and received " ^
+		(string_of_int s) ^ " at " ^ (string_of_pos p) ^ "."
 	| MismatchedArrayDim_Err(dim_l, dim_prod, n, p) ->
 		"Array initializer has " ^ (string_of_int n) ^ " elements, but specified dimensions [" ^
 		(String.concat ", " (List.map string_of_int dim_l)) ^ "] require " ^

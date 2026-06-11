@@ -112,6 +112,7 @@ and inner_type =
 
 	(* var type: wraps variables - ensures that a load is done to obtain the underlying type
 		a regular variable is always a pointer to a dusk_type, so we treat it accordingly
+		- fun: stores the LLVM function type + storage return type
 	*)
 
 type var_type =

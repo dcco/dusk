@@ -31,10 +31,10 @@ let resolve_type_def (env: res_env) (p: l_pos) (td: m_tdef): g_tdef rs_res = mat
 		let* fl' = map_try_res (fun (x, tau) ->
 			let* tau' = resolve_type env p tau in Valid (x, tau')
 		) fl in Valid (StructTD fl')
-	| EnumTD(extFlag, cl) ->
+	| EnumTD cl ->
 		let* cl' = map_try_res (fun (x, ext) ->
 			let* x' = add_dec_renv env p LocalOr x in Valid (x', ext)
-		) cl in Valid (EnumTD(extFlag, cl'))
+		) cl in Valid (EnumTD cl')
 	| UnionTD cl ->
 		let* cl' = map_try_res (fun (x, tau_l, ext) ->
 			let* x' = add_dec_renv env p LocalOr x in

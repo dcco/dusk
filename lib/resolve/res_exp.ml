@@ -113,9 +113,18 @@ let resolve_dec (env: res_env) (d: m_dec): r_dec rs_res = match d with
 	| TDefDec(tName, td, p) ->
 		let* tName' = add_dec_renv env p LocalOr tName in
 		let* td' = resolve_type_def env p td in	Valid (TDefDec(tName', td', p))
-	| ExtendsDec _ -> (*ExtendsDec(x, al, cl, p) ->*)
+	| AttrsDec(tName, fl, cl, p) ->
+		let* tName' = resolve_name env p tName in
+		let* fl' = map_try_res (fun (x, tau) ->
+			let* t' = resolve_type env p tau in Valid (x, t')
+		) fl in
+		let* cl' = map_try_res (fun (ctor, el) ->
+			let* el' = map_try_res (resolve_exp env) el in
+			let* ctor' = resolve_name env p ctor in
+			Valid (ctor', el')
+		) cl in Valid (AttrsDec(tName', fl', cl', p))
+	(*| ExtendsDec _ -> ExtendsDec(x, al, cl, p) ->*)
 			(* resolve attributes *)
-		failwith "UNIMPLEMENTED: res_exp.ml - Unimplemented resolution for type extension."
 		(*let* al' = map_try_res (fun (x, tau) ->
 			let* t' = resolve_type env p tau in Valid (x, t')
 		) al in

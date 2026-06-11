@@ -101,6 +101,8 @@ type sym_fun_type = sym * canon_name fun_type
 
 type poly_dec = sym_fun_type poly_type
 
+type tc_attrs = (string, g_type) Hashtbl.t
+
 type tc_tval =
 	TcTDef of g_tdef
 	| TcCtorE of canon_name
@@ -111,6 +113,7 @@ type type_env = {
 	globalFIds: (string, canon_name * poly_dec) Hashtbl.t;
 	globalTIds: (string, canon_name * tc_tval) Hashtbl.t;
 	globalIds: (string, canon_name * g_type) Hashtbl.t;
+	globalAttrs: (string, tc_attrs) Hashtbl.t;
 	localIds: g_type StringMap.t;
 	guardMap: guard_map;
 	boxCount: int ref
@@ -152,8 +155,8 @@ let add_fun_tenv (env: type_env) (f: canon_name) (v: sym_fun_type): unit =
 let add_tdef_tenv (env: type_env) (f: canon_name) (td: g_tdef): unit = match td with
 	| StructTD fl ->
 		Hashtbl.add env.globalTIds (cr f) (f, TcTDef (StructTD fl))
-	| EnumTD(extFlag, cl) ->
-		Hashtbl.add env.globalTIds (cr f) (f, TcTDef (EnumTD(extFlag, cl)));
+	| EnumTD cl ->
+		Hashtbl.add env.globalTIds (cr f) (f, TcTDef (EnumTD cl));
 		List.iter (fun (c, _) -> Hashtbl.add env.globalTIds (cr c) (c, TcCtorE f)) cl
 	| UnionTD cl ->
 		Hashtbl.add env.globalTIds (cr f) (f, TcTDef (UnionTD cl));
@@ -165,6 +168,7 @@ let builtin_tenv (dl: g_virt_bind list): type_env =
 		globalFIds = Hashtbl.create 50;
 		globalTIds = Hashtbl.create 50;
 		globalIds = Hashtbl.create 50;
+		globalAttrs = Hashtbl.create 10;
 		localIds = StringMap.empty;
 		guardMap = StringMap.empty;
 		boxCount = ref 0

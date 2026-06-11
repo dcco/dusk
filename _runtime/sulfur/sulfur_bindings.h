@@ -87,6 +87,33 @@ extern void _none_Sys_Sulfur_waitRom()
 	waitRom(sulfur->rom);
 }
 
+	/* screen bindings */
+
+extern int32_t _none_Sys_Sulfur_screenWidth()
+{
+	return WIDTH;
+}
+
+extern int32_t _none_Sys_Sulfur_screenHeight()
+{
+	return HEIGHT;
+}
+
+extern int32_t _none_Sys_Sulfur_canvasZoom()
+{
+	return ZOOM;
+}
+
+extern int32_t _none_Sys_Sulfur_canvasWidth()
+{
+	return (int32_t) ceilf((float) WIDTH / ZOOM);
+}
+
+extern int32_t _none_Sys_Sulfur_canvasHeight()
+{
+	return (int32_t) ceilf((float) HEIGHT / ZOOM);
+}
+
 	/* resource bindings */
 
 extern uint32_t _Image_Sys_Sulfur_pixel(tex_image_t* imagePtr, int32_t x, int32_t y)

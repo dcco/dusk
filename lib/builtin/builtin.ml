@@ -237,7 +237,14 @@ let sulfurList = [
 	("rotateX", ExternalSym [], [mat4Ty; floatTy], unitTy);
 	("lookAt", ExternalSym [], [mat4Ty; vec3Ty; vec3Ty; vec3Ty], unitTy);
 
-	("mult", ExternalSym [], [mat4Ty; vec4Ty], vec4Ty)
+	("mult", ExternalSym [], [mat4Ty; vec4Ty], vec4Ty);
+
+		(* screen *)
+	("screenWidth", ExternalSym [], [], intTy);
+	("screenHeight", ExternalSym [], [], intTy);
+	("canvasZoom", ExternalSym [], [], intTy);
+	("canvasWidth", ExternalSym [], [], intTy);
+	("canvasHeight", ExternalSym [], [], intTy)
 ]
 
 let sulfurTypes = [
@@ -268,11 +275,11 @@ let sulfurTypes = [
 		("GLFloatV", [floatTy], Some "C_GL_FLOAT");
 		("GLMat4V", [mat4Ty], Some "C_GL_MAT4");
 	]));*)
-	(pb "BufferType", TDefVD (EnumTD(false, [
+	(pb "BufferType", TDefVD (EnumTD [
 		(qn "FBOColor", GlobalEB "C_FBO_COLOR");
 		(qn "FBODepth", GlobalEB "C_FBO_DEPTH");
 		(qn "FBORender", GlobalEB "C_FBO_RENDER")
-	])))
+	]))
 ]
 
 	(*
@@ -289,7 +296,7 @@ let builtinTreeMap (shaderFlag: bool): (m_virt_bind list) tree_map =
 
 let extractSymbols (symList: (raw_bind, qual_name) virt_bind list): raw_bind list =
 	List.concat (List.map (fun (f, vd) -> match vd with
-		TDefVD (EnumTD(_, cl)) -> f :: (List.map (fun (QN(_, c), _) -> RawBind c) cl)
+		TDefVD (EnumTD cl) -> f :: (List.map (fun (QN(_, c), _) -> RawBind c) cl)
 		| TDefVD (UnionTD cl) -> f :: (List.map (fun (QN(_, c), _, _) -> RawBind c) cl)
 		| _ -> [f]
 	) symList)

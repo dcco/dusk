@@ -30,12 +30,6 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 				(* align + add to env *)
 			Option.iter (fun align -> set_alignment align vx; set_alignment align vs) alignOpt;
 			Hashtbl.add env' (DVar x) (DVal (vx, VarVT tx)); gpl_rec pt (i + 1)
-			(*let (vp, (tx, alignOpt)) = (Array.get va i, genStoreType tau) in
-			let vx = build_alloca tx ("_" ^ x) cont.builder in
-			let vs = build_store vp vx cont.builder in
-			let t = genType tau in
-			Option.iter (fun align -> set_alignment align vx; set_alignment align vs) alignOpt;
-			Hashtbl.add env' (DVar x) (DVal ((vx, t), None)); gpl_rec pt (i + 1)*)
 	in let startId =
 		let tau_store = toStoreType "(Parameter List Return)" env tau_r in
 		(match storeToValType "(Parameter List Return)" env tau_store with
@@ -45,12 +39,6 @@ let genParamList (cont: llvm_cont) (env: dusk_env) (pl: (string * g_type) list) 
 			| _ -> 0
 		)
 	in gpl_rec pl startId; env'
-	(*let startId = (match genStoreTypeFull "(Parameter List Return)" env tau_r with
-		TStore _ -> 0
-		| CopyStore(_, _) ->
-			let vp = DVal ((Array.get va 0, ptrType), None) in
-			Hashtbl.add env' DRetVar vp; 1
-	)*)
 
 let genPreAlloc (cont: llvm_cont) (env: dusk_env) (b: gen_stmt list): unit =
 	let varList = collect_var_body b in
@@ -66,17 +54,6 @@ let genPreAlloc (cont: llvm_cont) (env: dusk_env) (b: gen_stmt list): unit =
 			let v = build_alloca (genStoreType tau_store) "_boxT" cont.builder in
 			Option.iter (fun align -> set_alignment align v) (alignOfStoreType tau_store);
 			Hashtbl.add env (DBox i) (DBoxVal (v, tau_store))
-			(*let (t', alignOpt) = genStoreType "(Box)" env tau in
-			let v = build_alloca t' "_boxT" cont.builder in
-			Option.iter (fun align -> set_alignment align v) alignOpt;
-			Hashtbl.add env (DBox i) (DVal ((v, ptrType), alignOpt))*)
-		(*| OuterArrayBoxTy ->
-			let v = build_alloca gcArrType "_boxT" cont.builder in
-			Hashtbl.add env (DBox i) (DVal ((v, gcArrType), None))
-		| InnerArrayBoxTy(n, tau) ->
-			let (t', _) = genStoreType "(Array Box)" env tau in
-			let v = build_alloca (array_type t' n) "_boxT" cont.builder in
-			Hashtbl.add env (DBox i) (DVal ((v, ptrType), None))*)
 	)) boxList
 
 	(*
@@ -94,13 +71,11 @@ let genStructTD (cont: llvm_cont) (env: dusk_env) (f: string) (fl: (string * g_t
 	) in
 		(* - ignores alignment, values must be copied out *)
 	Hashtbl.add env (DTName f) (DTDef (StructTD_C(Array.of_list tau_l, tc_struct)))
-	(*let tl' = List.map (fun tau -> fst (genStoreType "(Struct Type Dec)" env tau)) tau_l in*)
 
 let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_name union_case) list): unit = match cl with
 	[] -> ()
 	| (name, _, ext_o) :: ct ->
-		(*	(* - ignores alignment, value must be copied out *)
-		let tl' = List.map (fun tau -> fst (genStoreType "(Enum/Union Type Dec)" env tau)) tau_l in*)
+		(* - ignores alignment, value must be copied out *)
 		let (v, i') = (match ext_o with
 			NoEB -> (DEnum (IntEV i), i + 1)
 			| IntEB j -> (DEnum (IntEV j), j + 1)
@@ -117,7 +92,6 @@ let genUnionTD (cont: llvm_cont) (env: dusk_env) (f: string) (cl: (canon_name un
 	let max_align = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
 		align_of_type cont (genTagCaseType env tau_l)
 	) cl) in
-	(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
 	Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
 	genEnumTD cont env 0 cl
 
@@ -146,7 +120,7 @@ let genDec (cont: llvm_cont) (env: dusk_env) (initFun: llvalue) (f: string) (d: 
 		genPreAlloc cont env' b;
 		ignore (genBody cont env' (1, fVal) b)
 	| TDefDecC (StructTD fl) -> genStructTD cont env f fl
-	| TDefDecC (EnumTD(_, cl)) ->
+	| TDefDecC (EnumTD cl) ->
 		Hashtbl.add env (DTName f) (DTDef EnumTD_C);
 			(* - filler datatypes for data-less enums *)
 		genEnumTD cont env 0 (List.map (fun (x, ext) -> (x, [], ext)) cl)
@@ -213,25 +187,14 @@ let genExternals (cont: llvm_cont) (mainDir: string) (env: dusk_env) (symList: g
 		SymVD (ExternalSym _, (tau_pl, tau_r)) ->
 			(*
 				-- currently not using "external sym"
-			let tau_plx = List.mapi (fun i tau_p -> if List.mem i vl then ptrType else genType env tau_p) tau_pl in
-			let fType = genFunType function_type (genType env tau_r) (Array.of_list tau_plx) in*)
+			*)
 			let fType = genFunType "(External Function Dec)" env tau_pl tau_r in
 			let tr = toStoreType "(Exteranl Function Dec)" env tau_r in
 			let v = declare_function (cr f) fType cont.llmod in
 			Hashtbl.add env (DVar (cr f)) (DVal(v, FunVT(fType, tr)))
 		| SymVD _ -> ()
-			(*let zero_size = size_of_type cont i8Type in
-			let max_size = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
-				size_of_type cont (virtTagTupleType tau_l)
-			) cl) in
-			let max_align = List.fold_left max zero_size (List.map (fun (_, tau_l, _) ->
-				align_of_type cont (virtTagTupleType tau_l)
-			) cl) in
-			(*let padding = (max_align - (max_size mod max_align)) mod max_align in*)
-			Hashtbl.add env (DTName f) (DTDef (OpaqueTD_C(max_size, max_align)));
-			genEnum cont env 0 cl*)
 		| TDefVD (StructTD fl) -> genStructTD cont env (cr f) fl
-		| TDefVD (EnumTD(_, cl)) ->
+		| TDefVD (EnumTD cl) ->
 			Hashtbl.add env (DTName (cr f)) (DTDef EnumTD_C);
 			(* - filler datatypes for data-less enums *)
 			genEnumTD cont env 0 (List.map (fun (x, ext) -> (x, [], ext)) cl)
@@ -301,20 +264,12 @@ let genTarget (targetArg: string option) (optimizeFlag: bool): (llvm_cont * Targ
 	let ttx = Target.by_triple target in
 	(*print_endline ("target: " ^ target);*)
 	set_target_triple target newCont.llmod;
-	(*printAllTargets ();*)
-	(*let target = "x86-64" in
-	let ttx = (match Target.by_name target with
-		None -> failwith "Could not find target for specified backend."
-		| Some t -> t
-	) in*)
-	(*let tm = print_endline ("target: " ^ target);*)
 		(* create target machine *)
 	let level = if optimizeFlag then CodeGenOptLevel.Aggressive else CodeGenOptLevel.None in
 	let tm = TargetMachine.create ~triple:target ~cpu:"generic" ~features:"" ~level:level
 		~reloc_mode:RelocMode.Default ~code_model:CodeModel.Default ttx in
 		(* get data layout from target machine *)
 	let layout = TargetMachine.data_layout tm in
-	(*print_endline ("data layout: " ^ (DataLayout.as_string layout));*)
 	let cont = { newCont with data_layout = layout } in
 	set_data_layout (DataLayout.as_string layout) (cont.llmod); (cont, tm)
 

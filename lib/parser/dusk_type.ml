@@ -103,7 +103,7 @@ type 'm union_case = 'm * 'm raw_type list * enum_back
 
 type 'm raw_tdef =
 	StructTD of 'm field_list
-	| EnumTD of bool * 'm enum_case list
+	| EnumTD of 'm enum_case list
 	| UnionTD of ('m union_case) list
 
 type m_field_list = qual_name field_list

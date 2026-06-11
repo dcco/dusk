@@ -40,12 +40,6 @@ let rec genStmt (cont: llvm_cont) (env: dusk_env) (b: blockInfo) (s: gen_stmt): 
 					ignore (genStoreRet "(Return Stmt)" cont env vx); build_ret_void cont.builder
 				| _ -> build_ret ve cont.builder
 			)
-			(*
-				TStore _ -> build_ret ve cont.builder
-				| CopyStore(tau_r', _) ->
-					let vx = build_load tau_r' ve "_retCopy" cont.builder in
-					ignore (genRetStore cont env vx); build_ret_void cont.builder
-			)*)
 	) in b
 	| IfStmtC(ec, body, term1, elseBody, term2) ->
 		let (vc, _) = genExp cont env ec in

@@ -39,7 +39,6 @@ type ('m, 'ann) exp =
 		(* ctors *)
 	| AtCtorExp of 'm * 'ann
 	| TupleExp of 'm option * ('m, 'ann) exp list * 'ann
-	(*| ValueArrayExp of ('m, 'ann) exp list * 'ann*)
 		(* - arity, type annotation, static dimensions, data *)
 	| DataArrayExp of int * ('m raw_type) option * int list * ('m, 'ann) exp list * 'ann
 		(* - arity, dynamic dimensions, initializer *)
@@ -85,7 +84,6 @@ let ann_exp e = match e with
 	| VarExp(_, a) -> a
 	| AtCtorExp(_, a) -> a
 	| TupleExp(_, _, a) -> a
-	(*| ValueArrayExp(_, a) -> a*)
 	| DataArrayExp(_, _, _, _, a) -> a
 	| FormatArrayExp(_, _, _, a) -> a
 	| NewStructExp(_, _, a) -> a
@@ -113,12 +111,14 @@ type lin_flag = Fn | Lin
 type ('m, 'ann) met =
 	Method of lin_flag * 'm * (string * 'm raw_type) list * 'm raw_type * ('m, 'ann) stmt list
 
-type ('m, 'ann) attr_case = 'm enum_case * ('m, 'ann) field_init
+(*type ('m, 'ann) attr_case = 'm enum_case * ('m, 'ann) field_init*)
+type ('m, 'ann) attr_case = 'm * (('m, 'ann) exp list)
 
 type ('m, 'ann) dec =
 	FunDec of ('m, 'ann) met * 'ann
 	| TDefDec of 'm * 'm raw_tdef * 'ann
-	| ExtendsDec of 'm * 'm field_list * ('m, 'ann) attr_case list * 'ann
+	| AttrsDec of 'm * 'm field_list * ('m, 'ann) attr_case list * 'ann
+	(*| ExtendsDec of 'm * 'm field_list * ('m, 'ann) attr_case list * 'ann*)
 	| ConstDec of 'm * ('m, 'ann) exp * 'ann
 	| GlobalsDec of 'm * 'm option * ('m * ('m, 'ann) exp) list * 'ann
 

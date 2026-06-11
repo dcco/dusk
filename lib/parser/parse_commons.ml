@@ -9,6 +9,7 @@ type parse_err =
 	| BadToken_Err of token * string
 	| BadLValue_Err of token
 	| NonIntExp_Err of l_pos
+	| BadAttrs_Err of l_pos
 
 type 'a parse_res = ('a, parse_err) try_res
 
@@ -20,6 +21,8 @@ let string_of_parse_err e = match e with
 		"Bad lvalue while parsing assignment at " ^ (string_of_pos pos) ^ "."
 	| NonIntExp_Err pos ->
 		"Expected integer constant for static array initializer dimensions while parsing at " ^ (string_of_pos pos) ^ "."
+	| BadAttrs_Err pos ->
+		"Unexpected attributes defined for enum without attribute definitions at " ^ (string_of_pos pos) ^ "."
 
 let string_of_parse_res sf r = match r with
 	Valid v -> sf v
