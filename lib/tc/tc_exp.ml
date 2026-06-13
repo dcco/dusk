@@ -182,6 +182,9 @@ let rec tc_exp (env: type_env) (e: r_exp): (gen_exp * g_type) tc_res = match e w
 				| Some (_, TcCtorU c) ->
 					let tau_s = NamedTy c in
 					Valid (TupleExpC(get_box_id_tenv env, tau_s, (EnumExpC (cr cx)) :: List.map fst et_l'), tau_s)
+				| Some (_, TcTDef (EnumTD _)) ->
+					let (e', _) = List.hd et_l' in
+					Valid (TagExpC e', NamedTy cx)
 				| _ -> Error (NonCtor_Err(cr cx, p))
 			)
 		)

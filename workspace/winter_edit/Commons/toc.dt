@@ -1,0 +1,10 @@
+
+module Core
+	references Sys.Os
+	chapter Range
+	chapter Rect
+	chapter NewMath
+	chapter Color
+	chapter Clock
+	chapter Units
+end

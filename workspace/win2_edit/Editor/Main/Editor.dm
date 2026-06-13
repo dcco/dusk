@@ -1,6 +1,7 @@
 
 struct Editor{
 	GameRoom room,
+	TilePal pal,
 	Int mode,
 	(Int, Int) prevPos
 }
@@ -8,6 +9,7 @@ struct Editor{
 fn newEditor() Editor
 	return new Editor{
 		room = newRoom(),
+		pal = newTilePal(),
 		mode = 0,
 		prevPos = (0, 0)
 	}
@@ -64,5 +66,5 @@ end
 
 fn draw(Editor editor)
 	editor.room.draw()
-	Sulfur.drawBox(0x77554f, canvasWidth() - 120, 0, 120, canvasHeight())
+	editor.pal.draw()
 end

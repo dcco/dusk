@@ -17,6 +17,7 @@ type gen_exp =
 		(* boxes a value inside a pointer 
 	| BoxExpC of int * gen_exp * g_type*)
 		(* tuple operations (tuple creation also requires a box) *)
+	| TagExpC of gen_exp
 	| EnumExpC of string
 	| EnumRawExpC of gen_exp
 	| TupleExpC of int * g_type * gen_exp list
@@ -66,6 +67,7 @@ let rec collect_thru_exp (f: gen_exp -> 'a list) (e: gen_exp): 'a list = match e
 	UnaryExpC(_, e') -> collect_thru_exp f e'
 	| BinExpC(_, e1, e2) -> (collect_thru_exp f e1) @ (collect_thru_exp f e2)
 	| CallExpC(_, ef, el, _) -> (f e) @ (collect_thru_exp f ef) @ (List.concat (List.map (collect_thru_exp f) el))
+	| TagExpC e' -> collect_thru_exp f e'
 	| EnumRawExpC e' -> collect_thru_exp f e'
 	| TupleExpC(_, _, el) -> (f e) @ (List.concat (List.map (collect_thru_exp f) el))
 	| MemoryFieldExpC(rw, e', _) -> (f e) @ (collect_thru_rw f rw) @ (collect_thru_exp f e')

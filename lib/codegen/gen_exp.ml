@@ -314,6 +314,9 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 				failwith ("BUG: gen_exp.ml - Ungenerated box for boxed function return value.")
 			| _ -> (build_call (genType tf) vf (Array.of_list vl) "" cont.builder, tr)
 		)
+	| TagExpC e ->
+		let (v, _) = genExp cont env e in
+		(build_trunc v tagType "_dropT" bx, PrimDT tagType)
 	| EnumExpC tag ->
 		let tagLit = (match Hashtbl.find_opt env (DCtor tag) with
 			Some (DEnum (IntEV i)) -> const_int tagType i

@@ -1,6 +1,6 @@
 
 module Main
-	references Sys modules Os, Input, Sulfur
+	references Sys modules Os, Input, Sulfur, Rom
 	references Commons.Core
 	references Phys.Main
 	chapter TilePal

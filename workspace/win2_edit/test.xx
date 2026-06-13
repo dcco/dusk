@@ -1519,6 +1519,112 @@ __Phys_Main_GameRoom_Phys_Main_draw:
 	jmp	.LBB31_1
 	.seh_endproc
 
+	.def	_none_Editor_Main_newTilePal;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	_none_Editor_Main_newTilePal
+	.p2align	4, 0x90
+_none_Editor_Main_newTilePal:
+.seh_proc _none_Editor_Main_newTilePal
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	xorl	%eax, %eax
+	movl	%eax, %edx
+	movl	$4, %ecx
+	callq	gc_alloc
+	movq	%rax, %rcx
+	movq	%rcx, %rax
+	movl	$0, (%rcx)
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	__Editor_Main_TilePal_Phys_Main_draw;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__Editor_Main_TilePal_Phys_Main_draw
+	.p2align	4, 0x90
+__Editor_Main_TilePal_Phys_Main_draw:
+.seh_proc __Editor_Main_TilePal_Phys_Main_draw
+	subq	$88, %rsp
+	.seh_stackalloc 88
+	.seh_endprologue
+	movq	%rcx, 80(%rsp)
+	callq	_none_Sys_Sulfur_canvasWidth
+	subl	$120, %eax
+	movl	%eax, 76(%rsp)
+	movl	$0, 72(%rsp)
+	movl	76(%rsp), %eax
+	movl	%eax, 44(%rsp)
+	movl	72(%rsp), %eax
+	movl	%eax, 48(%rsp)
+	callq	_none_Sys_Sulfur_canvasHeight
+	movl	44(%rsp), %edx
+	movl	48(%rsp), %r8d
+	movl	$7820623, %ecx
+	movl	$120, %r9d
+	movl	%eax, 32(%rsp)
+	callq	_Int_Sys_Sulfur_drawBox
+	movl	76(%rsp), %eax
+	addl	$8, %eax
+	movl	%eax, 68(%rsp)
+	movl	72(%rsp), %eax
+	addl	$8, %eax
+	movl	%eax, 64(%rsp)
+	movl	$0, 60(%rsp)
+.LBB33_1:
+	cmpl	$2, 60(%rsp)
+	jge	.LBB33_3
+	movl	60(%rsp), %eax
+	addl	$1, %eax
+	movw	%ax, 58(%rsp)
+	movq	ATTR_Phys_Main_TType_sFrame(%rip), %rax
+	movw	58(%rsp), %cx
+	movq	16(%rax), %rax
+	movswq	%cx, %rdx
+	movl	(%rax,%rdx,4), %eax
+	movswq	%cx, %rcx
+	movl	%eax, 52(%rsp)
+	movq	ATTR_Phys_Main_TType_rt(%rip), %rax
+	movw	58(%rsp), %cx
+	movq	16(%rax), %rax
+	movswq	%cx, %rcx
+	cmpw	$0, (%rax,%rcx,2)
+	sete	%al
+	xorb	$-1, %al
+	testb	$1, %al
+	jne	.LBB33_4
+	jmp	.LBB33_5
+.LBB33_3:
+	addq	$88, %rsp
+	retq
+.LBB33_4:
+	movl	52(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 52(%rsp)
+	jmp	.LBB33_6
+.LBB33_5:
+	jmp	.LBB33_6
+.LBB33_6:
+	movl	68(%rsp), %ecx
+	movl	60(%rsp), %eax
+	shll	$3, %eax
+	addl	%eax, %ecx
+	movl	64(%rsp), %edx
+	movq	_Sys_Rom_tset.1(%rip), %r8
+	movl	52(%rsp), %r9d
+	xorl	%eax, %eax
+	movl	$0, 32(%rsp)
+	callq	_Int_Sys_Sulfur_drawSprite
+	movl	60(%rsp), %eax
+	addl	$1, %eax
+	movl	%eax, 60(%rsp)
+	jmp	.LBB33_1
+	.seh_endproc
+
 	.def	_none_Editor_Main_newEditor;
 	.scl	2;
 	.type	32;
@@ -1527,30 +1633,34 @@ __Phys_Main_GameRoom_Phys_Main_draw:
 	.p2align	4, 0x90
 _none_Editor_Main_newEditor:
 .seh_proc _none_Editor_Main_newEditor
-	subq	$56, %rsp
-	.seh_stackalloc 56
+	subq	$72, %rsp
+	.seh_stackalloc 72
 	.seh_endprologue
 	callq	_none_Phys_Main_newRoom
-	movq	%rax, 40(%rsp)
-	movl	$0, 52(%rsp)
-	movl	$0, 48(%rsp)
-	movl	48(%rsp), %eax
-	movl	%eax, 36(%rsp)
-	movl	52(%rsp), %eax
-	movl	%eax, 32(%rsp)
+	movq	%rax, 56(%rsp)
+	callq	_none_Editor_Main_newTilePal
+	movq	%rax, 48(%rsp)
+	movl	$0, 68(%rsp)
+	movl	$0, 64(%rsp)
+	movl	64(%rsp), %eax
+	movl	%eax, 44(%rsp)
+	movl	68(%rsp), %eax
+	movl	%eax, 40(%rsp)
 	leaq	tc__Editor_Main_Editor(%rip), %rdx
-	movl	$24, %ecx
+	movl	$32, %ecx
 	callq	gc_alloc
-	movl	32(%rsp), %r9d
-	movl	36(%rsp), %r8d
-	movq	40(%rsp), %rdx
+	movl	40(%rsp), %r10d
+	movl	44(%rsp), %r9d
+	movq	48(%rsp), %r8
+	movq	56(%rsp), %rdx
 	movq	%rax, %rcx
 	movq	%rcx, %rax
-	movl	%r9d, 16(%rcx)
-	movl	%r8d, 12(%rcx)
+	movl	%r10d, 24(%rcx)
+	movl	%r9d, 20(%rcx)
+	movq	%r8, 8(%rcx)
 	movq	%rdx, (%rcx)
-	movl	$0, 8(%rcx)
-	addq	$56, %rsp
+	movl	$0, 16(%rcx)
+	addq	$72, %rsp
 	retq
 	.seh_endproc
 
@@ -1600,14 +1710,14 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	xorb	$-1, %cl
 	orb	%cl, %al
 	testb	$1, %al
-	jne	.LBB33_1
-	jmp	.LBB33_2
-.LBB33_1:
+	jne	.LBB35_1
+	jmp	.LBB35_2
+.LBB35_1:
 	addq	$168, %rsp
 	retq
-.LBB33_2:
-	jmp	.LBB33_3
-.LBB33_3:
+.LBB35_2:
+	jmp	.LBB35_3
+.LBB35_3:
 	movl	124(%rsp), %ecx
 	subl	108(%rsp), %ecx
 	callq	_Int_builtin_abs
@@ -1623,9 +1733,9 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	setg	%cl
 	orb	%cl, %al
 	testb	$1, %al
-	jne	.LBB33_4
-	jmp	.LBB33_5
-.LBB33_4:
+	jne	.LBB35_4
+	jmp	.LBB35_5
+.LBB35_4:
 	movl	124(%rsp), %ecx
 	subl	108(%rsp), %ecx
 	callq	_Int_builtin_abs
@@ -1636,19 +1746,19 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	movl	%eax, %ecx
 	movl	56(%rsp), %eax
 	cmpl	%ecx, %eax
-	jg	.LBB33_7
-	jmp	.LBB33_8
-.LBB33_5:
+	jg	.LBB35_7
+	jmp	.LBB35_8
+.LBB35_5:
 	movq	160(%rsp), %rcx
 	movl	108(%rsp), %edx
 	movl	104(%rsp), %r8d
 	movw	142(%rsp), %r9w
 	callq	__Phys_Main_GameRoom_Phys_Main_setTile
-.LBB33_6:
+.LBB35_6:
 	nop
 	addq	$168, %rsp
 	retq
-.LBB33_7:
+.LBB35_7:
 	movl	124(%rsp), %ecx
 	movl	108(%rsp), %edx
 	callq	_Int_Commons_Core_min
@@ -1657,9 +1767,9 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	movl	%eax, 80(%rsp)
 	movl	108(%rsp), %eax
 	cmpl	124(%rsp), %eax
-	jl	.LBB33_10
-	jmp	.LBB33_11
-.LBB33_8:
+	jl	.LBB35_10
+	jmp	.LBB35_11
+.LBB35_8:
 	movl	120(%rsp), %ecx
 	movl	104(%rsp), %edx
 	callq	_Int_Commons_Core_min
@@ -1668,19 +1778,19 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	movl	%eax, 76(%rsp)
 	movl	104(%rsp), %eax
 	cmpl	120(%rsp), %eax
-	jl	.LBB33_16
-	jmp	.LBB33_17
-.LBB33_9:
-	jmp	.LBB33_6
-.LBB33_10:
+	jl	.LBB35_16
+	jmp	.LBB35_17
+.LBB35_9:
+	jmp	.LBB35_6
+.LBB35_10:
 	movl	104(%rsp), %eax
 	movl	%eax, 80(%rsp)
-	jmp	.LBB33_12
-.LBB33_11:
-	jmp	.LBB33_12
-.LBB33_12:
+	jmp	.LBB35_12
+.LBB35_11:
+	jmp	.LBB35_12
+.LBB35_12:
 	movl	$0, 92(%rsp)
-.LBB33_13:
+.LBB35_13:
 	movl	92(%rsp), %eax
 	movl	%eax, 52(%rsp)
 	movl	124(%rsp), %ecx
@@ -1689,7 +1799,7 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	movl	%eax, %ecx
 	movl	52(%rsp), %eax
 	cmpl	%ecx, %eax
-	jge	.LBB33_15
+	jge	.LBB35_15
 	movl	76(%rsp), %eax
 	addl	92(%rsp), %eax
 	movl	%eax, 64(%rsp)
@@ -1717,18 +1827,18 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	movl	92(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 92(%rsp)
-	jmp	.LBB33_13
-.LBB33_15:
-	jmp	.LBB33_9
-.LBB33_16:
+	jmp	.LBB35_13
+.LBB35_15:
+	jmp	.LBB35_9
+.LBB35_16:
 	movl	108(%rsp), %eax
 	movl	%eax, 76(%rsp)
-	jmp	.LBB33_18
-.LBB33_17:
-	jmp	.LBB33_18
-.LBB33_18:
+	jmp	.LBB35_18
+.LBB35_17:
+	jmp	.LBB35_18
+.LBB35_18:
 	movl	$0, 72(%rsp)
-.LBB33_19:
+.LBB35_19:
 	movl	72(%rsp), %eax
 	movl	%eax, 44(%rsp)
 	movl	120(%rsp), %ecx
@@ -1737,7 +1847,7 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	movl	%eax, %ecx
 	movl	44(%rsp), %eax
 	cmpl	%ecx, %eax
-	jge	.LBB33_21
+	jge	.LBB35_21
 	movl	80(%rsp), %eax
 	addl	72(%rsp), %eax
 	movl	%eax, 68(%rsp)
@@ -1765,9 +1875,9 @@ __Phys_Main_GameRoom_Editor_Main_paint:
 	movl	72(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 72(%rsp)
-	jmp	.LBB33_19
-.LBB33_21:
-	jmp	.LBB33_9
+	jmp	.LBB35_19
+.LBB35_21:
+	jmp	.LBB35_9
 	.seh_endproc
 
 	.def	__Editor_Main_Editor_Editor_Main_update;
@@ -1819,38 +1929,38 @@ __Editor_Main_Editor_Editor_Main_update:
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_mouseDown
 	testb	$1, %al
-	jne	.LBB34_1
-	jmp	.LBB34_2
-.LBB34_1:
+	jne	.LBB36_1
+	jmp	.LBB36_2
+.LBB36_1:
 	movw	$1, 94(%rsp)
 	movq	128(%rsp), %rax
-	cmpl	$1, 8(%rax)
-	je	.LBB34_4
-	jmp	.LBB34_5
-.LBB34_2:
+	cmpl	$1, 16(%rax)
+	je	.LBB36_4
+	jmp	.LBB36_5
+.LBB36_2:
 	movq	.refptr.K_right(%rip), %rax
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_mouseDown
 	testb	$1, %al
-	jne	.LBB34_7
-	jmp	.LBB34_8
-.LBB34_3:
+	jne	.LBB36_7
+	jmp	.LBB36_8
+.LBB36_3:
 	movq	.refptr.K_z(%rip), %rax
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_keyPress
 	testb	$1, %al
-	jne	.LBB34_10
-	jmp	.LBB34_11
-.LBB34_4:
+	jne	.LBB36_10
+	jmp	.LBB36_11
+.LBB36_4:
 	movw	$2, 94(%rsp)
-	jmp	.LBB34_6
-.LBB34_5:
-	jmp	.LBB34_6
-.LBB34_6:
+	jmp	.LBB36_6
+.LBB36_5:
+	jmp	.LBB36_6
+.LBB36_6:
 	movq	120(%rsp), %rcx
 	movq	128(%rsp), %rdx
-	movl	12(%rdx), %eax
-	movl	16(%rdx), %edx
+	movl	20(%rdx), %eax
+	movl	24(%rdx), %edx
 	movl	%edx, 76(%rsp)
 	movl	%eax, 72(%rsp)
 	movl	100(%rsp), %eax
@@ -1861,12 +1971,12 @@ __Editor_Main_Editor_Editor_Main_update:
 	leaq	72(%rsp), %rdx
 	leaq	64(%rsp), %r8
 	callq	__Phys_Main_GameRoom_Editor_Main_paint
-	jmp	.LBB34_3
-.LBB34_7:
+	jmp	.LBB36_3
+.LBB36_7:
 	movq	120(%rsp), %rcx
 	movq	128(%rsp), %rdx
-	movl	12(%rdx), %eax
-	movl	16(%rdx), %edx
+	movl	20(%rdx), %eax
+	movl	24(%rdx), %edx
 	movl	%edx, 60(%rsp)
 	movl	%eax, 56(%rsp)
 	movl	100(%rsp), %eax
@@ -1877,21 +1987,21 @@ __Editor_Main_Editor_Editor_Main_update:
 	leaq	48(%rsp), %r8
 	xorl	%r9d, %r9d
 	callq	__Phys_Main_GameRoom_Editor_Main_paint
-	jmp	.LBB34_9
-.LBB34_8:
-	jmp	.LBB34_9
-.LBB34_9:
-	jmp	.LBB34_3
-.LBB34_10:
+	jmp	.LBB36_9
+.LBB36_8:
+	jmp	.LBB36_9
+.LBB36_9:
+	jmp	.LBB36_3
+.LBB36_10:
 	movq	128(%rsp), %rax
 	movq	128(%rsp), %rdx
 	movl	$1, %ecx
-	subl	8(%rdx), %ecx
-	movl	%ecx, 8(%rax)
-	jmp	.LBB34_12
-.LBB34_11:
-	jmp	.LBB34_12
-.LBB34_12:
+	subl	16(%rdx), %ecx
+	movl	%ecx, 16(%rax)
+	jmp	.LBB36_12
+.LBB36_11:
+	jmp	.LBB36_12
+.LBB36_12:
 	movq	128(%rsp), %rax
 	movl	100(%rsp), %ecx
 	movl	96(%rsp), %edx
@@ -1899,8 +2009,8 @@ __Editor_Main_Editor_Editor_Main_update:
 	movl	%ecx, 40(%rsp)
 	movl	40(%rsp), %ecx
 	movl	44(%rsp), %edx
-	movl	%edx, 16(%rax)
-	movl	%ecx, 12(%rax)
+	movl	%edx, 24(%rax)
+	movl	%ecx, 20(%rax)
 	addq	$136, %rsp
 	retq
 	.seh_endproc
@@ -1913,25 +2023,18 @@ __Editor_Main_Editor_Editor_Main_update:
 	.p2align	4, 0x90
 __Editor_Main_Editor_Phys_Main_draw:
 .seh_proc __Editor_Main_Editor_Phys_Main_draw
-	subq	$56, %rsp
-	.seh_stackalloc 56
+	subq	$40, %rsp
+	.seh_stackalloc 40
 	.seh_endprologue
-	movq	%rcx, 48(%rsp)
-	movq	48(%rsp), %rax
+	movq	%rcx, 32(%rsp)
+	movq	32(%rsp), %rax
 	movq	(%rax), %rcx
 	callq	__Phys_Main_GameRoom_Phys_Main_draw
-	callq	_none_Sys_Sulfur_canvasWidth
-	subl	$120, %eax
-	movl	%eax, 44(%rsp)
-	callq	_none_Sys_Sulfur_canvasHeight
-	movl	44(%rsp), %edx
-	movl	$7820623, %ecx
-	xorl	%r8d, %r8d
-	movl	$120, %r9d
-	movl	%eax, 32(%rsp)
-	callq	_Int_Sys_Sulfur_drawBox
+	movq	32(%rsp), %rax
+	movq	8(%rax), %rcx
+	callq	__Editor_Main_TilePal_Phys_Main_draw
 	nop
-	addq	$56, %rsp
+	addq	$40, %rsp
 	retq
 	.seh_endproc
 
@@ -1961,43 +2064,43 @@ _none_main:
 	movq	40(%rsp), %rax
 	movq	%rax, 56(%rsp)
 	callq	_none_Sys_Sulfur_waitRom
-.LBB36_1:
+.LBB38_1:
 	movb	$1, %al
 	testb	$1, %al
-	jne	.LBB36_2
-	jmp	.LBB36_3
-.LBB36_2:
+	jne	.LBB38_2
+	jmp	.LBB38_3
+.LBB38_2:
 	movq	64(%rsp), %rcx
 	callq	__Commons_Core_FPSClock_Commons_Core_tick
 	movl	%eax, 52(%rsp)
 	movl	$0, 48(%rsp)
-	jmp	.LBB36_4
-.LBB36_3:
+	jmp	.LBB38_4
+.LBB38_3:
 	addq	$72, %rsp
 	retq
-.LBB36_4:
+.LBB38_4:
 	movl	48(%rsp), %eax
 	cmpl	52(%rsp), %eax
-	jge	.LBB36_6
+	jge	.LBB38_6
 	movq	56(%rsp), %rcx
 	callq	__Editor_Main_Editor_Editor_Main_update
 	callq	_none_Sys_Input_inUpdate
 	movl	48(%rsp), %eax
 	addl	$1, %eax
 	movl	%eax, 48(%rsp)
-	jmp	.LBB36_4
-.LBB36_6:
+	jmp	.LBB38_4
+.LBB38_6:
 	cmpl	$1, 52(%rsp)
-	jl	.LBB36_8
+	jl	.LBB38_8
 	movq	56(%rsp), %rcx
 	callq	__Editor_Main_Editor_Phys_Main_draw
 	callq	_none_Sys_Sulfur_refresh
 	callq	gc_collect
-	jmp	.LBB36_9
-.LBB36_8:
-	jmp	.LBB36_9
-.LBB36_9:
-	jmp	.LBB36_1
+	jmp	.LBB38_9
+.LBB38_8:
+	jmp	.LBB38_9
+.LBB38_9:
+	jmp	.LBB38_1
 	.seh_endproc
 
 	.bss
@@ -2177,17 +2280,16 @@ tc__Phys_Main_GameRoom:
 	.zero	4
 	.quad	tc_offs__Phys_Main_GameRoom
 
-	.bss
 	.globl	tc_offs__Editor_Main_Editor
 	.p2align	2, 0x0
 tc_offs__Editor_Main_Editor:
-	.zero	4
+	.long	0
+	.long	8
 
-	.data
 	.globl	tc__Editor_Main_Editor
 	.p2align	3, 0x0
 tc__Editor_Main_Editor:
-	.long	1
+	.long	2
 	.zero	4
 	.quad	tc_offs__Editor_Main_Editor
 
