@@ -175,7 +175,148 @@ let genGC (cont: llvm_cont): unit =
 		gc_collect = (gc_collect, collect_type);
 	}
 
+let extLoadType (ext: string): int = match ext with
+	"png" -> 0
+	| "ttf" -> 1
+	| "sprite" -> 10
+	| _ -> failwith ("BUG: Bad resource file extension \"" ^ ext ^ "\" encountered in generation phase.")
+
+(* let grListTypeLL = structType [iType; _ptrType] *)
+let srTypeLL = structType [tagType; iType; _ptrType; _ptrType]
+let crTypeLL = structType [tagType; iType; _ptrType; _ptrType; _ptrType]
+
+let genGlobal (cont: llvm_cont) (privateFlag: bool) (g: string) (v: llvalue): llvalue =
+	let g = define_global g v cont.llmod in
+	set_global_constant true g;
+	(if privateFlag then set_linkage Linkage.Private g else ()); g
+
+let genSimpResExterns (cont: llvm_cont)	(simpResList: (s_res_def * int * llvalue) list): (string, int * llvalue) Hashtbl.t =
+		(* auxiliary mapping of resource names -> storage pointers *)
+	let simpPtrMap = Hashtbl.create 50 in
+		(* generate constants for each simple resource *)
+	let srList' = List.mapi (fun i (SimpRes(ext, _, x, url, args), gId, ptr) ->
+			(* - define URL constant *)
+		let gStr = genGlobal cont true ("url_" ^ (string_of_int i)) (const_stringz context url) in 
+			(* - add to storage map *)
+		Hashtbl.add simpPtrMap x (gId, ptr);
+			(* - wrap regular integer arguments into global *)
+		let g_ip = (
+			if List.length args = 0 then const_null _ptrType
+			else let args' = (List.length args) :: args in
+				let argList = List.map (fun i -> const_int iType i) args' in
+				genGlobal cont true ("cr_iargs" ^ (string_of_int i))
+				(const_array iType (Array.of_list argList))
+		) in
+			(* - define simple resource struct *)
+		const_struct context [|
+			const_int tagType (extLoadType ext);
+			const_int iType gId;
+			gStr; g_ip; ptr
+		|]
+	) simpResList in
+		(* put them in an array *)
+	let gInner = genGlobal cont true "simp_res_inner" (const_array srTypeLL (Array.of_list srList')) in
+		(* wrap into final global *)
+	let _ = genGlobal cont false "res_list"
+		(const_struct context [| const_int iType (List.length srList'); gInner |]) in
+	simpPtrMap
+
+let genCompResExterns (cont: llvm_cont) (simpPtrMap: (string, int * llvalue) Hashtbl.t)
+	(compResList: (c_res_def * llvalue) list): unit =
+		(* generates constants for each composite resource *)
+	let crList' = List.mapi (fun i (CompRes(ext, xargs, args), ptr) ->
+			(* - get storage pointer of associated XARG *)
+		let gId = ref 0 in
+		let xargList = List.mapi (fun i x -> match Hashtbl.find_opt simpPtrMap x with
+			Some (_gId, ptr) -> (if i = 0 then gId := _gId); ptr
+			| None -> failwith ("TO_ERR: gen_dec.ml - Composite resource using unknown source resource `" ^ x ^ "`")
+		) xargs in
+		let g_xp = genGlobal cont true ("cr_xargs" ^ (string_of_int i))
+			(const_array _ptrType (Array.of_list xargList)) in
+			(* - wrap regular integer arguments into global *)
+		let argList = List.map (fun i -> const_int iType i) args in
+		let g_ip = genGlobal cont true ("cr_iargs" ^ (string_of_int i))
+			(const_array iType (Array.of_list argList)) in
+			(* - define composite resource struct *)
+		const_struct context [|
+			const_int tagType (extLoadType ext);
+			const_int iType !gId;
+			g_ip; g_xp; ptr
+		|]
+	) compResList in
+		(* put them in an array *)
+	let gInner = genGlobal cont true "comp_res_inner" (const_array crTypeLL (Array.of_list crList')) in
+		(* wrap into final global *)
+	let _ = genGlobal cont false "comp_res_list"
+		(const_struct context [| const_int iType (List.length crList'); gInner |]) in ()
+
+let _resGroupName (r: s_res_def): string = match r with
+	SimpRes(_, g, _, _, _) -> g
+
 let genExternals (cont: llvm_cont) (mainDir: string) (env: dusk_env) (symList: g_virt_bind list): unit =
+	let simpResList = ref [] in
+	let compResList = ref [] in
+	let gId = ref 0 in
+	let groupNames = Hashtbl.create 10 in
+		(*
+			iterate virtual declarations
+			- generate external enum/function handles
+			- collect resources
+		*)
+	List.iter (fun (f, vd) -> match vd with
+			(* -- currently not using the parameter (a list of "boxed arguments") *)
+		SymVD (ExternalSym _, (tau_pl, tau_r)) ->
+			let fType = genFunType "(External Function Dec)" env tau_pl tau_r in
+			let tr = toStoreType "(External Function Dec)" env tau_r in
+			let v = declare_function (cr f) fType cont.llmod in
+			Hashtbl.add env (DVar (cr f)) (DVal(v, FunVT(fType, tr)))
+		| SymVD _ -> ()
+		| TDefVD (StructTD fl) -> genStructTD cont env (cr f) fl
+		| TDefVD (EnumTD cl) ->
+			Hashtbl.add env (DTName (cr f)) (DTDef EnumTD_C);
+			(* - filler datatypes for data-less enums *)
+			genEnumTD cont env 0 (List.map (fun (x, ext) -> (x, [], ext)) cl)
+		| TDefVD (UnionTD cl) -> genUnionTD cont env (cr f) cl
+		| ResVD(r, _) ->
+			(* - create storage pointer *)
+			let tau_res = PrimDT _ptrType in
+			let ptr = define_global (cr f) (const_null _ptrType) cont.llmod in
+			(* - add resource to corresponding list *)
+			Hashtbl.add env (DVar (cr f)) (DVal(ptr, VarVT tau_res)); (match r with
+				SRD r' ->
+					(* - lookup (or add new) group id *)
+					let gn = _resGroupName r' in
+					let gId = (match Hashtbl.find_opt groupNames gn with
+						None -> Hashtbl.add groupNames gn !gId; gId := !gId + 1; !gId - 1
+						| Some xId -> xId 
+					) in
+					simpResList := (r', gId, ptr) :: !simpResList
+				| CRD r' -> compResList := (r', ptr) :: !compResList
+			);
+	) symList;
+		(* generate resouce loader data *)
+	let simpPtrMap = genSimpResExterns cont !simpResList in
+	genCompResExterns cont simpPtrMap !compResList;
+		(* generate group names *)
+	let groupArr = Array.make (Hashtbl.length groupNames) "" in
+	Hashtbl.iter (fun gn gId -> groupArr.(gId) <- gn) groupNames;
+		(*- define name constants *)
+	let groupVals = Array.mapi (fun i gn ->
+		genGlobal cont true ("res_group_" ^ (string_of_int i)) (const_stringz context gn)
+	) groupArr in
+	let g_gv = genGlobal cont true "g_rg" (const_array _ptrType groupVals) in
+	let _ = genGlobal cont false "res_group_names"
+		(const_struct context [| const_int iType (Hashtbl.length groupNames); g_gv |]) in
+		(* - rom dir *)
+	let grd = define_global "rom_dir_v" (const_string context (mainDir ^ "/rom/\x00")) cont.llmod in
+	let grd_p = define_global "rom_dir" (const_gep i8Type grd [| const_int iType 0 |]) cont.llmod in
+	set_global_constant true grd;
+	set_global_constant true grd_p
+
+	(*;
+	genCompResExterns cont !compResList*)
+
+(*let genExternals (cont: llvm_cont) (mainDir: string) (env: dusk_env) (symList: g_virt_bind list): unit =
 	let simpResList = ref [] in
 	let simpPtrMap = Hashtbl.create 50 in
 	let compResList = ref [] in
@@ -189,7 +330,7 @@ let genExternals (cont: llvm_cont) (mainDir: string) (env: dusk_env) (symList: g
 				-- currently not using "external sym"
 			*)
 			let fType = genFunType "(External Function Dec)" env tau_pl tau_r in
-			let tr = toStoreType "(Exteranl Function Dec)" env tau_r in
+			let tr = toStoreType "(External Function Dec)" env tau_r in
 			let v = declare_function (cr f) fType cont.llmod in
 			Hashtbl.add env (DVar (cr f)) (DVal(v, FunVT(fType, tr)))
 		| SymVD _ -> ()
@@ -247,6 +388,7 @@ let genExternals (cont: llvm_cont) (mainDir: string) (env: dusk_env) (symList: g
 	let grd = define_global "rom_dir_v" (const_string context (mainDir ^ "/rom/\x00")) cont.llmod in
 	let grd_p = define_global "rom_dir" (const_gep i8Type grd [| const_int iType 0 |]) cont.llmod in
 	set_global_constant true grd_p
+*)
 
 	(*
 		code generation hook

@@ -3,6 +3,7 @@ struct Editor{
 	GameRoom room,
 	TilePal pal,
 	Int mode,
+	Int zoomSetting,
 	(Int, Int) prevPos
 }
 
@@ -11,6 +12,7 @@ fn newEditor() Editor
 		room = newRoom(),
 		pal = newTilePal(),
 		mode = 0,
+		zoomSetting = 2,
 		prevPos = (0, 0)
 	}
 end
@@ -57,6 +59,14 @@ fn update(Editor editor)
 		room.paint(editor.prevPos, (tx, ty), v)
 	elsif Input.mouseDown(^right) then
 		room.paint(editor.prevPos, (tx, ty), NullTile)
+	end
+	if Input.keyPress(^x) then
+		if editor.zoomSetting = 2 then
+			editor.zoomSetting = 3
+		else
+			editor.zoomSetting = 2
+		end
+		setCanvasZoom(editor.zoomSetting)
 	end
 	if Input.keyPress(^z) then
 		editor.mode = 1 - editor.mode

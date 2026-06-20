@@ -1655,10 +1655,11 @@ _none_Editor_Main_newEditor:
 	movq	56(%rsp), %rdx
 	movq	%rax, %rcx
 	movq	%rcx, %rax
-	movl	%r10d, 24(%rcx)
-	movl	%r9d, 20(%rcx)
+	movl	%r10d, 28(%rcx)
+	movl	%r9d, 24(%rcx)
 	movq	%r8, 8(%rcx)
 	movq	%rdx, (%rcx)
+	movl	$2, 20(%rcx)
 	movl	$0, 16(%rcx)
 	addq	$72, %rsp
 	retq
@@ -1945,7 +1946,7 @@ __Editor_Main_Editor_Editor_Main_update:
 	jne	.LBB36_7
 	jmp	.LBB36_8
 .LBB36_3:
-	movq	.refptr.K_z(%rip), %rax
+	movq	.refptr.K_x(%rip), %rax
 	movl	(%rax), %ecx
 	callq	_Key_Sys_Input_keyPress
 	testb	$1, %al
@@ -1959,8 +1960,8 @@ __Editor_Main_Editor_Editor_Main_update:
 .LBB36_6:
 	movq	120(%rsp), %rcx
 	movq	128(%rsp), %rdx
-	movl	20(%rdx), %eax
-	movl	24(%rdx), %edx
+	movl	24(%rdx), %eax
+	movl	28(%rdx), %edx
 	movl	%edx, 76(%rsp)
 	movl	%eax, 72(%rsp)
 	movl	100(%rsp), %eax
@@ -1975,8 +1976,8 @@ __Editor_Main_Editor_Editor_Main_update:
 .LBB36_7:
 	movq	120(%rsp), %rcx
 	movq	128(%rsp), %rdx
-	movl	20(%rdx), %eax
-	movl	24(%rdx), %edx
+	movl	24(%rdx), %eax
+	movl	28(%rdx), %edx
 	movl	%edx, 60(%rsp)
 	movl	%eax, 56(%rsp)
 	movl	100(%rsp), %eax
@@ -1994,14 +1995,40 @@ __Editor_Main_Editor_Editor_Main_update:
 	jmp	.LBB36_3
 .LBB36_10:
 	movq	128(%rsp), %rax
+	cmpl	$2, 20(%rax)
+	je	.LBB36_13
+	jmp	.LBB36_14
+.LBB36_11:
+	jmp	.LBB36_12
+.LBB36_12:
+	movq	.refptr.K_z(%rip), %rax
+	movl	(%rax), %ecx
+	callq	_Key_Sys_Input_keyPress
+	testb	$1, %al
+	jne	.LBB36_16
+	jmp	.LBB36_17
+.LBB36_13:
+	movq	128(%rsp), %rax
+	movl	$3, 20(%rax)
+	jmp	.LBB36_15
+.LBB36_14:
+	movq	128(%rsp), %rax
+	movl	$2, 20(%rax)
+.LBB36_15:
+	movq	128(%rsp), %rax
+	movl	20(%rax), %ecx
+	callq	_Int_Sys_Sulfur_setCanvasZoom
+	jmp	.LBB36_12
+.LBB36_16:
+	movq	128(%rsp), %rax
 	movq	128(%rsp), %rdx
 	movl	$1, %ecx
 	subl	16(%rdx), %ecx
 	movl	%ecx, 16(%rax)
-	jmp	.LBB36_12
-.LBB36_11:
-	jmp	.LBB36_12
-.LBB36_12:
+	jmp	.LBB36_18
+.LBB36_17:
+	jmp	.LBB36_18
+.LBB36_18:
 	movq	128(%rsp), %rax
 	movl	100(%rsp), %ecx
 	movl	96(%rsp), %edx
@@ -2009,8 +2036,8 @@ __Editor_Main_Editor_Editor_Main_update:
 	movl	%ecx, 40(%rsp)
 	movl	40(%rsp), %ecx
 	movl	44(%rsp), %edx
-	movl	%edx, 24(%rax)
-	movl	%ecx, 20(%rax)
+	movl	%edx, 28(%rax)
+	movl	%ecx, 24(%rax)
 	addq	$136, %rsp
 	retq
 	.seh_endproc
@@ -2104,6 +2131,11 @@ _none_main:
 	.seh_endproc
 
 	.bss
+	.globl	_Sys_Rom_century_gothic
+	.p2align	3, 0x0
+_Sys_Rom_century_gothic:
+	.quad	0
+
 	.globl	_Sys_Rom_text
 	.p2align	3, 0x0
 _Sys_Rom_text:
@@ -2131,81 +2163,112 @@ _Sys_Rom_tset.1:
 .Lurl_1:
 	.asciz	"intro/text.png"
 
-	.globl	res_url_list
-	.p2align	3, 0x0
-res_url_list:
-	.quad	.Lurl_0
-	.quad	.Lurl_1
-
-	.globl	res_ptr_list
-	.p2align	3, 0x0
-res_ptr_list:
-	.quad	_Sys_Rom_tset
-	.quad	_Sys_Rom_text
-
-	.globl	res_total
-	.p2align	2, 0x0
-res_total:
-	.long	2
-
-	.globl	cr_iargs0
 	.p2align	4, 0x0
-cr_iargs0:
+.Lurl_2:
+	.asciz	"fonts/century_gothic.ttf"
+
+	.p2align	2, 0x0
+.Lcr_iargs2:
+	.long	1
+	.long	12
+
+	.p2align	4, 0x0
+.Lsimp_res_inner:
+	.short	0
+	.zero	2
+	.long	1
+	.quad	.Lurl_0
+	.quad	0
+	.quad	_Sys_Rom_tset
+	.short	0
+	.zero	2
+	.long	1
+	.quad	.Lurl_1
+	.quad	0
+	.quad	_Sys_Rom_text
+	.short	1
+	.zero	2
+	.long	0
+	.quad	.Lurl_2
+	.quad	.Lcr_iargs2
+	.quad	_Sys_Rom_century_gothic
+
+	.globl	res_list
+	.p2align	3, 0x0
+res_list:
+	.long	3
+	.zero	4
+	.quad	.Lsimp_res_inner
+
+	.p2align	3, 0x0
+.Lcr_xargs0:
+	.quad	_Sys_Rom_tset
+
+	.p2align	4, 0x0
+.Lcr_iargs0:
 	.long	0
 	.long	0
 	.long	30
 	.long	1
 	.long	1
 
-	.data
-	.globl	cr_arg0
 	.p2align	3, 0x0
-cr_arg0:
-	.quad	cr_iargs0
-	.quad	_Sys_Rom_tset
+.Lcr_xargs1:
+	.quad	_Sys_Rom_text
 
-	.section	.rdata,"dr"
-	.globl	cr_iargs1
 	.p2align	4, 0x0
-cr_iargs1:
+.Lcr_iargs1:
 	.long	0
 	.long	0
 	.long	13
 	.long	1
 	.long	1
 
-	.data
-	.globl	cr_arg1
-	.p2align	3, 0x0
-cr_arg1:
-	.quad	cr_iargs1
-	.quad	_Sys_Rom_text
-
-	.section	.rdata,"dr"
-	.globl	comp_res_arg_list
-	.p2align	3, 0x0
-comp_res_arg_list:
-	.quad	cr_arg0
-	.quad	cr_arg1
-
-	.globl	comp_res_ptr_list
-	.p2align	3, 0x0
-comp_res_ptr_list:
+	.p2align	4, 0x0
+.Lcomp_res_inner:
+	.short	10
+	.zero	2
+	.long	1
+	.quad	.Lcr_iargs0
+	.quad	.Lcr_xargs0
 	.quad	_Sys_Rom_tset.1
+	.short	10
+	.zero	2
+	.long	1
+	.quad	.Lcr_iargs1
+	.quad	.Lcr_xargs1
 	.quad	_Sys_Rom_sfont
 
-	.globl	comp_res_total
-	.p2align	2, 0x0
-comp_res_total:
+	.globl	comp_res_list
+	.p2align	3, 0x0
+comp_res_list:
 	.long	2
+	.zero	4
+	.quad	.Lcomp_res_inner
 
-	.data
+.Lres_group_0:
+	.asciz	"fonts"
+
+.Lres_group_1:
+	.asciz	"intro"
+
+	.p2align	3, 0x0
+.Lg_rg:
+	.quad	.Lres_group_0
+	.quad	.Lres_group_1
+
+	.globl	res_group_names
+	.p2align	3, 0x0
+res_group_names:
+	.long	2
+	.zero	4
+	.quad	.Lg_rg
+
 	.globl	rom_dir_v
 	.p2align	4, 0x0
 rom_dir_v:
 	.asciz	"workspace/win2_edit/rom/"
 
-	.section	.rdata,"dr"
 	.globl	rom_dir
 	.p2align	3, 0x0
 rom_dir:
@@ -2303,6 +2366,11 @@ tc__Editor_Main_Editor:
 	.globl	.refptr.K_right
 .refptr.K_right:
 	.quad	K_right
+	.section	.rdata$.refptr.K_x,"dr",discard,.refptr.K_x
+	.p2align	3, 0x0
+	.globl	.refptr.K_x
+.refptr.K_x:
+	.quad	K_x
 	.section	.rdata$.refptr.K_z,"dr",discard,.refptr.K_z
 	.p2align	3, 0x0
 	.globl	.refptr.K_z

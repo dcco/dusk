@@ -1,10 +1,21 @@
-#ifndef RES_STACK_H
-#define RES_STACK_H
+#ifndef RES_LOAD_LIST_H
+#define RES_LOAD_LIST_H
 
-	/* resource loading info */
+	/*
+		resource load item: a generic datatype containing information
+			for either loading OR processing a resource
+	*/
 
 typedef tag_type R_LOAD_TYPE;
-enum { R_IMAGE, R_SPRITE };
+enum { R_IMAGE = 0, R_FONT = 1, R_SPRITE = 10 };
+
+extern const tag_type RC_IMAGE;
+extern const tag_type RC_FONT;
+extern const tag_type RC_SPRITE;
+
+const tag_type RC_IMAGE = R_IMAGE;
+const tag_type RC_FONT = R_FONT;
+const tag_type RC_SPRITE = R_SPRITE;
 
 typedef struct resLoadItem {
 	R_LOAD_TYPE type;
@@ -16,17 +27,14 @@ typedef struct resLoadItem {
 	void* xArgs;
 } resLoadItem_t;
 
-	/* resource load queue */
-
-typedef struct resListMeta {
-	int8_t init;
-	int32_t total;
-	int32_t width;
-	int32_t height;
-} resListMeta_t;
+	/*
+		resource load [queue]: a list containing a "queue" of resources to be processed
+			keeps track of a "head" pointer. instead of "popping" values out of the queue,
+			the head pointer simply moves forward.
+			this is so the items may be used in-place.
+	*/
 
 typedef struct resLoadList {
-	resListMeta_t meta;
 	int32_t capacity;
 	int32_t length;
 	int32_t head;
@@ -35,12 +43,16 @@ typedef struct resLoadList {
 
 resLoadList_t* newResList() {
 	resLoadList_t* rl = (resLoadList_t*) malloc(sizeof(resLoadList_t));
-	rl->meta.init = 0;
 	rl->capacity = 30;
 	rl->length = 0;
 	rl->head = 0;
 	rl->data = (resLoadItem_t*) malloc(30 * sizeof(resLoadItem_t));
 	return rl;
+}
+
+void freeResList(resLoadList_t* list) {
+	free(list->data);
+	free(list);
 }
 
 int emptyResList(resLoadList_t* list) {

@@ -107,7 +107,7 @@ let rec parseAtomType: m_type parser = fun tkList -> match tkList with
 	| _ ->
 		let* (QN(q, x), tkRem) = parseDerefTId "Type Name" tkList in
 		if List.mem x ["Unit"; "Int"; "Float"; "Bool"; "String"; "U8"; "U32"; "U64"] then Valid (primTy x, tkRem)
-		else if List.mem x ["PRNG"; "Mat4"; "Image"; "FixImage"; "Sprite"; "Mesh"; "RenderData"] then Valid (builtinTy x, tkRem)
+		else if List.mem x ["PRNG"; "Mat4"; "Image"; "FixImage"; "Sprite"; "Mesh"; "RenderData"; "Font"] then Valid (builtinTy x, tkRem)
 		else if x = "BOT" then Valid (BotTy, tkRem)
 		else Valid (NamedTy (QN(q, x)), tkRem)
 

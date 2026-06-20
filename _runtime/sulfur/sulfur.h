@@ -12,6 +12,7 @@
 #include "texImage.h"
 #include "texSingleImage.h"
 #include "sprite.h"
+#include "font.h"
 
 	// shader code
 #include "mat4.h"
@@ -31,13 +32,16 @@
 
 	// rom + main code
 #include "resLoadList.h"
+#include "resGroup.h"
 #include "sulfurRom.h"
 #include "sf2d.h"
 #include "captureCard.h"
 
 //#define PIPELINE_DEF 1
 
-const int ZOOM = 2;
+#ifndef INIT_ZOOM
+#define INIT_ZOOM 2
+#endif
 
 void orthoMat(GLfloat* m, float l, float r, float b, float t, float n, float f) {
 	float lr = 1.0f / (l - r);
@@ -102,7 +106,7 @@ sulfur_t* initSulfur(int width, int height) {
 	// initialize 2d rendering
 	sulfur_t* self = (sulfur_t*) malloc(sizeof(sulfur_t));
 	self->sf2d = initSf2d();
-	self->cc = initCC(ZOOM, width, height);
+	self->cc = initCC(INIT_ZOOM, width, height);
 	self->width = width;
 	self->height = height;
 	orthoMat(self->pMat, 0.0f, (float) width, (float) height, 0.0f, -1.0f, 1.0f);
@@ -128,7 +132,7 @@ sulfur_t* initSulfur(int width, int height) {
 	#endif
 
 	// initialize rom + misc rendering media
-	self->rom = initSfRom();
+	self->rom = newSfRom();
 
 	#ifdef PIPELINE_DEF
 		self->screenQuad = (mesh_t*) malloc(sizeof(mesh_t));
@@ -201,7 +205,7 @@ int8_t render(sulfur_t* sulfur) {
 		sulfur->swap_buffer = temp;
 		// dirty bits
 		sulfur->dirty = 0;
-		if (sulfur->rom->texArr != NULL) dirty = 1;
+		if (sulfur->rom->shared.texArr != NULL) dirty = 1;
 	}
 	pthread_mutex_unlock(&sulfur->bufferMutex);
 	if (!dirty) {
@@ -214,9 +218,10 @@ int8_t render(sulfur_t* sulfur) {
 	shader_t* shader = sulfur->sf2d->shader;
 
 	int32_t len = lenRList(&sulfur->front_buffer->list2d);
-	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->rom->texArr, len, sulfur->front_buffer->list2d.data);
+	drawDataShader(shader, &sulfur->sf2d->defQuad, sulfur->rom->shared.texArr, len, sulfur->front_buffer->list2d.data);
 	
 	// copy to capture card for future
+	updateCC(sulfur->cc);
 	copyCC(sulfur->cc);
 	#ifdef PIPELINE_DEF
 		glClearColor(0.1f, 0.15f, 0.15f, 1.0f);

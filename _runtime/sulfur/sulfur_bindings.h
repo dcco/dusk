@@ -2,7 +2,9 @@
 #define SULFUR_BINDINGS_H
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_image.h"
+#include "stb_truetype.h"
 
 #include "sulfur.h"
 #include "sulfurData.h"
@@ -101,17 +103,21 @@ extern int32_t _none_Sys_Sulfur_screenHeight()
 
 extern int32_t _none_Sys_Sulfur_canvasZoom()
 {
-	return ZOOM;
+	return sulfur->cc->zoom;
 }
-
 extern int32_t _none_Sys_Sulfur_canvasWidth()
 {
-	return (int32_t) ceilf((float) WIDTH / ZOOM);
+	return (int32_t) ceilf((float) WIDTH / sulfur->cc->zoom);
 }
 
 extern int32_t _none_Sys_Sulfur_canvasHeight()
 {
-	return (int32_t) ceilf((float) HEIGHT / ZOOM);
+	return (int32_t) ceilf((float) HEIGHT / sulfur->cc->zoom);
+}
+
+extern void _Int_Sys_Sulfur_setCanvasZoom(int32_t zoom)
+{
+	askResizeCC(sulfur->cc, zoom, sulfur->cc->windowWidth, sulfur->cc->windowHeight);
 }
 
 	/* resource bindings */
@@ -152,8 +158,6 @@ shader_uniform_def_t* convert_uniforms(gc_array_t* uniforms)
 	}
 	return uniformList;
 }*/
-
-
 
 extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t* _fs,
 	gc_array_t* attrs, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)

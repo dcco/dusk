@@ -32,9 +32,15 @@ type sym =
 	| ExternalSym of int list
 	| UserDefSym
 
-type resource_def =
-	SimpRes of string * string * string
-	| CompRes of string * string list * int list
+	(*
+		resource_def:
+		- simp: extension, group name, name, URL, int arg list 
+		- comp: extension, xarg list, int arg list
+	*)
+type s_res_def = SimpRes of string * string * string * string * int list
+type c_res_def = CompRes of string * string list * int list
+
+type resource_def = SRD of s_res_def | CRD of c_res_def
 
 type 'm virt_dec =
 	SymVD of sym * 'm fun_type
@@ -171,6 +177,7 @@ let imageTy = builtinTy "Image"
 let fixImageTy = builtinTy "FixImage"
 let spriteTy = builtinTy "Sprite"
 let meshTy = builtinTy "Mesh"
+let fontTy = builtinTy "Font"
 
 let sulfurShaderList = [
 		(* 3d rendering hooks *)
@@ -244,7 +251,8 @@ let sulfurList = [
 	("screenHeight", ExternalSym [], [], intTy);
 	("canvasZoom", ExternalSym [], [], intTy);
 	("canvasWidth", ExternalSym [], [], intTy);
-	("canvasHeight", ExternalSym [], [], intTy)
+	("canvasHeight", ExternalSym [], [], intTy);
+	("setCanvasZoom", ExternalSym [], [intTy], unitTy)
 ]
 
 let sulfurTypes = [
