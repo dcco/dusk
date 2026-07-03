@@ -226,6 +226,7 @@ let sulfurList = [
 	("drawBox", ExternalSym [], [intTy; intTy; intTy; intTy; intTy], unitTy);
 	("drawSprite", ExternalSym [], [intTy; intTy; spriteTy; intTy; boolTy], unitTy);
 	("drawText", ExternalSym [], [spriteTy; intTy; intTy; intTy; stringTy], unitTy);
+	("drawTextf", ExternalSym [], [fontTy; intTy; intTy; stringTy], unitTy);
 	(*("draw", ExternalSym [], [namedTy "Glyph"], unitTy);*)
 	
 		(* rom data *)

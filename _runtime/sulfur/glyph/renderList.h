@@ -54,9 +54,5 @@ void addRList(renderList_t* list, void* g) {
 int32_t lenRList(renderList_t* list) {
 	return list->length;
 }
-/*
-glyph_t* getRList(renderList_t* list, int i) {
-	return list->data + i];
-}*/
 
 #endif

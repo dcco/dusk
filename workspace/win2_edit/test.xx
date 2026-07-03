@@ -2343,6 +2343,18 @@ tc__Phys_Main_GameRoom:
 	.zero	4
 	.quad	tc_offs__Phys_Main_GameRoom
 
+	.globl	tc_offs__Editor_GUI_Pane
+	.p2align	2, 0x0
+tc_offs__Editor_GUI_Pane:
+	.long	16
+
+	.globl	tc__Editor_GUI_Pane
+	.p2align	3, 0x0
+tc__Editor_GUI_Pane:
+	.long	1
+	.zero	4
+	.quad	tc_offs__Editor_GUI_Pane
+
 	.globl	tc_offs__Editor_Main_Editor
 	.p2align	2, 0x0
 tc_offs__Editor_Main_Editor:

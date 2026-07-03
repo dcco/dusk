@@ -1,4 +1,8 @@
 
+module GUI
+	chapter Pane
+end
+
 module Main
 	references Sys modules Os, Input, Sulfur, Rom
 	references Commons.Core

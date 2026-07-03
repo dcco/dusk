@@ -118,15 +118,6 @@ extern gen_res_list_t res_list;
 extern gen_res_list_t comp_res_list;
 extern gen_res_list_t res_group_names;
 
-/*
-extern void* res_url_list[];
-extern void* res_ptr_list[];
-extern int res_total;
-
-extern void* comp_res_arg_list[];
-extern void* comp_res_ptr_list[];
-extern int comp_res_total;*/
-
 void* initRomLoad(void* arg) {
 	// unpack sulfur rom
 	sf_rom_t* rom = ((sulfur_t*) arg)->rom;
@@ -147,45 +138,8 @@ void* initRomLoad(void* arg) {
 	for (int i = 0; i < res_list.total; i++) {
 		// read URL name
 		rawCatDynString(full_url, rom_dir, res_list_data[i].url);
-		// increase memory size if required
-		/*size_t cur_len = rom_len + strlen(res_url_list[i]);
-		if (full_len < cur_len) {
-			full_len = cur_len * 2;
-			full_url = realloc(full_url, full_len + 1);
-		}
-		// read URL name
-		strcpy(full_url, rom_dir);
-		strcat(full_url, res_url_list[i]);*/
 		// load simple resource
 		loadSimpRes(imageCount, &iData, full_url->data, &res_list_data[i]);
-		// load image data
-		/*iData.type = R_IMAGE;
-		iData.storePtr = res_ptr_list[i];
-		iData.storeId = i;
-		char* img = stbi_load(full_url, &iData.a, &iData.b, &n, 4);
-		if (img == NULL) {
-			// TODO: throw exception
-			printf("Failed to load: %s\n", full_url);
-			return NULL;
-		}
-		iData.xArgs = img;
-		// check image size
-		if (i == 0) {
-			w = iData.a;
-			h = iData.b;
-			// pass meta-information along
-			pthread_mutex_lock(&rom->loadMutex);
-			resListMeta_t* meta = &rom->resList->meta;
-			meta->init = 1;
-			meta->total = res_total;
-			meta->width = w;
-			meta->height = h;
-			pthread_mutex_unlock(&rom->loadMutex);
-		} else {
-			if (iData.a != w || iData.b != h) {
-				exit_log("Inconsistent texture sizes for texture atlas.", "");
-			}
-		}*/
 		// meta data
 		if (iData.type == R_IMAGE) {
 			imageCount = imageCount + 1;
@@ -215,19 +169,6 @@ void* initRomLoad(void* arg) {
 		addResList(rom->groupList[groupId]->loadList, &iData);
 		pthread_mutex_unlock(&rom->loadMutex);
 	}
-	/*for (int i = 0; i < comp_res_total; i++) {
-		// read arguments
-		void** comp_res_args = comp_res_arg_list[i];
-		// sprite case (only case atm)
-		iData.type = R_SPRITE;
-		iData.storePtr = comp_res_ptr_list[i];
-		iData.iArgs = (int*) comp_res_args[0];
-		iData.xArgs = (void**) comp_res_args[1];
-		// pass sprite data to sulfur's resource loader
-		pthread_mutex_lock(&rom->loadMutex);
-		addResList(rom->resList, &iData);
-		pthread_mutex_unlock(&rom->loadMutex);
-	}*/
 	pthread_mutex_lock(&rom->loadMutex);
 	// initialize shared resource metadata
 	shared_rom_t* shared = &rom->shared;
@@ -270,17 +211,6 @@ void waitRom(sf_rom_t* rom) {
 			pthread_mutex_unlock(&rom->loadMutex);
 		}
 	}
-	/*int32_t mainTotal = res_total + comp_res_total;
-	int32_t loadTotal;
-	pthread_mutex_lock(&rom->loadMutex);
-	loadTotal = rom->compTotal;
-	pthread_mutex_unlock(&rom->loadMutex);
-	while (loadTotal != mainTotal) {
-		sleep_ms(30);
-		pthread_mutex_lock(&rom->loadMutex);
-		loadTotal = rom->compTotal;
-		pthread_mutex_unlock(&rom->loadMutex);
-	}*/
 }
 
 

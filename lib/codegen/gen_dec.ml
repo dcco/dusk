@@ -61,16 +61,21 @@ let genPreAlloc (cont: llvm_cont) (env: dusk_env) (b: gen_stmt list): unit =
 	*)
 
 let genStructTD (cont: llvm_cont) (env: dusk_env) (f: string) (fl: (string * g_type) list): unit =
-		(* build layout struct *)
+		(* add temp type w/out layout for recursive type generation *)
 	let tau_l = List.map snd fl in
+	Hashtbl.add env (DTName f) (DTDef (StructTD_C(Array.of_list tau_l, const_null _ptrType)));
+		(* build layout struct *)
 	let offsetList = gcElemTypeList "(Struct Type Dec)" cont env 0 tau_l in
 	let tc_struct = (match offsetList with
 		[] -> const_null _ptrType
 		| [DirectChild] -> const_null _ptrType
 		| _ -> genGCType cont f offsetList
 	) in
-		(* - ignores alignment, values must be copied out *)
-	Hashtbl.add env (DTName f) (DTDef (StructTD_C(Array.of_list tau_l, tc_struct)))
+		(*
+			add struct w/ layout type
+			- ignores alignment, values must be copied out
+		*)
+	Hashtbl.replace env (DTName f) (DTDef (StructTD_C(Array.of_list tau_l, tc_struct)))
 
 let rec genEnumTD (cont: llvm_cont) (env: dusk_env) (i: int) (cl: (canon_name union_case) list): unit = match cl with
 	[] -> ()

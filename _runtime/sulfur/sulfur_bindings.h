@@ -14,12 +14,6 @@ sulfur_t* sulfur = NULL;
 
 	/* main bindings */
 
-/*extern void _Glyph_Sys_Sulfur_draw(int8_t raw[32])
-{
-	renderList_t* rl = &sulfur->back_buffer->list2d;
-	addGlyphRList(rl, (glyph_t*) raw);
-}*/
-
 extern void _Int_Sys_Sulfur_drawBox(int32_t c, int32_t x, int32_t y, int32_t w, int32_t h)
 {
 	renderList_t* rl = &sulfur->back_buffer->list2d;
@@ -38,19 +32,16 @@ extern void _Sprite_Sys_Sulfur_drawText(sprite_t* fontPtr, int32_t x, int32_t y,
 	addTextRList(rl, fontPtr, x, y, kw, text);
 }
 
+extern void _Font_Sys_Sulfur_drawTextf(fontFamily_t* fontPtr, int32_t x, int32_t y, dusk_string_t* text)
+{
+	renderList_t* rl = &sulfur->back_buffer->list2d;
+	addTextfRList(rl, fontPtr, x, y, text);
+}
+
 extern void _none_Sys_Sulfur_refresh()
 {
 	swapBackBuffer(sulfur);
 }
-
-/*
-extern void _Glyph3d_Sys_Sulfur_draw(int8_t raw[32])
-{
-	#ifdef PIPELINE_DEF
-		renderTable_t* rt = &sulfur->back_buffer->table3d;
-		addGlyph3dRTable(sulfur->r3d, rt, (glyph3d_t*) raw);
-	#endif
-}*/
 
 extern void _Float_Sys_Sulfur_drawQuadX(float x, float y, float z, sprite_t* spritePtr, int32_t frame)
 {
@@ -141,24 +132,6 @@ extern tex_simage_t* _Int_Sys_Sulfur_fixedTexImageFloat(int32_t w, int32_t h, gc
 	return img;
 }
 
-/*
-shader_uniform_def_t* convert_uniforms(gc_array_t* uniforms)
-{
-	shader_uniform_def_t* uniformList = NULL;
-	if (uniforms->size > 0) {
-		int32_t uniformTotal = uniforms->size;
-		uniformList = (shader_uniform_def_t*) malloc(sizeof(shader_uniform_def_t) * uniformTotal);
-		raw_uniform_def_t** rawUList = (raw_uniform_def_t**) uniforms->data;
-		for (int i = 0; i < uniformTotal; i++) {
-			raw_uniform_def_t* rawUniform = rawUList[i];
-			uniformList[i].name = &rawUniform->name->start;
-			uniformList[i].glType = readGLType(rawUniform->g->type);
-			uniformList[i].arity = rawUniform->arity;
-		}
-	}
-	return uniformList;
-}*/
-
 extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t* _fs,
 	gc_array_t* attrs, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)
 {
@@ -213,21 +186,6 @@ extern shader_t* _String_Sys_Sulfur_newShader(dusk_string_t* _vs, dusk_string_t*
 	return shader;
 	return NULL;
 }
-/*
-fbo_layer_def_t* convert_layers(gc_array_t* layers)
-{
-	fbo_layer_def_t* layerList = NULL;
-	if (layers->size > 0) {
-		int32_t layersTotal = layers->size;
-		layerList = (fbo_layer_def_t*) malloc(sizeof(fbo_layer_def_t) * layersTotal);
-		raw_enum_t** rawLList = (raw_enum_t**) layers->data;
-		for (int i = 0; i < layersTotal; i++) {
-			raw_enum_t* rawLayer = rawLList[i];
-			layerList[i].type = rawLayer->type;
-		}
-	}
-	return layerList;
-}*/
 
 extern frameBuffer_t* _String_Sys_Sulfur_newFrameBuffer(dusk_string_t* _vs, dusk_string_t* _fs, int32_t w, int32_t h,
 	gc_array_t* layers, gc_array_t* attrs, dusk_string_t* _uPMat, gc_array_t* uniforms, gc_array_t* uniformTexs)
