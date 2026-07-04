@@ -256,6 +256,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "ui64toi" -> (build_trunc v iType "_castT" bx, iType)
 			| "itof" -> (build_sitofp v fType "_castT" bx, fType)
 			| "itoui64" -> (build_zext v i64Type "_castT" bx, i64Type)
+			| "ui64tof" -> (build_uitofp v fType "_castT" bx, i64Type)
 			| _ -> failwith ("BUG: gen_exp.ml - Unexpected operator \"" ^ xOp ^ "\" encountered in generation phase.")
 		) in (vf, PrimDT t)
 	| BinExpC(xOp, e1, e2) ->
@@ -271,6 +272,7 @@ let rec genExp (cont: llvm_cont) (env: dusk_env) (e: gen_exp): dusk_val = let bx
 			| "fsub" -> (build_fsub v1 v2 "_subT" bx, fType)
 			| "fmul" -> (build_fmul v1 v2 "_mulT" bx, fType)
 			| "fdiv" -> (build_fdiv v1 v2 "_divT" bx, fType)
+			| "fmod" -> (build_frem v1 v2 "_modT" bx, fType)
 			| "ieq" -> (build_icmp Icmp.Eq v1 v2 "_cmpT" bx, bType)
 			| "ineq" -> (build_icmp Icmp.Ne v1 v2 "_cmpT" bx, bType)
 			| "ileq" -> (build_icmp Icmp.Sle v1 v2 "_cmpT" bx, bType)

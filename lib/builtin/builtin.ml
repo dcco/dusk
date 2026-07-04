@@ -79,6 +79,7 @@ let builtinList = [
 	("add", BinaryASMSym "fadd", [floatTy; floatTy], floatTy);
 	("sub", BinaryASMSym "fsub", [floatTy; floatTy], floatTy);
 	("mul", BinaryASMSym "fmul", [floatTy; floatTy], floatTy);
+	("mod", BinaryASMSym "fmod", [floatTy; floatTy], floatTy);
 	("flDiv", BinaryASMSym "fdiv", [floatTy; floatTy], floatTy);
 
 	("eq", BinaryASMSym "ieq", [intTy; intTy], boolTy);
@@ -118,12 +119,14 @@ let builtinList = [
 	("toInt", UnaryASMSym "ftoi", [floatTy], intTy);
 	("toInt", UnaryASMSym "ui64toi", [uint64Ty], intTy);
 	("toFloat", UnaryASMSym "itof", [intTy], floatTy);
+	("toFloat", UnaryASMSym "ui64tof", [uint64Ty], floatTy);
 	("toU64", UnaryASMSym "itoui64", [intTy], uint64Ty);
 	("floor", ExternalSym [], [floatTy], intTy);
 	("ceil", ExternalSym [], [floatTy], intTy);
 
 	("expo", ExternalSym [], [floatTy; floatTy], floatTy);
 	("sqrt", ExternalSym [], [floatTy], floatTy);
+	("ln", ExternalSym [], [floatTy], floatTy);
 	("abs", ExternalSym [], [intTy], intTy);
 	("abs", ExternalSym [], [floatTy], floatTy);
 	

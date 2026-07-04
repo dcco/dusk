@@ -112,7 +112,7 @@ From highest to lowest precedence, the following unary and binary operators are 
 ```
 -- unary operators
 |_|         
--   !   ~
+-   !   ^
 
 -- bitwise operators
 <<  >>
@@ -133,7 +133,7 @@ From highest to lowest precedence, the following unary and binary operators are 
 
 All binary operators are left-associative.
 
-These operators have their standard meaning along with `**` for exponentiation, `/.` for floating-point division (distinct from `/` truncating division), the standard bitwise operators `~`, `<<`, `>>`, `^`, `&`, `|`, and the unary `measure` operator `|_|` used for things like the absolute value, the length of a string, and later the size of arrays.
+These operators have their standard meaning along with `**` for exponentiation, `/.` for floating-point division (distinct from `/` truncating division), the standard bitwise operators `<<`, `>>`, `&`, `|` with `^` overloaded for both bitwise negation and bitwise XOR, and the unary `measure` operator `|_|` used for things like the absolute value, the length of a string, and later the size of arrays.
 
 These operators may also be called as normal functions using their "explicit name", and they may be overloaded using this explicit name as well. A complete table of operators, explicit names, and what overloads are built-in to the language is given below:
 
@@ -147,17 +147,17 @@ These operators may also be called as normal functions using their "explicit nam
 | `/.` | `flDiv` | `Int`, `U8`, `U32`, `U64`, `Float` | Numeric division |
 | `%` | `mod` | `Int`, `U8`, `U32`, `U64` | Numeric modulo/remainder |
 | `**` | `expo` | `Int`, `U8`, `U32`, `U64`, `Float` | Numeric exponentiation |
-| `=`| `equals` | `Int`, `U8`, `U32`, `U64`, `Float`, `Bool`, `String`, `OID` | Value Equality |
-| `!=`| `neq` | `Int`, `U8`, `U32`, `U64`, `Float`, `Bool`, `String`, `OID` | Value Inequality |
-| `<`| `lt` | `Int`, `U8`, `U32`, `U64`, `Float` | Less than comparison |
-| `<=`| `leq` | `Int`, `U8`, `U32`, `U64`, `Float` | Less than or equal comparison |
-| `>=`| `gt` | `Int`, `U8`, `U32`, `U64`, `Float` | Greater than comparison |
-| `>=`| `geq` | `Int`, `U8`, `U32`, `U64`, `Float` | Greater than or equal comparison |
+| `=` | `equals` | `Int`, `U8`, `U32`, `U64`, `Float`, `Bool`, `String`, `OID` | Value Equality |
+| `!=` | `neq` | `Int`, `U8`, `U32`, `U64`, `Float`, `Bool`, `String`, `OID` | Value Inequality |
+| `<` | `lt` | `Int`, `U8`, `U32`, `U64`, `Float` | Less than comparison |
+| `<=` | `leq` | `Int`, `U8`, `U32`, `U64`, `Float` | Less than or equal comparison |
+| `>=` | `gt` | `Int`, `U8`, `U32`, `U64`, `Float` | Greater than comparison |
+| `>=` | `geq` | `Int`, `U8`, `U32`, `U64`, `Float` | Greater than or equal comparison |
 | `!` (Unary) | `not` | `Bool` | Logical negation |
 | `&&` | `and` | `Bool` | Logical conjunction |
 | `||` | `or` | `Bool` | Logical disjunction |
 | `|_|` (Unary) | `measure` | `Int`, `Float`, `String` | Absolute value/String length |
-| `~` (Unary) | `bitNeg` | `Int`, `U8`, `U32`, `U64`, `Float` | Bitwise complement |
+| `^` (Unary) | `bitNeg` | `Int`, `U8`, `U32`, `U64`, `Float` | Bitwise complement |
 | `<<` | `bitShiftLeft` | `Int`, `U8`, `U32`, `U64`, `Float` | Bitwise shift left |
 | `>>` | `bitShiftRight` | `Int`, `U8`, `U32`, `U64`, `Float` | Bitwise shift right |
 | `&` | `bitAnd` | `Int`, `U8`, `U32`, `U64`, `Float` | Bitwise AND |
@@ -168,14 +168,15 @@ Note that the `=`/`equals` function is NOT defined for all types. In fact for mo
 
 `TODO:` Implement all operators/overloads.
 
-### 2.3 Math
+### 2.3 Math / Misc Functions
 
-Dusk also includes the following builtin math functions:
+#### Math
+
+Dusk includes the following builtin math functions:
 
 | Function Name | Builtin Overloads | Description |
 |:--------------|:------------------|:------------|
 | `sqrt` | `Float` | Square Root |
-| `cbrt` | `Float` | Cube Root |
 | `log` | `Float` | Logarithm |
 | `log10` | `Float` | Log Base-10 |
 | `ln` | `Float` | Natural Log |
@@ -197,9 +198,30 @@ Dusk also includes the following builtin math functions:
 | `toDegrees` | `Float` | Radian to degree conversion |
 | `toRadians` | `Float` | Degree to radian conversion |
 
-Constants `_PI` and `_E` are also always available.
+Constants `_PI` and `_E` are also available.
 
 `TODO:` Implement all math functions/overloads.
+
+#### String Operators / Functions
+
+In addition to string literals, strings may be initialized using arrays of characters (`U8` values):
+```
+new String(new 1d['M', '4', 'R', 'I', '0'])
+```
+
+(More details on array syntax will be given later in this section).
+
+Individual characters may be read out of a string using array syntax:
+```
+var s = "September."
+print(toString(s[3]))    -- prints 't'
+```
+
+Lastly, Dusk implements two builtin string functions:
+| Function Name | Builtin Overloads | Description |
+|:--------------|:------------------|:------------|
+| `toString` | `Int`, `U8`, U32`, `U64`, `Float` | Convert to String |
+| `subString` | `String` | Substring operator |
 
 ### 2.4 Enums
 

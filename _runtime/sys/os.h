@@ -13,6 +13,10 @@ extern float _Float_builtin_sqrt(float f) {
 	return sqrtf(f);
 }
 
+extern float _Float_builtin_ln(float f) {
+	return logf(f);
+}
+
 extern uint32_t _Int_builtin_abs(uint32_t f) {
 	return abs(f);
 }
